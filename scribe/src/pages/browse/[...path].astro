@@ -1,0 +1,109 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { marked } from 'marked';
+
+const GARDNER_URL = import.meta.env.GARDNER_URL || 'http://localhost:8000';
+
+const { path } = Astro.params;
+const currentPath = path || '';
+
+let data: any = null;
+let error: string | null = null;
+
+try {
+  const url = currentPath
+    ? `${GARDNER_URL}/api/browse/${currentPath}`
+    : `${GARDNER_URL}/api/browse`;
+  const response = await fetch(url);
+  if (response.ok) {
+    data = await response.json();
+  } else {
+    error = `Failed to load: ${response.status}`;
+  }
+} catch (e) {
+  error = 'Could not connect to Gardner. Is it running?';
+}
+
+// Build breadcrumb parts
+const pathParts = currentPath ? currentPath.split('/').filter(Boolean) : [];
+const breadcrumbs = pathParts.map((part, index) => ({
+  name: part,
+  path: pathParts.slice(0, index + 1).join('/'),
+}));
+
+// Render markdown if it's a file
+let renderedContent = '';
+if (data?.is_file && data?.content) {
+  renderedContent = await marked(data.content);
+}
+---
+
+<Layout title={`Browse - ${currentPath || 'Atlas'}`}>
+  <main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-light text-gray-400">Browse</h1>
+        <a href="/" class="text-blue-400 hover:text-blue-300 text-sm">
+          &larr; Capture
+        </a>
+      </div>
+
+      <!-- Breadcrumb -->
+      <nav class="mb-6 text-sm">
+        <ol class="flex flex-wrap items-center gap-2">
+          <li>
+            <a href="/browse" class="text-blue-400 hover:text-blue-300">atlas</a>
+          </li>
+          {breadcrumbs.map((crumb, i) => (
+            <li class="flex items-center gap-2">
+              <span class="text-gray-600">/</span>
+              {i === breadcrumbs.length - 1 ? (
+                <span class="text-gray-300">{crumb.name}</span>
+              ) : (
+                <a href={`/browse/${crumb.path}`} class="text-blue-400 hover:text-blue-300">
+                  {crumb.name}
+                </a>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      {error ? (
+        <div class="p-4 bg-red-900/30 border border-red-800 rounded-lg">
+          <p class="text-red-400">{error}</p>
+        </div>
+      ) : data?.is_file ? (
+        <!-- File content -->
+        <article class="prose prose-invert prose-sm max-w-none
+                       prose-headings:text-gray-200 prose-p:text-gray-300
+                       prose-a:text-blue-400 prose-code:text-green-400
+                       prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-800">
+          <div set:html={renderedContent} />
+        </article>
+      ) : (
+        <!-- Directory listing -->
+        <div class="space-y-1">
+          {data?.items?.length === 0 ? (
+            <p class="text-gray-500 py-8 text-center">This directory is empty</p>
+          ) : (
+            data?.items?.map((item: any) => (
+              <a
+                href={`/browse/${item.path}`}
+                class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-900 transition-colors group"
+              >
+                <span class="text-lg">
+                  {item.type === 'directory' ? '📁' : '📄'}
+                </span>
+                <span class="text-gray-300 group-hover:text-white">
+                  {item.name}
+                </span>
+              </a>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>
