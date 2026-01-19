@@ -1,0 +1,7 @@
+[project]
+name = "athena-pkms"
+version = "0.1.0"
+description = "A self-hosted, agentic second brain where you dump the chaos and the AI tends the garden."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
