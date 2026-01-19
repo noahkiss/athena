@@ -24,6 +24,8 @@ jobs:
             context: ./gardner
           - image: scribe
             context: ./scribe
+          - image: allinone
+            context: .
 
     steps:
       - name: Checkout repository

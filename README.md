@@ -14,9 +14,24 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 | `scribe/` | Capture frontend | Astro, HTMX, Tailwind |
 | `athena/` | Knowledge base template | Markdown, Git |
 
-## Quick Start
+## Quick Start (All-in-one)
 
 **Prerequisites:** Docker, an OpenAI-compatible API key
+
+```bash
+git clone https://github.com/noahkiss/athena.git
+cd athena
+cp .env.example .env
+# Edit .env with your AI provider settings
+docker-compose -f docker-compose.allinone.yml up -d --build
+curl -X POST http://localhost:8000/api/bootstrap
+```
+
+**Access:**
+- Frontend: http://localhost:3000
+- API docs: http://localhost:8000/docs
+
+## Quick Start (Split services)
 
 ```bash
 git clone https://github.com/noahkiss/athena.git

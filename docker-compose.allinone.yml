@@ -1,0 +1,11 @@
+services:
+  athena:
+    build: .
+    ports:
+      - "8000:8000"
+      - "3000:3000"
+    volumes:
+      - ./athena:/data  # The Brain (source of truth)
+    env_file: .env
+    environment:
+      - GARDNER_URL=http://127.0.0.1:8000
