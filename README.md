@@ -17,7 +17,7 @@ The source of truth. This directory is a **template** for the volume bind-mounte
 ### 2. `gardner/` (The Brain)
 The backend service and worker nodes.
 *   **Role:** API endpoints, File Watchers, Cron Jobs, LLM Processing.
-*   **Tech:** Python, FastAPI, Anthropic SDK, APScheduler.
+*   **Tech:** Python, FastAPI, OpenAI-compatible API.
 *   **Function:** Watches the `inbox`, reads `GARDNER.md` instructions, and moves files into the `athena` structure.
 
 ### 3. `scribe/` (The Interface)
@@ -32,34 +32,81 @@ The lightweight frontend.
 
 ### Prerequisites
 *   Docker & Docker Compose
-*   An Anthropic API Key (for the Gardener)
+*   An AI provider API key (OpenAI, LiteLLM, or any OpenAI-compatible endpoint)
 
 ### Installation
 
 1.  **Clone the Repo:**
     ```bash
-    git clone https://github.com/yourusername/pkms.git
-    cd pkms
+    git clone https://github.com/yourusername/athena.git
+    cd athena
     ```
 
 2.  **Configure Environment:**
     ```bash
     cp .env.example .env
-    # Edit .env and add your ANTHROPIC_API_KEY
+    # Edit .env and configure your AI provider (see Configuration section below)
     ```
 
-3.  **Initialize the Brain:**
-    The `athena` folder in this repo is just a skeleton. When running locally, you might want to map this to a real data directory on your machine, or use the skeleton as a starting point.
-    *(See `docker-compose.yml` for volume mapping details)*.
-
-4.  **Launch:**
+3.  **Launch:**
     ```bash
     docker-compose up -d --build
+    ```
+
+4.  **Bootstrap the Knowledge Base:**
+    ```bash
+    # Initialize the directory structure and default config files
+    curl -X POST http://localhost:8000/api/bootstrap
+    ```
+
+    Or bootstrap before launch using the CLI:
+    ```bash
+    cd gardner && uv run python bootstrap.py
     ```
 
 5.  **Access:**
     *   **Scribe (Frontend):** `http://localhost:3000`
     *   **Gardner (API):** `http://localhost:8000/docs`
+
+---
+
+## ⚙️ Configuration
+
+Athena uses **OpenAI-compatible endpoints**, making it work with any provider that implements this API:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AI_BASE_URL` | `https://api.openai.com/v1` | Base URL for the AI API |
+| `AI_API_KEY` | - | API key (falls back to `OPENAI_API_KEY`) |
+| `AI_MODEL_FAST` | `gpt-4o-mini` | Model for quick tasks (suggestions) |
+| `AI_MODEL_THINKING` | `gpt-4o` | Model for complex tasks (classification) |
+| `DATA_DIR` | `/data` | Knowledge base location (inside container) |
+
+### Provider Examples
+
+**OpenAI (default):**
+```env
+AI_BASE_URL=https://api.openai.com/v1
+AI_API_KEY=sk-...
+AI_MODEL_FAST=gpt-4o-mini
+AI_MODEL_THINKING=gpt-4o
+```
+
+**LiteLLM Proxy:**
+```env
+AI_BASE_URL=http://localhost:4000/v1
+AI_API_KEY=your-litellm-key
+AI_MODEL_FAST=claude-3-haiku-20240307
+AI_MODEL_THINKING=claude-3-5-sonnet-20241022
+```
+
+**Ollama (local):**
+```env
+AI_BASE_URL=http://localhost:11434/v1
+AI_API_KEY=ollama
+AI_MODEL_FAST=llama3.2
+AI_MODEL_THINKING=llama3.2
+```
 
 ---
 
@@ -117,10 +164,12 @@ pkms/
 ## 🛠 Features
 
 - [x] **Capture:** Fast mobile-friendly text dump to Markdown.
-- [x] **Gardener:** Manual trigger to auto-sort inbox files using Claude Sonnet.
-- [x] **Refine:** AI-assisted context injection *before* saving a note (Claude Haiku).
+- [x] **Gardener:** Manual trigger to auto-sort inbox files using AI.
+- [x] **Refine:** AI-assisted context injection *before* saving a note.
 - [x] **Browse:** Read-only view of the `atlas` directory with markdown rendering.
+- [x] **Bootstrap:** One-command initialization of the knowledge base structure.
 - [x] **MCP Server:** Expose notes to external AI tools via Model Context Protocol.
+- [x] **Provider Agnostic:** Works with OpenAI, LiteLLM, Ollama, or any OpenAI-compatible API.
 
 ---
 
@@ -130,8 +179,9 @@ pkms/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| `GET` | `/api/status` | Health check and bootstrap status |
+| `POST` | `/api/bootstrap` | Initialize knowledge base structure |
 | `POST` | `/api/inbox` | Submit a note to the inbox |
-| `GET` | `/api/status` | Health check |
 | `POST` | `/api/trigger-gardener` | Manually trigger inbox processing |
 | `POST` | `/api/refine` | Get AI suggestions for a note |
 | `GET` | `/api/browse/{path}` | Browse atlas directory/files |

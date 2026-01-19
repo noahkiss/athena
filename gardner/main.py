@@ -1,38 +1,94 @@
 """The Gardener - FastAPI backend for Project Athena."""
 
-import os
 from datetime import datetime
-from pathlib import Path
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+
+from ai_client import AIClient, get_client
+from config import DATA_DIR, INBOX_DIR, ATLAS_DIR
 
 app = FastAPI(title="Gardner", description="Backend API for Project Athena PKMS")
 
-DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
-INBOX_DIR = DATA_DIR / "inbox"
 
+# --- Request/Response Models ---
 
 class InboxRequest(BaseModel):
     """Request model for submitting a note to the inbox."""
-
     content: str
 
 
 class InboxResponse(BaseModel):
     """Response model for inbox submission."""
-
     filename: str
     message: str
 
 
 class StatusResponse(BaseModel):
     """Response model for health check."""
-
     status: str
     inbox_path: str
     inbox_exists: bool
+    atlas_exists: bool
+    bootstrapped: bool
+
+
+class GardenerTriggerResponse(BaseModel):
+    """Response model for gardener trigger."""
+    message: str
+    status: str
+
+
+class BootstrapResponse(BaseModel):
+    """Response model for bootstrap endpoint."""
+    created: list[str]
+    skipped: list[str]
+    exists: list[str]
+
+
+class RefineRequest(BaseModel):
+    """Request model for content refinement."""
+    content: str
+
+
+class BrowseItem(BaseModel):
+    """Item in a directory listing."""
+    name: str
+    type: str  # "file" or "directory"
+    path: str
+
+
+class BrowseResponse(BaseModel):
+    """Response model for browse endpoint."""
+    path: str
+    items: list[BrowseItem]
+    content: str | None = None
+    is_file: bool = False
+
+
+# --- Endpoints ---
+
+@app.get("/api/status", response_model=StatusResponse)
+async def get_status() -> StatusResponse:
+    """Health check endpoint."""
+    agents_file = DATA_DIR / "AGENTS.md"
+    return StatusResponse(
+        status="ok",
+        inbox_path=str(INBOX_DIR),
+        inbox_exists=INBOX_DIR.exists(),
+        atlas_exists=ATLAS_DIR.exists(),
+        bootstrapped=agents_file.exists(),
+    )
+
+
+@app.post("/api/bootstrap", response_model=BootstrapResponse)
+async def bootstrap_knowledge_base(force: bool = False) -> BootstrapResponse:
+    """Initialize the knowledge base directory structure."""
+    from bootstrap import bootstrap
+    results = bootstrap(force=force)
+    return BootstrapResponse(**results)
 
 
 @app.post("/api/inbox", response_model=InboxResponse)
@@ -53,27 +109,9 @@ async def submit_to_inbox(request: InboxRequest) -> InboxResponse:
     return InboxResponse(filename=filename, message="Note saved to inbox")
 
 
-@app.get("/api/status", response_model=StatusResponse)
-async def get_status() -> StatusResponse:
-    """Health check endpoint."""
-    return StatusResponse(
-        status="ok",
-        inbox_path=str(INBOX_DIR),
-        inbox_exists=INBOX_DIR.exists(),
-    )
-
-
-class GardenerTriggerResponse(BaseModel):
-    """Response model for gardener trigger."""
-
-    message: str
-    status: str
-
-
 def run_gardener() -> None:
     """Run the gardener worker in the background."""
     from workers.gardener import process_inbox
-
     process_inbox()
 
 
@@ -87,14 +125,7 @@ async def trigger_gardener(background_tasks: BackgroundTasks) -> GardenerTrigger
     )
 
 
-ATLAS_DIR = DATA_DIR / "atlas"
-
-
-class RefineRequest(BaseModel):
-    """Request model for content refinement."""
-
-    content: str
-
+# --- Refine Endpoint ---
 
 def search_atlas(keywords: list[str], max_files: int = 5) -> list[dict]:
     """Search atlas for files containing keywords."""
@@ -107,7 +138,6 @@ def search_atlas(keywords: list[str], max_files: int = 5) -> list[dict]:
             content = md_file.read_text().lower()
             score = sum(1 for kw in keywords if kw.lower() in content)
             if score > 0:
-                # Get first 200 chars as preview
                 preview = md_file.read_text()[:200].replace("\n", " ")
                 matches.append({
                     "path": str(md_file.relative_to(ATLAS_DIR)),
@@ -123,25 +153,31 @@ def search_atlas(keywords: list[str], max_files: int = 5) -> list[dict]:
 
 def extract_keywords(content: str) -> list[str]:
     """Extract potential keywords from content."""
-    # Simple extraction: words longer than 3 chars, excluding common words
-    stopwords = {"this", "that", "with", "from", "have", "been", "will", "would", "could", "should", "about", "what", "when", "where", "which", "their", "there", "these", "those", "some", "other"}
+    stopwords = {
+        "this", "that", "with", "from", "have", "been", "will", "would",
+        "could", "should", "about", "what", "when", "where", "which",
+        "their", "there", "these", "those", "some", "other"
+    }
     words = content.lower().split()
-    keywords = [w.strip(".,!?\"'()[]{}") for w in words if len(w) > 3 and w.lower() not in stopwords]
-    return list(set(keywords))[:20]  # Limit to 20 unique keywords
+    keywords = [
+        w.strip(".,!?\"'()[]{}")
+        for w in words
+        if len(w) > 3 and w.lower() not in stopwords
+    ]
+    return list(set(keywords))[:20]
 
 
 @app.post("/api/refine")
 async def refine_content(request: RefineRequest):
     """Analyze content and suggest context, tags, and related notes."""
-    from fastapi.responses import HTMLResponse
-
     content = request.content.strip()
     if not content:
         return HTMLResponse('<p class="text-gray-500">Enter some content to get suggestions.</p>')
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return HTMLResponse('<p class="text-yellow-500">AI suggestions unavailable (API key not configured).</p>')
+    try:
+        client = get_client()
+    except ValueError as e:
+        return HTMLResponse(f'<p class="text-yellow-500">AI not configured: {e}</p>')
 
     # Search for related content
     keywords = extract_keywords(content)
@@ -154,13 +190,7 @@ async def refine_content(request: RefineRequest):
             related_context += f"- {r['path']}: {r['preview']}...\n"
 
     try:
-        from anthropic import Anthropic
-
-        client = Anthropic(api_key=api_key)
-
-        response = client.messages.create(
-            model="claude-3-5-haiku-latest",
-            max_tokens=500,
+        result = client.chat_fast(
             messages=[{
                 "role": "user",
                 "content": f"""Analyze this note and provide brief suggestions.
@@ -176,8 +206,6 @@ RELATED: any related topics or files mentioned above
 MISSING: what context might improve this note (1 sentence)"""
             }],
         )
-
-        result = response.content[0].text
 
         # Parse and format as HTML
         html_parts = ['<div class="space-y-2 text-sm">']
@@ -203,24 +231,11 @@ MISSING: what context might improve this note (1 sentence)"""
 
     except Exception as e:
         return HTMLResponse(f'<p class="text-red-500">Refinement failed: {e}</p>')
+    finally:
+        client.close()
 
 
-class BrowseItem(BaseModel):
-    """Item in a directory listing."""
-
-    name: str
-    type: str  # "file" or "directory"
-    path: str
-
-
-class BrowseResponse(BaseModel):
-    """Response model for browse endpoint."""
-
-    path: str
-    items: list[BrowseItem]
-    content: str | None = None
-    is_file: bool = False
-
+# --- Browse Endpoint ---
 
 @app.get("/api/browse/{path:path}", response_model=BrowseResponse)
 @app.get("/api/browse", response_model=BrowseResponse)
@@ -238,7 +253,6 @@ async def browse_atlas(path: str = "") -> BrowseResponse:
         raise HTTPException(status_code=403, detail="Access denied")
 
     if target.is_file():
-        # Return file content
         content = target.read_text()
         return BrowseResponse(
             path=path,

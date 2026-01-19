@@ -2,24 +2,18 @@
 
 import json
 import logging
-import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from anthropic import Anthropic
 from pydantic import BaseModel
+
+from ai_client import AIClient, get_client
+from config import DATA_DIR, INBOX_DIR, ATLAS_DIR, TASKS_FILE, AGENTS_FILE, GARDNER_FILE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
-INBOX_DIR = DATA_DIR / "inbox"
-ATLAS_DIR = DATA_DIR / "atlas"
-TASKS_FILE = DATA_DIR / "tasks.md"
-AGENTS_FILE = DATA_DIR / "AGENTS.md"
-GARDNER_FILE = DATA_DIR / "GARDNER.md"
 
 
 class GardenerAction(BaseModel):
@@ -64,8 +58,8 @@ def read_context_files() -> str:
     return "\n\n---\n\n".join(context_parts)
 
 
-def classify_note(client: Anthropic, note_content: str, filename: str) -> GardenerAction:
-    """Send note to Claude for classification."""
+def classify_note(client: AIClient, note_content: str, filename: str) -> GardenerAction:
+    """Send note to AI for classification."""
     context = read_context_files()
 
     user_message = f"""Please classify and process this note.
@@ -80,14 +74,10 @@ def classify_note(client: Anthropic, note_content: str, filename: str) -> Garden
 
 Respond with a JSON object specifying the action, path, and formatted content."""
 
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=4096,
+    response_text = client.chat_thinking(
         messages=[{"role": "user", "content": user_message}],
         system=SYSTEM_PROMPT,
     )
-
-    response_text = response.content[0].text
 
     # Extract JSON from response (handle markdown code blocks)
     if "```json" in response_text:
@@ -198,53 +188,48 @@ def process_inbox() -> list[dict]:
         logger.info("Inbox directory does not exist")
         return []
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        logger.error("ANTHROPIC_API_KEY not set")
-        return []
-
     # Ensure git repo exists for version control
     ensure_git_repo()
 
-    client = Anthropic(api_key=api_key)
     results = []
 
-    for inbox_file in INBOX_DIR.glob("*.md"):
-        logger.info(f"Processing: {inbox_file.name}")
+    with get_client() as client:
+        for inbox_file in INBOX_DIR.glob("*.md"):
+            logger.info(f"Processing: {inbox_file.name}")
 
-        try:
-            note_content = inbox_file.read_text()
-            action = classify_note(client, note_content, inbox_file.name)
+            try:
+                note_content = inbox_file.read_text()
+                action = classify_note(client, note_content, inbox_file.name)
 
-            logger.info(f"Action: {action.action} -> {action.path}")
-            logger.info(f"Reasoning: {action.reasoning}")
+                logger.info(f"Action: {action.action} -> {action.path}")
+                logger.info(f"Reasoning: {action.reasoning}")
 
-            target_path = execute_action(action)
+                target_path = execute_action(action)
 
-            # Git commit
-            git_commit(target_path, f"Gardener: Processed {inbox_file.name}")
+                # Git commit
+                git_commit(target_path, f"Gardener: Processed {inbox_file.name}")
 
-            # Delete original
-            inbox_file.unlink()
+                # Delete original
+                inbox_file.unlink()
 
-            # Also commit the deletion
-            git_commit(inbox_file, f"Gardener: Removed {inbox_file.name} from inbox")
+                # Also commit the deletion
+                git_commit(inbox_file, f"Gardener: Removed {inbox_file.name} from inbox")
 
-            results.append({
-                "file": inbox_file.name,
-                "action": action.action,
-                "path": str(action.path),
-                "success": True,
-            })
+                results.append({
+                    "file": inbox_file.name,
+                    "action": action.action,
+                    "path": str(action.path),
+                    "success": True,
+                })
 
-        except Exception as e:
-            logger.error(f"Failed to process {inbox_file.name}: {e}")
-            results.append({
-                "file": inbox_file.name,
-                "action": "error",
-                "error": str(e),
-                "success": False,
-            })
+            except Exception as e:
+                logger.error(f"Failed to process {inbox_file.name}: {e}")
+                results.append({
+                    "file": inbox_file.name,
+                    "action": "error",
+                    "error": str(e),
+                    "success": False,
+                })
 
     return results
 
