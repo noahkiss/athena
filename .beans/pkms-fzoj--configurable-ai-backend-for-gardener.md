@@ -1,11 +1,11 @@
 ---
 # pkms-fzoj
 title: Configurable AI Backend for Gardener
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-19T21:11:12Z
-updated_at: 2026-01-19T21:14:46Z
+updated_at: 2026-01-19T21:22:37Z
 parent: pkms-y140
 ---
 

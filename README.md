@@ -33,21 +33,55 @@ curl -X POST http://localhost:8000/api/bootstrap
 
 ## Configuration
 
-Athena works with any OpenAI-compatible API (OpenAI, LiteLLM, Ollama, etc.):
+### AI Backend
+
+Athena supports multiple AI backends:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AI_BASE_URL` | `https://api.openai.com/v1` | API endpoint |
-| `AI_API_KEY` | - | API key |
-| `AI_MODEL_FAST` | `gpt-4o-mini` | Quick tasks (suggestions) |
-| `AI_MODEL_THINKING` | `gpt-4o` | Complex tasks (classification) |
+| `GARDENER_BACKEND` | `openai` | Backend type: `openai` or `anthropic` |
+| `AI_API_KEY` | - | API key (falls back to `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`) |
+| `AI_MODEL` | `gpt-4o` / `claude-sonnet-4-20250514` | Model for classification |
+| `AI_BASE_URL` | `https://api.openai.com/v1` | API endpoint (OpenAI backend only) |
 
-**LiteLLM example:**
+**OpenAI example:**
 ```env
+GARDENER_BACKEND=openai
+AI_API_KEY=sk-...
+AI_MODEL=gpt-4o
+```
+
+**Anthropic example:**
+```env
+GARDENER_BACKEND=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+AI_MODEL=claude-sonnet-4-20250514
+```
+
+**LiteLLM example** (use OpenAI backend):
+```env
+GARDENER_BACKEND=openai
 AI_BASE_URL=http://localhost:4000/v1
 AI_API_KEY=your-key
-AI_MODEL_FAST=claude-3-haiku-20240307
-AI_MODEL_THINKING=claude-3-5-sonnet-20241022
+AI_MODEL=claude-3-5-sonnet-20241022
+```
+
+### Automation
+
+By default, the gardener must be triggered manually. Enable automatic processing:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GARDENER_AUTO` | `false` | Enable automatic inbox processing |
+| `GARDENER_MODE` | `watch` | Detection mode: `watch` (file watcher) or `poll` |
+| `GARDENER_DEBOUNCE` | `5.0` | Seconds to wait after last file change (watch mode) |
+| `GARDENER_POLL_INTERVAL` | `300` | Seconds between polls (poll mode) |
+
+**Enable automation:**
+```env
+GARDENER_AUTO=true
+GARDENER_MODE=watch
+GARDENER_DEBOUNCE=5.0
 ```
 
 ## Knowledge Base Structure

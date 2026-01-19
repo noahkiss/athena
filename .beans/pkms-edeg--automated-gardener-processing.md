@@ -1,11 +1,11 @@
 ---
 # pkms-edeg
 title: Automated Gardener Processing
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-19T21:11:29Z
-updated_at: 2026-01-19T21:11:29Z
+updated_at: 2026-01-19T21:22:37Z
 parent: pkms-y140
 ---
 
@@ -63,6 +63,6 @@ async def gardener_watcher():
 - [x] Add lifespan task to start watcher
 - [x] Add automation status to /api/status endpoint
 - [x] Handle errors gracefully (don't crash watcher on failures)
-- [ ] Document configuration in README/AGENTS.md
+- [x] Document configuration in README/AGENTS.md
 - [ ] Test with rapid file submissions
 - [ ] Test with Docker volume mounts
