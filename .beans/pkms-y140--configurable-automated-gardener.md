@@ -1,10 +1,11 @@
 ---
 # pkms-y140
 title: Configurable & Automated Gardener
-status: draft
+status: in-progress
 type: epic
+priority: normal
 created_at: 2026-01-19T21:10:55Z
-updated_at: 2026-01-19T21:10:55Z
+updated_at: 2026-01-19T21:14:45Z
 ---
 
 Make the gardener system more flexible and autonomous:

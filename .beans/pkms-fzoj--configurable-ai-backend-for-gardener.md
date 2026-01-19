@@ -1,10 +1,11 @@
 ---
 # pkms-fzoj
 title: Configurable AI Backend for Gardener
-status: draft
+status: in-progress
 type: feature
+priority: normal
 created_at: 2026-01-19T21:11:12Z
-updated_at: 2026-01-19T21:11:12Z
+updated_at: 2026-01-19T21:14:46Z
 parent: pkms-y140
 ---
 
@@ -53,12 +54,12 @@ AI_MODEL=...
 | Agentic | Varies | Tool use, multi-step | Complex classification |
 
 ## Checklist
-- [ ] Create GardenerBackend abstract base class
-- [ ] Implement OpenAIBackend (refactor existing code)
-- [ ] Implement AnthropicBackend with native SDK
-- [ ] Implement AgenticBackend with tool use pattern
-- [ ] Add GARDENER_BACKEND env var to config
-- [ ] Create factory function to instantiate correct backend
-- [ ] Update gardener worker to use backend abstraction
-- [ ] Add backend info to /api/status response
+- [x] Create GardenerBackend abstract base class
+- [x] Implement OpenAIBackend (refactor existing code)
+- [x] Implement AnthropicBackend with native SDK
+- [ ] Implement AgenticBackend with tool use pattern (future)
+- [x] Add GARDENER_BACKEND env var to config
+- [x] Create factory function to instantiate correct backend
+- [x] Update gardener worker to use backend abstraction
+- [x] Add backend info to /api/status response
 - [ ] Test with each backend type

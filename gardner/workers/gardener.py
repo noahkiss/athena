@@ -5,44 +5,12 @@ import logging
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
 
-from pydantic import BaseModel
-
-from ai_client import AIClient, get_client
+from backends import GardenerAction, GardenerBackend, get_backend
 from config import DATA_DIR, INBOX_DIR, ATLAS_DIR, TASKS_FILE, AGENTS_FILE, GARDNER_FILE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class GardenerAction(BaseModel):
-    """Response model for gardener classification."""
-
-    action: Literal["create", "append", "task"]
-    path: str
-    content: str
-    reasoning: str
-
-
-SYSTEM_PROMPT = """You are the Gardener, an AI agent responsible for organizing notes in a Personal Knowledge Management System.
-
-Your task is to analyze incoming notes and decide where they belong in the knowledge base.
-
-You MUST respond with a valid JSON object matching this schema:
-{
-  "action": "create" | "append" | "task",
-  "path": "relative path from /atlas, e.g., 'projects/my-project.md'",
-  "content": "the formatted markdown content to write",
-  "reasoning": "brief explanation of your decision"
-}
-
-Actions:
-- "create": Create a new file at the specified path
-- "append": Append to an existing file (include timestamp header)
-- "task": Add to tasks.md because classification is uncertain (<80% confidence)
-
-IMPORTANT: Always preserve the user's exact words in a "## Raw Source" section at the end of the file."""
 
 
 def read_context_files() -> str:
@@ -58,37 +26,10 @@ def read_context_files() -> str:
     return "\n\n---\n\n".join(context_parts)
 
 
-def classify_note(client: AIClient, note_content: str, filename: str) -> GardenerAction:
-    """Send note to AI for classification."""
+def classify_note(backend: GardenerBackend, note_content: str, filename: str) -> GardenerAction:
+    """Send note to AI backend for classification."""
     context = read_context_files()
-
-    user_message = f"""Please classify and process this note.
-
-## Context Files
-{context}
-
-## Note to Process
-**Filename:** {filename}
-**Content:**
-{note_content}
-
-Respond with a JSON object specifying the action, path, and formatted content."""
-
-    response_text = client.chat_thinking(
-        messages=[{"role": "user", "content": user_message}],
-        system=SYSTEM_PROMPT,
-    )
-
-    # Extract JSON from response (handle markdown code blocks)
-    if "```json" in response_text:
-        json_str = response_text.split("```json")[1].split("```")[0].strip()
-    elif "```" in response_text:
-        json_str = response_text.split("```")[1].split("```")[0].strip()
-    else:
-        json_str = response_text.strip()
-
-    data = json.loads(json_str)
-    return GardenerAction(**data)
+    return backend.classify(note_content, filename, context)
 
 
 def execute_action(action: GardenerAction) -> Path:
@@ -182,8 +123,12 @@ def git_commit(file_path: Path, message: str) -> bool:
         return False
 
 
-def process_inbox() -> list[dict]:
-    """Process all files in the inbox."""
+def process_inbox(backend: GardenerBackend | None = None) -> list[dict]:
+    """Process all files in the inbox.
+
+    Args:
+        backend: Optional backend instance. If not provided, creates one from env.
+    """
     if not INBOX_DIR.exists():
         logger.info("Inbox directory does not exist")
         return []
@@ -192,14 +137,18 @@ def process_inbox() -> list[dict]:
     ensure_git_repo()
 
     results = []
+    own_backend = backend is None
 
-    with get_client() as client:
+    if own_backend:
+        backend = get_backend()
+
+    try:
         for inbox_file in INBOX_DIR.glob("*.md"):
             logger.info(f"Processing: {inbox_file.name}")
 
             try:
                 note_content = inbox_file.read_text()
-                action = classify_note(client, note_content, inbox_file.name)
+                action = classify_note(backend, note_content, inbox_file.name)
 
                 logger.info(f"Action: {action.action} -> {action.path}")
                 logger.info(f"Reasoning: {action.reasoning}")
@@ -230,6 +179,9 @@ def process_inbox() -> list[dict]:
                     "error": str(e),
                     "success": False,
                 })
+    finally:
+        if own_backend:
+            backend.close()
 
     return results
 

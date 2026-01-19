@@ -1,8 +1,9 @@
 ---
 # pkms-edeg
 title: Automated Gardener Processing
-status: draft
+status: in-progress
 type: feature
+priority: normal
 created_at: 2026-01-19T21:11:29Z
 updated_at: 2026-01-19T21:11:29Z
 parent: pkms-y140
@@ -55,13 +56,13 @@ async def gardener_watcher():
 ```
 
 ## Checklist
-- [ ] Add watchfiles to dependencies
-- [ ] Create gardener automation config options
-- [ ] Implement file watcher with debounce
-- [ ] Implement polling fallback
-- [ ] Add lifespan task to start watcher
-- [ ] Add /api/gardener/status endpoint for monitoring
-- [ ] Handle errors gracefully (don't crash watcher on failures)
+- [x] Add watchfiles to dependencies
+- [x] Create gardener automation config options
+- [x] Implement file watcher with debounce
+- [x] Implement polling fallback
+- [x] Add lifespan task to start watcher
+- [x] Add automation status to /api/status endpoint
+- [x] Handle errors gracefully (don't crash watcher on failures)
 - [ ] Document configuration in README/AGENTS.md
 - [ ] Test with rapid file submissions
 - [ ] Test with Docker volume mounts

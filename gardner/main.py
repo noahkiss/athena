@@ -1,24 +1,38 @@
 """The Gardener - FastAPI backend for Project Athena."""
 
+import asyncio
 import contextlib
+import logging
 from datetime import datetime
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from starlette.routing import Mount
 
-from ai_client import AIClient, get_client
+from automation import start_automation, get_automation_status
+from backends import get_backend, get_backend_config
 from config import DATA_DIR, INBOX_DIR, ATLAS_DIR
 from mcp_tools import mcp
+
+logger = logging.getLogger(__name__)
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Manage MCP session lifecycle."""
+    """Manage MCP session and automation lifecycle."""
+    # Start automation task
+    automation_task = asyncio.create_task(start_automation())
+
     async with mcp.session_manager.run():
         yield
+
+    # Cleanup automation on shutdown
+    automation_task.cancel()
+    try:
+        await automation_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(
@@ -44,6 +58,14 @@ class InboxResponse(BaseModel):
     message: str
 
 
+class AutomationStatus(BaseModel):
+    """Automation configuration status."""
+    enabled: bool
+    mode: str | None
+    poll_interval: int | None
+    debounce: float | None
+
+
 class StatusResponse(BaseModel):
     """Response model for health check."""
     status: str
@@ -51,6 +73,9 @@ class StatusResponse(BaseModel):
     inbox_exists: bool
     atlas_exists: bool
     bootstrapped: bool
+    gardener_backend: str
+    gardener_model: str
+    automation: AutomationStatus
 
 
 class GardenerTriggerResponse(BaseModel):
@@ -92,12 +117,17 @@ class BrowseResponse(BaseModel):
 async def get_status() -> StatusResponse:
     """Health check endpoint."""
     agents_file = DATA_DIR / "AGENTS.md"
+    backend_type, config = get_backend_config()
+    auto_status = get_automation_status()
     return StatusResponse(
         status="ok",
         inbox_path=str(INBOX_DIR),
         inbox_exists=INBOX_DIR.exists(),
         atlas_exists=ATLAS_DIR.exists(),
         bootstrapped=agents_file.exists(),
+        gardener_backend=backend_type,
+        gardener_model=config.model,
+        automation=AutomationStatus(**auto_status),
     )
 
 
@@ -185,6 +215,30 @@ def extract_keywords(content: str) -> list[str]:
     return list(set(keywords))[:20]
 
 
+def format_refine_html(result: str) -> str:
+    """Format refinement result as HTML."""
+    html_parts = ['<div class="space-y-2 text-sm">']
+
+    for line in result.strip().split("\n"):
+        if line.startswith("TAGS:"):
+            tags = line.replace("TAGS:", "").strip()
+            html_parts.append(f'<p><span class="text-gray-400">Tags:</span> <span class="text-blue-400">{tags}</span></p>')
+        elif line.startswith("CATEGORY:"):
+            category = line.replace("CATEGORY:", "").strip()
+            html_parts.append(f'<p><span class="text-gray-400">Category:</span> <span class="text-green-400">{category}</span></p>')
+        elif line.startswith("RELATED:"):
+            related_text = line.replace("RELATED:", "").strip()
+            if related_text and related_text.lower() != "none":
+                html_parts.append(f'<p><span class="text-gray-400">Related:</span> <span class="text-purple-400">{related_text}</span></p>')
+        elif line.startswith("MISSING:"):
+            missing = line.replace("MISSING:", "").strip()
+            if missing and missing.lower() != "none":
+                html_parts.append(f'<p><span class="text-gray-400">Consider adding:</span> <span class="text-yellow-400">{missing}</span></p>')
+
+    html_parts.append("</div>")
+    return "\n".join(html_parts)
+
+
 @app.post("/api/refine")
 async def refine_content(request: RefineRequest):
     """Analyze content and suggest context, tags, and related notes."""
@@ -192,65 +246,23 @@ async def refine_content(request: RefineRequest):
     if not content:
         return HTMLResponse('<p class="text-gray-500">Enter some content to get suggestions.</p>')
 
-    try:
-        client = get_client()
-    except ValueError as e:
-        return HTMLResponse(f'<p class="text-yellow-500">AI not configured: {e}</p>')
-
     # Search for related content
     keywords = extract_keywords(content)
     related = search_atlas(keywords)
 
     related_context = ""
     if related:
-        related_context = "\n\nRelated files in knowledge base:\n"
         for r in related:
             related_context += f"- {r['path']}: {r['preview']}...\n"
 
     try:
-        result = client.chat_fast(
-            messages=[{
-                "role": "user",
-                "content": f"""Analyze this note and provide brief suggestions.
-
-Note content:
-{content}
-{related_context}
-
-Respond in this exact format (keep it brief):
-TAGS: tag1, tag2, tag3
-CATEGORY: suggested category (projects/people/home/wellness/tech/journal/reading)
-RELATED: any related topics or files mentioned above
-MISSING: what context might improve this note (1 sentence)"""
-            }],
-        )
-
-        # Parse and format as HTML
-        html_parts = ['<div class="space-y-2 text-sm">']
-
-        for line in result.strip().split("\n"):
-            if line.startswith("TAGS:"):
-                tags = line.replace("TAGS:", "").strip()
-                html_parts.append(f'<p><span class="text-gray-400">Tags:</span> <span class="text-blue-400">{tags}</span></p>')
-            elif line.startswith("CATEGORY:"):
-                category = line.replace("CATEGORY:", "").strip()
-                html_parts.append(f'<p><span class="text-gray-400">Category:</span> <span class="text-green-400">{category}</span></p>')
-            elif line.startswith("RELATED:"):
-                related_text = line.replace("RELATED:", "").strip()
-                if related_text and related_text.lower() != "none":
-                    html_parts.append(f'<p><span class="text-gray-400">Related:</span> <span class="text-purple-400">{related_text}</span></p>')
-            elif line.startswith("MISSING:"):
-                missing = line.replace("MISSING:", "").strip()
-                if missing and missing.lower() != "none":
-                    html_parts.append(f'<p><span class="text-gray-400">Consider adding:</span> <span class="text-yellow-400">{missing}</span></p>')
-
-        html_parts.append("</div>")
-        return HTMLResponse("\n".join(html_parts))
-
+        with get_backend() as backend:
+            result = backend.refine(content, related_context)
+            return HTMLResponse(format_refine_html(result))
+    except ValueError as e:
+        return HTMLResponse(f'<p class="text-yellow-500">AI not configured: {e}</p>')
     except Exception as e:
         return HTMLResponse(f'<p class="text-red-500">Refinement failed: {e}</p>')
-    finally:
-        client.close()
 
 
 # --- Browse Endpoint ---
