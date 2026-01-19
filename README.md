@@ -85,20 +85,26 @@ The atlas structure evolves as the Gardener encounters new content types.
 
 ## MCP Server
 
-Expose your knowledge base to external AI tools via Model Context Protocol:
+Expose your knowledge base to external AI tools via Model Context Protocol. The MCP server runs as part of the FastAPI app using streamable-http transport.
 
+**Configure Claude Code:**
+```bash
+claude mcp add --transport http athena-pkms http://localhost:8000/mcp
+```
+
+**Or add to `.mcp.json`:**
 ```json
 {
-  "athena": {
-    "command": "uv",
-    "args": ["run", "python", "mcp_server.py"],
-    "cwd": "/path/to/athena/gardner",
-    "env": { "DATA_DIR": "/path/to/athena/athena" }
+  "mcpServers": {
+    "athena-pkms": {
+      "type": "http",
+      "url": "http://localhost:8000/mcp"
+    }
   }
 }
 ```
 
-Tools: `read_notes`, `add_note`
+**Tools:** `read_notes`, `add_note`
 
 ## Development
 

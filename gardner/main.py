@@ -1,16 +1,34 @@
 """The Gardener - FastAPI backend for Project Athena."""
 
+import contextlib
 from datetime import datetime
 from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from starlette.routing import Mount
 
 from ai_client import AIClient, get_client
 from config import DATA_DIR, INBOX_DIR, ATLAS_DIR
+from mcp_tools import mcp
 
-app = FastAPI(title="Gardner", description="Backend API for Project Athena PKMS")
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage MCP session lifecycle."""
+    async with mcp.session_manager.run():
+        yield
+
+
+app = FastAPI(
+    title="Gardner",
+    description="Backend API for Project Athena PKMS",
+    lifespan=lifespan,
+)
+
+# Mount MCP server (FastMCP serves at /mcp internally)
+app.mount("/", mcp.streamable_http_app())
 
 
 # --- Request/Response Models ---

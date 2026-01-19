@@ -14,8 +14,8 @@
 
 ```
 gardner/
-├── main.py              # FastAPI application
-├── mcp_server.py        # MCP server for external AI tools
+├── main.py              # FastAPI application + MCP server mount
+├── mcp_tools.py         # MCP tools (FastMCP with streamable-http)
 ├── workers/
 │   └── gardener.py      # Inbox processing worker
 ├── pyproject.toml       # Dependencies (uv)
@@ -31,6 +31,20 @@ gardner/
 | `/api/trigger-gardener` | POST | Manually trigger inbox processing |
 | `/api/refine` | POST | AI-assisted suggestions (Haiku) |
 | `/api/browse/{path}` | GET | Browse atlas directory/files |
+| `/mcp` | POST | MCP server endpoint (JSON-RPC) |
+
+## MCP Server
+
+The MCP server is integrated into the FastAPI app using FastMCP with streamable-http transport.
+
+**Tools exposed:**
+- `read_notes` - Browse/read from the atlas knowledge base
+- `add_note` - Add notes to the inbox
+
+**Configure Claude Code to use it:**
+```bash
+claude mcp add --transport http athena-pkms http://localhost:8000/mcp
+```
 
 ## Worker Logic
 
