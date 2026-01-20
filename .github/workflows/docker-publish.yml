@@ -20,8 +20,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - image: gardner
-            context: ./gardner
+          - image: gardener
+            context: ./gardener
           - image: scribe
             context: ./scribe
           - image: allinone

@@ -2,9 +2,9 @@
 import Layout from '../../layouts/Layout.astro';
 import { marked } from 'marked';
 
-const GARDNER_URL =
-  process.env.GARDNER_URL ||
-  import.meta.env.GARDNER_URL ||
+const GARDENER_URL =
+  process.env.GARDENER_URL ||
+  import.meta.env.GARDENER_URL ||
   'http://localhost:8000';
 
 const { path } = Astro.params;
@@ -15,8 +15,8 @@ let error: string | null = null;
 
 try {
   const url = currentPath
-    ? `${GARDNER_URL}/api/browse/${currentPath}`
-    : `${GARDNER_URL}/api/browse`;
+    ? `${GARDENER_URL}/api/browse/${currentPath}`
+    : `${GARDENER_URL}/api/browse`;
   const response = await fetch(url);
   if (response.ok) {
     data = await response.json();
@@ -24,7 +24,7 @@ try {
     error = `Failed to load: ${response.status}`;
   }
 } catch (e) {
-  error = 'Could not connect to Gardner. Is it running?';
+  error = 'Could not connect to Gardener. Is it running?';
 }
 
 // Build breadcrumb parts

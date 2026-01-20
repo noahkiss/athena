@@ -12,6 +12,6 @@ Implement an all-in-one Dockerfile plus entrypoint and docs while keeping split 
 
 ## Checklist
 - [x] Create root Dockerfile for all-in-one build/runtime
-- [x] Add entrypoint to run Gardner + Scribe in one container
+- [x] Add entrypoint to run Gardener + Scribe in one container
 - [x] Add compose option for all-in-one
 - [x] Update README with all-in-one instructions

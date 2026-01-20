@@ -21,9 +21,9 @@ scribe/
 │       ├── browse/
 │       │   └── [...path].astro  # Dynamic browse route
 │       └── api/
-│           ├── inbox.ts       # Proxy to Gardner /api/inbox
-│           ├── refine.ts      # Proxy to Gardner /api/refine
-│           └── browse/[...path].ts  # Proxy to Gardner /api/browse
+│           ├── inbox.ts       # Proxy to Gardener /api/inbox
+│           ├── refine.ts      # Proxy to Gardener /api/refine
+│           └── browse/[...path].ts  # Proxy to Gardener /api/browse
 ├── package.json
 ├── astro.config.mjs
 ├── tailwind.config.js
@@ -35,7 +35,7 @@ scribe/
 | Route | Description |
 |-------|-------------|
 | `/` | Capture page - textarea with Submit/Refine buttons |
-| `/api/ask` | Proxy to Gardner /api/ask (Explore/Ask) |
+| `/api/ask` | Proxy to Gardener /api/ask (Explore/Ask) |
 | `/browse` | Atlas root directory listing |
 | `/browse/{path}` | Directory listing or markdown file view |
 
@@ -45,8 +45,8 @@ scribe/
 - **Latency:** Capture must be instant. "Refining" is optional.
 
 ## Environment Variables
-- `GARDNER_URL` - Backend API URL (default: `http://localhost:8000`)
+- `GARDENER_URL` - Backend API URL (default: `http://localhost:8000`)
 
 **Constraints:**
 - No complex state management libraries (Redux, etc.). Use HTML attributes and HTMX.
-- All API calls proxy through Astro endpoints to Gardner backend.
+- All API calls proxy through Astro endpoints to Gardener backend.

@@ -97,7 +97,7 @@ claude mcp add --transport http athena-pkms http://localhost:8000/mcp
 
 The gardener worker (`workers/gardener.py`):
 1. Scans `/data/inbox` for `.md` files
-2. Reads `/data/AGENTS.md` + `/data/GARDNER.md` for context
+2. Reads `/data/AGENTS.md` + `/data/GARDENER.md` for context
 3. Sends each note to the configured backend for classification
 4. Executes file operation (create/append/task)
 5. Commits changes to Git

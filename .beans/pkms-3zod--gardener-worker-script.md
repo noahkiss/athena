@@ -14,7 +14,7 @@ Core inbox processing logic using Claude.
 ## Workflow
 1. Scan /data/inbox for .md files
 2. For each file:
-   - Read AGENTS.md + GARDNER.md for context
+   - Read AGENTS.md + GARDENER.md for context
    - Send note + context to Claude (Sonnet)
    - Request JSON: {action: create|append|task, path: ..., content: ...}
    - Execute file operation
@@ -25,8 +25,8 @@ Core inbox processing logic using Claude.
 - Use anthropic Python SDK
 - Structured output parsing
 - Error handling for LLM failures
-- Respect GARDNER.md classification rules
+- Respect GARDENER.md classification rules
 
 ## Files to create
-- `gardner/workers/gardener.py`
+- `gardener/workers/gardener.py`
 - Add anthropic to dependencies

@@ -28,7 +28,7 @@ AGENTS_MD = """# ATHENA SYSTEM CONTEXT (Live Document)
 3. **Cross-Link:** If a note mentions a person, link to their file in `/atlas/people/`.
 """
 
-GARDNER_MD = """# THE GARDENER PROTOCOL
+GARDENER_MD = """# THE GARDENER PROTOCOL
 
 **Goal:** Process files in `/inbox` and move them to `/atlas`.
 
@@ -76,7 +76,7 @@ status: {seed|active|archive}
 TASKS_MD = """# Ambiguity Log
 
 Notes the Gardener couldn't confidently classify will appear here.
-Review periodically and manually sort, or provide guidance in GARDNER.md.
+Review periodically and manually sort, or provide guidance in GARDENER.md.
 """
 
 
@@ -108,7 +108,7 @@ def bootstrap(force: bool = False) -> dict:
     # Files to create with their content
     files = {
         DATA_DIR / "AGENTS.md": AGENTS_MD,
-        DATA_DIR / "GARDNER.md": GARDNER_MD,
+        DATA_DIR / "GARDENER.md": GARDENER_MD,
         DATA_DIR / "tasks.md": TASKS_MD,
     }
 

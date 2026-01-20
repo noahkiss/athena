@@ -57,7 +57,7 @@ class GardenerBackend(ABC):
         Args:
             note_content: The raw note content from inbox
             filename: Original filename (for context)
-            context: Concatenated AGENTS.md + GARDNER.md content
+            context: Concatenated AGENTS.md + GARDENER.md content
 
         Returns:
             GardenerAction with action type, path, content, and reasoning

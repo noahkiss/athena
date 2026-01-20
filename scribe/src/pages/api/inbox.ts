@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 
-const GARDNER_URL =
-  process.env.GARDNER_URL ||
-  import.meta.env.GARDNER_URL ||
+const GARDENER_URL =
+  process.env.GARDENER_URL ||
+  import.meta.env.GARDENER_URL ||
   'http://localhost:8000';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -17,14 +17,14 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const response = await fetch(`${GARDNER_URL}/api/inbox`, {
+    const response = await fetch(`${GARDENER_URL}/api/inbox`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
     });
 
     if (!response.ok) {
-      throw new Error(`Gardner responded with ${response.status}`);
+      throw new Error(`Gardener responded with ${response.status}`);
     }
 
     const data = await response.json();
@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Inbox submission error:', error);
     return new Response(
-      '<p class="text-red-500">Failed to save note. Is Gardner running?</p>',
+      '<p class="text-red-500">Failed to save note. Is Gardener running?</p>',
       { status: 500, headers: { 'Content-Type': 'text/html' } }
     );
   }

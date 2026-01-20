@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from backends import GardenerAction, GardenerBackend, get_backend
-from config import DATA_DIR, INBOX_DIR, ATLAS_DIR, TASKS_FILE, AGENTS_FILE, GARDNER_FILE
+from config import DATA_DIR, INBOX_DIR, ATLAS_DIR, TASKS_FILE, AGENTS_FILE, GARDENER_FILE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,14 +17,14 @@ _PROCESSING_LOCK = threading.Lock()
 
 
 def read_context_files() -> str:
-    """Read AGENTS.md and GARDNER.md for context."""
+    """Read AGENTS.md and GARDENER.md for context."""
     context_parts = []
 
     if AGENTS_FILE.exists():
         context_parts.append(f"# System Context\n{AGENTS_FILE.read_text()}")
 
-    if GARDNER_FILE.exists():
-        context_parts.append(f"# Classification Rules\n{GARDNER_FILE.read_text()}")
+    if GARDENER_FILE.exists():
+        context_parts.append(f"# Classification Rules\n{GARDENER_FILE.read_text()}")
 
     return "\n\n---\n\n".join(context_parts)
 

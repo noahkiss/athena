@@ -21,6 +21,6 @@ Initialize FastAPI application with core endpoints.
 - Save files as `YYYY-MM-DD_HHMM-{uuid}.md`
 
 ## Files to create
-- `gardner/main.py` - FastAPI app
-- `gardner/pyproject.toml` - Dependencies (fastapi, uvicorn, pydantic)
-- `gardner/requirements.txt` or use uv
+- `gardener/main.py` - FastAPI app
+- `gardener/pyproject.toml` - Dependencies (fastapi, uvicorn, pydantic)
+- `gardener/requirements.txt` or use uv

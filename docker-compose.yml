@@ -14,7 +14,7 @@ services:
     depends_on:
       - gardener
     environment:
-      - GARDNER_URL=http://gardener:8000
+      - GARDENER_URL=http://gardener:8000
 
 # MCP Server: Run locally with `uv run python mcp_server.py` in gardener/
 # Or add to Claude Desktop config:

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GARDNER_HOST=${GARDNER_HOST:-0.0.0.0}
-GARDNER_PORT=${GARDNER_PORT:-8000}
+GARDENER_HOST=${GARDENER_HOST:-0.0.0.0}
+GARDENER_PORT=${GARDENER_PORT:-8000}
 SCRIBE_HOST=${SCRIBE_HOST:-0.0.0.0}
 SCRIBE_PORT=${SCRIBE_PORT:-3000}
 
-export GARDNER_URL=${GARDNER_URL:-http://127.0.0.1:${GARDNER_PORT}}
+export GARDENER_URL=${GARDENER_URL:-http://127.0.0.1:${GARDENER_PORT}}
 
 cleanup() {
   local exit_code=$?
@@ -26,7 +26,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 cd /app/gardener
-uv run uvicorn main:app --host "${GARDNER_HOST}" --port "${GARDNER_PORT}" &
+uv run uvicorn main:app --host "${GARDENER_HOST}" --port "${GARDENER_PORT}" &
 
 gardener_pid=$!
 

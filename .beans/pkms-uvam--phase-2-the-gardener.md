@@ -15,6 +15,6 @@ AI-powered inbox processing and organization.
 
 ## Scope
 - Gardener worker script using Anthropic SDK
-- LLM-based classification using GARDNER.md rules
+- LLM-based classification using GARDENER.md rules
 - Git integration for version control
 - Scheduler or manual trigger mechanism

@@ -8,4 +8,4 @@ services:
       - ./athena:/data  # The Brain (source of truth)
     env_file: .env
     environment:
-      - GARDNER_URL=http://127.0.0.1:8000
+      - GARDENER_URL=http://127.0.0.1:8000

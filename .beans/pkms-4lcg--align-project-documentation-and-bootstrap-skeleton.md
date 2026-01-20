@@ -14,7 +14,7 @@ Reconcile discrepancies between README.md, INSTRUCTIONS.md, and actual project s
 - [x] Update root AGENTS.md with 'beans prime' command and uv usage
 - [x] Update README.md to match current atlas directory structure
 - [x] Update INSTRUCTIONS.md or note it as historical reference
-- [x] Update GARDNER.md classification rules to match current atlas dirs
+- [x] Update GARDENER.md classification rules to match current atlas dirs
 - [x] Create tasks.md in athena/ (minimal placeholder)
 - [x] Remove orphan main.py
 - [x] Note that atlas structure is living/flexible in relevant docs

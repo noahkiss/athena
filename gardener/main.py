@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Gardner",
+    title="Gardener",
     description="Backend API for Project Athena PKMS",
     lifespan=lifespan,
 )

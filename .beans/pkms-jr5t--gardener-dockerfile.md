@@ -1,6 +1,6 @@
 ---
 # pkms-jr5t
-title: Gardner Dockerfile
+title: Gardener Dockerfile
 status: completed
 type: task
 priority: normal
@@ -9,7 +9,7 @@ updated_at: 2026-01-19T08:18:15Z
 parent: pkms-rpqb
 ---
 
-Create Dockerfile for the Gardner (backend) service.
+Create Dockerfile for the Gardener (backend) service.
 
 ## Requirements
 - Python 3.12+ base image
@@ -18,5 +18,5 @@ Create Dockerfile for the Gardner (backend) service.
 - Expose port 8000
 
 ## Acceptance
-- `docker build ./gardner` succeeds
+- `docker build ./gardener` succeeds
 - Container runs uvicorn successfully

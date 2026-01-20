@@ -112,7 +112,7 @@ The `athena/` directory serves as a template. On first run, bootstrap creates:
 ```
 athena/
 ├── AGENTS.md      # User context and preferences
-├── GARDNER.md     # Classification rules
+├── GARDENER.md     # Classification rules
 ├── tasks.md       # Ambiguity log (uncertain classifications)
 ├── inbox/         # Landing zone for new notes
 └── atlas/         # Organized knowledge

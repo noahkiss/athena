@@ -1,4 +1,4 @@
-"""Centralized configuration for Gardner."""
+"""Centralized configuration for Gardener."""
 
 import os
 from pathlib import Path
@@ -9,7 +9,7 @@ INBOX_DIR = DATA_DIR / "inbox"
 ATLAS_DIR = DATA_DIR / "atlas"
 TASKS_FILE = DATA_DIR / "tasks.md"
 AGENTS_FILE = DATA_DIR / "AGENTS.md"
-GARDNER_FILE = DATA_DIR / "GARDNER.md"
+GARDENER_FILE = DATA_DIR / "GARDENER.md"
 
 # Gardener automation settings
 GARDENER_AUTO = os.environ.get("GARDENER_AUTO", "false").lower() in ("true", "1", "yes")

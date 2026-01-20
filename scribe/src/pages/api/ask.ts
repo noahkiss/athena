@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
 
-const GARDNER_URL =
-  process.env.GARDNER_URL ||
-  import.meta.env.GARDNER_URL ||
+const GARDENER_URL =
+  process.env.GARDENER_URL ||
+  import.meta.env.GARDENER_URL ||
   'http://localhost:8000';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -17,14 +17,14 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const response = await fetch(`${GARDNER_URL}/api/ask`, {
+    const response = await fetch(`${GARDENER_URL}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question }),
     });
 
     if (!response.ok) {
-      throw new Error(`Gardner responded with ${response.status}`);
+      throw new Error(`Gardener responded with ${response.status}`);
     }
 
     const html = await response.text();
