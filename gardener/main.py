@@ -284,12 +284,12 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
             message="Data directory is not a git repository",
         )
 
-    # Check for uncommitted changes
+    # Check for uncommitted changes using -z for NUL-separated output
+    # This handles paths with spaces, tabs, and Unicode correctly
     result = subprocess.run(
-        ["git", "status", "--porcelain"],
+        ["git", "status", "--porcelain", "-z"],
         cwd=DATA_DIR,
         capture_output=True,
-        text=True,
     )
     if not result.stdout.strip():
         return SnapshotResponse(
@@ -298,32 +298,38 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
             files_changed=0,
         )
 
-    # Count changed files
-    changed_files = len([l for l in result.stdout.strip().split("\n") if l])
-
     # Stage all changes
     subprocess.run(["git", "add", "-A"], cwd=DATA_DIR, check=True, capture_output=True)
 
-    # Parse git status output for proper handling of deletes/renames
-    # Format: XY PATH or XY ORIG -> PATH for renames
+    # Parse git status -z output for proper handling of paths
+    # Format with -z: entries are NUL-separated
+    # - Regular: "XY path\x00"
+    # - Rename/Copy: "XY new_path\x00old_path\x00"
     parsed_changes: list[dict] = []
-    for line in result.stdout.strip().split("\n"):
-        if not line:
+    entries = result.stdout.split(b'\x00')
+    i = 0
+    while i < len(entries):
+        entry = entries[i]
+        if not entry:
+            i += 1
             continue
-        status = line[:2]
-        path_part = line[3:]
 
-        if status[0] == 'R' or status[1] == 'R':
-            # Rename: "old -> new"
-            if ' -> ' in path_part:
-                old_path, new_path = path_part.split(' -> ', 1)
-                parsed_changes.append({'status': 'rename', 'path': new_path, 'old_path': old_path})
-            else:
-                parsed_changes.append({'status': 'modify', 'path': path_part, 'old_path': None})
+        status = entry[:2].decode('utf-8', errors='replace')
+        path = entry[3:].decode('utf-8', errors='replace')
+
+        if status[0] in ('R', 'C') or status[1] in ('R', 'C'):
+            # Rename/Copy: next entry is the old path
+            old_path = entries[i + 1].decode('utf-8', errors='replace') if i + 1 < len(entries) else None
+            parsed_changes.append({'status': 'rename', 'path': path, 'old_path': old_path})
+            i += 2  # Skip both entries
         elif status[0] == 'D' or status[1] == 'D':
-            parsed_changes.append({'status': 'delete', 'path': path_part, 'old_path': None})
+            parsed_changes.append({'status': 'delete', 'path': path, 'old_path': None})
+            i += 1
         else:
-            parsed_changes.append({'status': 'modify', 'path': path_part, 'old_path': None})
+            parsed_changes.append({'status': 'modify', 'path': path, 'old_path': None})
+            i += 1
+
+    changed_files = len(parsed_changes)
 
     # Commit with provided message or default
     commit_message = request.message or "Manual: Snapshot uncommitted changes"
@@ -407,7 +413,7 @@ async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
     """
     try:
         from state import (
-            run_reconcile, get_changes_since_sha, get_repo_state, init_db,
+            run_reconcile, get_changes_since_sha, init_db,
             check_repo_identity, get_dirty_files, get_dirty_summary
         )
 
