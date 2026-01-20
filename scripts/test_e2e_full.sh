@@ -176,6 +176,7 @@ popd >/dev/null)
 REFINE_RES=$(curl -s --max-time 60 -X POST "http://127.0.0.1:${GARDENER_PORT}/api/refine" -H "Content-Type: application/json" -d "$REFINE_PAYLOAD")
 
 MCP_STATUS=$(curl -s -L -o /tmp/mcp-tools.json -w "%{http_code}" -X POST "http://127.0.0.1:${GARDENER_PORT}/mcp" \
+  -H "Accept: application/json" \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}')
 
