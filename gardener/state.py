@@ -288,16 +288,17 @@ def update_repo_root_hash(hash_value: str) -> None:
 
 
 def record_processed_commit(sha: str, branch: str, note: str | None = None) -> None:
-    """Record a processed commit."""
+    """Record a processed commit and update last_seen_sha."""
     conn = get_db_connection()
     try:
         conn.execute(
             "INSERT OR REPLACE INTO processed_commits (sha, branch, note, processed_at) VALUES (?, ?, ?, datetime('now'))",
             (sha, branch, note)
         )
+        # Update both last_processed_sha and last_seen_sha
         conn.execute(
-            "UPDATE repo_state SET last_processed_sha = ?, last_updated = datetime('now') WHERE id = 1",
-            (sha,)
+            "UPDATE repo_state SET last_processed_sha = ?, last_seen_sha = ?, last_updated = datetime('now') WHERE id = 1",
+            (sha, sha)
         )
         conn.commit()
     finally:
@@ -783,19 +784,35 @@ def run_reconcile() -> ReconcileRun:
     """Run reconciliation: detect changes, generate tasks, record run.
 
     This is the main entry point for the reconcile operation.
+    If repo identity has changed (history rewritten), forces a full scan.
     """
     init_db()
 
+    # Check repo identity - if invalid, force full scan
+    identity_valid, current_hash = check_repo_identity()
+
     # Get current state
     repo_state = get_repo_state()
-    from_sha = repo_state["last_reconcile_sha"] or repo_state["last_processed_sha"]
     to_sha = get_current_head()
+
+    if not identity_valid:
+        # History was rewritten - force full scan by ignoring previous SHA
+        from_sha = None
+        # Update the repo identity to the new one
+        if current_hash:
+            update_repo_root_hash(current_hash)
+    else:
+        from_sha = repo_state["last_reconcile_sha"] or repo_state["last_processed_sha"]
 
     # Detect changes
     changes = get_changes_since_sha(from_sha)
 
     # Generate maintenance tasks
     tasks = generate_maintenance_tasks(changes)
+
+    # If we did a full scan due to identity change, add a note
+    if not identity_valid:
+        tasks.insert(0, "Repository history changed - performed full scan")
 
     # Record the run
     run_id = record_reconcile_run(from_sha, to_sha, changes, tasks)

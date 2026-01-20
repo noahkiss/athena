@@ -137,6 +137,12 @@ class ReconcileResponse(BaseModel):
     changes_by_location: dict[str, int]
     tasks: list[str]
     changes: list[ChangedFileInfo] | None = None  # Optional detailed list
+    # Uncommitted changes (working tree)
+    uncommitted_files: int = 0
+    uncommitted_by_location: dict[str, int] | None = None
+    uncommitted_warning: str | None = None
+    # Repo identity
+    repo_identity_valid: bool = True
 
 
 class RefineRequest(BaseModel):
@@ -290,6 +296,9 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
     # Stage all changes
     subprocess.run(["git", "add", "-A"], cwd=DATA_DIR, check=True, capture_output=True)
 
+    # Get list of changed files before committing (for provenance)
+    changed_file_paths = [line[3:] for line in result.stdout.strip().split("\n") if line]
+
     # Commit with provided message or default
     commit_message = request.message or "Manual: Snapshot uncommitted changes"
     try:
@@ -299,6 +308,27 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
             check=True,
             capture_output=True,
         )
+
+        # Update state DB after successful commit
+        try:
+            from state import (
+                get_current_head, get_current_branch, record_processed_commit,
+                update_file_state, record_provenance, PROVENANCE_MANUAL
+            )
+            head = get_current_head()
+            if head:
+                branch = get_current_branch()
+                record_processed_commit(head, branch, commit_message)
+
+                # Update file state and provenance for each changed file
+                for file_path in changed_file_paths:
+                    full_path = DATA_DIR / file_path
+                    if full_path.exists():
+                        update_file_state(full_path)
+                        record_provenance(file_path, PROVENANCE_MANUAL, head)
+        except Exception:
+            pass  # State tracking is optional
+
         return SnapshotResponse(
             committed=True,
             message=f"Committed {changed_files} file(s)",
@@ -316,10 +346,12 @@ async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
     """Detect and reconcile manual/external changes to the knowledge base.
 
     This operation:
-    1. Detects changes since last reconcile (or last processed commit)
-    2. Classifies changes by location (inbox/atlas/meta)
-    3. Generates maintenance task recommendations
-    4. Records the reconcile run
+    1. Checks repo identity (detects history rewrites)
+    2. Detects committed changes since last reconcile
+    3. Reports uncommitted changes (requires snapshot first)
+    4. Classifies changes by location (inbox/atlas/meta)
+    5. Generates maintenance task recommendations
+    6. Records the reconcile run
 
     Source-of-truth rules:
     - Atlas notes are never auto-rewritten (manual edits preserved)
@@ -330,15 +362,31 @@ async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
         include_details: If True, include full list of changed files
     """
     try:
-        from state import run_reconcile, get_changes_since_sha, get_repo_state, init_db
+        from state import (
+            run_reconcile, get_changes_since_sha, get_repo_state, init_db,
+            check_repo_identity, get_dirty_files, get_dirty_summary
+        )
 
         init_db()
+
+        # Check repo identity first
+        identity_valid, _ = check_repo_identity()
+
+        # Get uncommitted changes
+        dirty_files = get_dirty_files()
+        dirty_summary = get_dirty_summary() if dirty_files else None
+        uncommitted_warning = None
+        if dirty_files:
+            uncommitted_warning = (
+                f"{len(dirty_files)} uncommitted file(s) not included in reconcile. "
+                "Run /api/snapshot first to include them."
+            )
 
         # Get changes for detail view
         repo_state = get_repo_state()
         from_sha = repo_state.get("last_reconcile_sha") or repo_state.get("last_processed_sha")
 
-        # Run reconciliation
+        # Run reconciliation (on committed changes)
         result = run_reconcile()
 
         # Get detailed changes if requested
@@ -368,6 +416,10 @@ async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
             },
             tasks=result["tasks_generated"],
             changes=changes_detail,
+            uncommitted_files=len(dirty_files),
+            uncommitted_by_location=dirty_summary,
+            uncommitted_warning=uncommitted_warning,
+            repo_identity_valid=identity_valid,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Reconciliation failed: {e}")
