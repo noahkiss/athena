@@ -71,7 +71,15 @@ start_scribe() {
   if [[ ! -d node_modules ]]; then
     npm ci
   fi
+  rebuild=0
   if [[ "$FORCE_BUILD" == "1" || ! -d dist ]]; then
+    rebuild=1
+  elif [[ ! -f dist/server/entry.mjs ]]; then
+    rebuild=1
+  elif find src -type f -newer dist/server/entry.mjs -print -quit | grep -q .; then
+    rebuild=1
+  fi
+  if [[ "$rebuild" == "1" ]]; then
     npm run build
   fi
 
@@ -209,6 +217,10 @@ if [[ "$TEST_SCRIBE" == "1" ]]; then
   fi
   if [[ "$S_ASK" == *"Cross-site POST form submissions are forbidden"* ]]; then
     echo "Scribe ask failed CSRF check. Response: $S_ASK"
+    exit 1
+  fi
+  if [[ "$S_ASK" == *"<title>404"* || "$S_ASK" == *"Path: /api/ask"* ]]; then
+    echo "Scribe ask returned 404. Response: $S_ASK"
     exit 1
   fi
 fi
