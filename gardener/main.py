@@ -317,10 +317,15 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
         status = entry[:2].decode('utf-8', errors='replace')
         path = entry[3:].decode('utf-8', errors='replace')
 
-        if status[0] in ('R', 'C') or status[1] in ('R', 'C'):
-            # Rename/Copy: next entry is the old path
+        if status[0] == 'R' or status[1] == 'R':
+            # Rename: next entry is the old path (old file no longer exists)
             old_path = entries[i + 1].decode('utf-8', errors='replace') if i + 1 < len(entries) else None
             parsed_changes.append({'status': 'rename', 'path': path, 'old_path': old_path})
+            i += 2  # Skip both entries
+        elif status[0] == 'C' or status[1] == 'C':
+            # Copy: next entry is the source path (source file still exists)
+            old_path = entries[i + 1].decode('utf-8', errors='replace') if i + 1 < len(entries) else None
+            parsed_changes.append({'status': 'copy', 'path': path, 'old_path': old_path})
             i += 2  # Skip both entries
         elif status[0] == 'D' or status[1] == 'D':
             parsed_changes.append({'status': 'delete', 'path': path, 'old_path': None})
@@ -371,6 +376,12 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
                             update_file_state(full_path)
                         record_provenance(file_path, PROVENANCE_MANUAL, head,
                                           {'action': 'rename', 'from': change['old_path']})
+                    elif change['status'] == 'copy':
+                        # Keep source in state, add new path
+                        if full_path.exists():
+                            update_file_state(full_path)
+                        record_provenance(file_path, PROVENANCE_MANUAL, head,
+                                          {'action': 'copy', 'from': change['old_path']})
                     else:
                         # Add/modify
                         if full_path.exists():
