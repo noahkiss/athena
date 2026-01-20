@@ -1,5 +1,5 @@
 [project]
-name = "gardner"
+name = "gardener"
 version = "0.1.0"
 description = "The Gardener - Background service and API for Project Athena"
 requires-python = ">=3.12"
