@@ -588,10 +588,23 @@ if [[ "$TEST_CLAUDE" == "1" ]]; then
   if ! claude mcp list | grep -q "athena-pkms"; then
     claude mcp add --transport http athena-pkms "http://127.0.0.1:${GARDENER_PORT}/mcp"
   fi
-  CLAUDE_MODEL=${CLAUDE_MODEL:-claude-3-5-sonnet}
+  CLAUDE_MODEL=${CLAUDE_MODEL:-}
   CLAUDE_OUTPUT=$(mktemp)
   CLAUDE_PROMPT="Use read_notes to find the file that mentions ${TOKEN_DIRECT}, then summarize it."
-  claude -p "$CLAUDE_PROMPT" --model "$CLAUDE_MODEL" --temperature 0 >"$CLAUDE_OUTPUT"
+  CLAUDE_TEMP_ARGS=()
+  if claude --help 2>&1 | grep -q -- "--temperature"; then
+    CLAUDE_TEMP_ARGS=(--temperature 0)
+  fi
+  CLAUDE_CMD=(claude -p "$CLAUDE_PROMPT")
+  if [[ -n "$CLAUDE_MODEL" ]]; then
+    CLAUDE_CMD+=(--model "$CLAUDE_MODEL")
+  fi
+  CLAUDE_CMD+=("${CLAUDE_TEMP_ARGS[@]}")
+  if ! "${CLAUDE_CMD[@]}" >"$CLAUDE_OUTPUT" 2>&1; then
+    echo "Claude CLI failed. Output:"
+    cat "$CLAUDE_OUTPUT"
+    exit 1
+  fi
   if ! grep -Fq "$TOKEN_DIRECT" "$CLAUDE_OUTPUT"; then
     echo "Claude output did not reference the direct token. Output:"
     cat "$CLAUDE_OUTPUT"

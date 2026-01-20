@@ -49,7 +49,8 @@ FORCE_BUILD=1 ./scripts/test_e2e_full.sh
 # Enable gardener automation (poll mode) and validate it processes MCP notes
 TEST_AUTOMATION=1 ./scripts/test_e2e_full.sh
 
-# Run optional Claude CLI MCP check (requires claude CLI configured)
+# Run optional Claude CLI MCP check (requires claude CLI configured).
+# Optionally set CLAUDE_MODEL if your default model isn't available.
 TEST_CLAUDE=1 CLAUDE_MODEL=claude-3-5-sonnet ./scripts/test_e2e_full.sh
 
 # Custom ports
