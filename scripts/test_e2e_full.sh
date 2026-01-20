@@ -194,11 +194,23 @@ fi
 
 if [[ "$TEST_SCRIBE" == "1" ]]; then
   S_REFINE=$(curl -s --max-time 60 -X POST "http://127.0.0.1:${SCRIBE_PORT}/api/refine" \
+    -H "Origin: http://127.0.0.1:${SCRIBE_PORT}" \
+    -H "Referer: http://127.0.0.1:${SCRIBE_PORT}/" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     --data-urlencode "content=Refine test ${TOKEN_SCRIBE}")
   S_ASK=$(curl -s --max-time 60 -X POST "http://127.0.0.1:${SCRIBE_PORT}/api/ask" \
+    -H "Origin: http://127.0.0.1:${SCRIBE_PORT}" \
+    -H "Referer: http://127.0.0.1:${SCRIBE_PORT}/" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     --data-urlencode "content=What did I say about backup strategy for ${TOKEN_SCRIBE}?" )
+  if [[ "$S_REFINE" == *"Cross-site POST form submissions are forbidden"* ]]; then
+    echo "Scribe refine failed CSRF check. Response: $S_REFINE"
+    exit 1
+  fi
+  if [[ "$S_ASK" == *"Cross-site POST form submissions are forbidden"* ]]; then
+    echo "Scribe ask failed CSRF check. Response: $S_ASK"
+    exit 1
+  fi
 fi
 
 printf "Gardener inbox response: %s\n" "$INBOX_RES"
