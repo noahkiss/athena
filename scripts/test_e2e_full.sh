@@ -219,6 +219,14 @@ if [[ "$TEST_SCRIBE" == "1" ]]; then
     echo "Scribe ask failed CSRF check. Response: $S_ASK"
     exit 1
   fi
+  if [[ "$S_REFINE" == *"Refinement failed"* ]]; then
+    echo "Scribe refine returned error. Response: $S_REFINE"
+    exit 1
+  fi
+  if [[ "$S_ASK" == *"Ask failed"* ]]; then
+    echo "Scribe ask returned error. Response: $S_ASK"
+    exit 1
+  fi
   if [[ "$S_ASK" == *"<title>404"* || "$S_ASK" == *"Path: /api/ask"* ]]; then
     echo "Scribe ask returned 404. Response: $S_ASK"
     exit 1

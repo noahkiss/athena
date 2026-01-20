@@ -271,7 +271,7 @@ def format_ask_html(answer: str, related: list[dict]) -> str:
 @app.post("/api/refine")
 async def refine_content(request: RefineRequest):
     """Analyze content and suggest context, tags, and related notes."""
-    content = request.content.strip()
+    content = (request.content or "").strip()
     if not content:
         return HTMLResponse('<p class="text-gray-500">Enter some content to get suggestions.</p>')
 
@@ -297,7 +297,7 @@ async def refine_content(request: RefineRequest):
 @app.post("/api/ask")
 async def ask_question(request: AskRequest):
     """Answer a question using the knowledge base as context."""
-    question = request.question.strip()
+    question = (request.question or "").strip()
     if not question:
         return HTMLResponse('<p class="text-gray-500">Enter a question to explore your notes.</p>')
 
