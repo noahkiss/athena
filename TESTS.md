@@ -46,6 +46,12 @@ TEST_SCRIBE=0 ./scripts/test_e2e_full.sh
 # Force rebuild of Scribe dist/
 FORCE_BUILD=1 ./scripts/test_e2e_full.sh
 
+# Enable gardener automation (poll mode) and validate it processes MCP notes
+TEST_AUTOMATION=1 ./scripts/test_e2e_full.sh
+
+# Run optional Claude CLI MCP check (requires claude CLI configured)
+TEST_CLAUDE=1 CLAUDE_MODEL=claude-3-5-sonnet ./scripts/test_e2e_full.sh
+
 # Custom ports
 GARDENER_PORT=8010 SCRIBE_PORT=3010 ./scripts/test_e2e_full.sh
 ```
@@ -54,14 +60,19 @@ GARDENER_PORT=8010 SCRIBE_PORT=3010 ./scripts/test_e2e_full.sh
 
 1. Cleans `TEST_DATA_DIR` unless `KEEP_DATA=1`.
 2. Starts Gardener (uvicorn) with `DATA_DIR` overridden.
-3. Bootstraps `/data` structure.
-4. Submits a note via `/api/inbox` with a random token.
-5. Optionally submits a second note through Scribe `/api/inbox`.
-6. Triggers the gardener and waits for the inbox to clear.
-7. Verifies an atlas file exists and fetches it with `/api/browse`.
-8. Calls `/api/ask` and `/api/refine` using the generated token.
-9. Calls MCP `tools/list` at `/mcp` and checks for `read_notes`.
-10. If enabled, tests Scribe `/api/refine` and `/api/ask` proxies.
+3. Verifies `/api/status` and bootstrap state.
+4. Bootstraps `/data` structure and validates `AGENTS.md` + atlas presence.
+5. Runs negative checks (browse traversal + missing file, empty ask/refine).
+6. Validates invalid action paths are routed to `tasks.md`.
+7. Submits a note via `/api/inbox` with a random token (asserts response shape).
+8. Optionally submits a second note through Scribe `/api/inbox` (and checks empty input handling).
+9. Triggers the gardener and waits for the inbox to clear.
+10. Verifies atlas content for both tokens and fetches it with `/api/browse`.
+11. Calls `/api/ask` and `/api/refine` using the generated token (asserts no errors + expected fields).
+12. Calls MCP `tools/list`, then `tools/call` for `read_notes` and `add_note`.
+13. Processes the MCP-added note (or lets automation handle it when enabled).
+14. If enabled, tests Scribe `/api/refine` and `/api/ask` proxies.
+15. If enabled, runs a Claude CLI MCP prompt check.
 
 If any critical step fails, the script exits non-zero and prints the log path.
 
