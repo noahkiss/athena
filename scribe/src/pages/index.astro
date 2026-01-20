@@ -29,7 +29,7 @@ import Layout from '../layouts/Layout.astro';
           autofocus
         ></textarea>
 
-        <div class="flex gap-3">
+        <div class="flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
             id="refine-btn"
@@ -43,7 +43,20 @@ import Layout from '../layouts/Layout.astro';
             Refine
           </button>
           <button
+            type="button"
+            id="ask-btn"
+            hx-post="/api/ask"
+            hx-target="#explore"
+            hx-swap="innerHTML"
+            hx-include="#note-input"
+            class="flex-1 py-3 px-4 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg
+                   transition-colors"
+          >
+            Explore
+          </button>
+          <button
             type="submit"
+            id="submit-btn"
             class="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg
                    transition-colors font-medium"
           >
@@ -56,6 +69,10 @@ import Layout from '../layouts/Layout.astro';
         <p class="text-gray-500 text-sm">Click "Refine" for AI suggestions</p>
       </div>
 
+      <div id="explore" class="mt-4 p-3 bg-gray-900 rounded-lg border border-gray-800 min-h-[60px]">
+        <p class="text-gray-500 text-sm">Click "Explore" to ask your notes</p>
+      </div>
+
       <div id="feedback" class="mt-4 text-center"></div>
     </div>
   </main>
@@ -63,7 +80,7 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
   document.body.addEventListener('htmx:afterRequest', (event) => {
-    if (event.detail.successful) {
+    if (event.detail.successful && event.detail.elt?.id === 'submit-btn') {
       const textarea = document.getElementById('note-input');
       if (textarea) {
         textarea.value = '';

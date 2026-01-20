@@ -8,19 +8,19 @@ const GARDNER_URL =
 export const POST: APIRoute = async ({ request }) => {
   try {
     const formData = await request.formData();
-    const content = formData.get('content')?.toString() || '';
+    const question = formData.get('content')?.toString() || '';
 
-    if (!content.trim()) {
+    if (!question.trim()) {
       return new Response(
-        '<p class="text-gray-500">Enter some content to get suggestions.</p>',
+        '<p class="text-gray-500">Enter a question to explore your notes.</p>',
         { status: 200, headers: { 'Content-Type': 'text/html' } }
       );
     }
 
-    const response = await fetch(`${GARDNER_URL}/api/refine`, {
+    const response = await fetch(`${GARDNER_URL}/api/ask`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ question }),
     });
 
     if (!response.ok) {
@@ -33,9 +33,9 @@ export const POST: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'text/html' },
     });
   } catch (error) {
-    console.error('Refine error:', error);
+    console.error('Ask error:', error);
     return new Response(
-      '<p class="text-yellow-500">Could not get suggestions. Is Gardner running?</p>',
+      '<p class="text-yellow-500">Could not explore your notes. Is Gardener running?</p>',
       { status: 200, headers: { 'Content-Type': 'text/html' } }
     );
   }

@@ -1,6 +1,9 @@
 import type { APIRoute } from 'astro';
 
-const GARDNER_URL = import.meta.env.GARDNER_URL || 'http://localhost:8000';
+const GARDNER_URL =
+  process.env.GARDNER_URL ||
+  import.meta.env.GARDNER_URL ||
+  'http://localhost:8000';
 
 export const POST: APIRoute = async ({ request }) => {
   try {

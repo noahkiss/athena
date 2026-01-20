@@ -7,8 +7,14 @@ from mcp.server.fastmcp import FastMCP
 
 from config import INBOX_DIR, ATLAS_DIR
 
-# Create MCP server with stateless HTTP mode
-mcp = FastMCP("athena-pkms", stateless_http=True, json_response=True)
+# Create MCP server with stateless HTTP mode.
+# Set streamable_http_path="/" so mounting at /mcp exposes /mcp (no double /mcp/mcp).
+mcp = FastMCP(
+    "athena-pkms",
+    stateless_http=True,
+    json_response=True,
+    streamable_http_path="/",
+)
 
 
 @mcp.tool()

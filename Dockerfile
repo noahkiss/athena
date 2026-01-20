@@ -29,13 +29,13 @@ RUN apt-get update \
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install Gardner dependencies
-WORKDIR /app/gardner
-COPY gardner/pyproject.toml gardner/uv.lock* ./
+# Install Gardener dependencies
+WORKDIR /app/gardener
+COPY gardener/pyproject.toml gardener/uv.lock* ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-# Copy Gardner application code
-COPY gardner/ ./
+# Copy Gardener application code
+COPY gardener/ ./
 
 # Copy Scribe runtime assets
 WORKDIR /app/scribe

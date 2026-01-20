@@ -10,7 +10,7 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 
 | Directory | Role | Tech |
 |-----------|------|------|
-| `gardner/` | Backend API + AI worker | Python, FastAPI |
+| `gardener/` | Backend API + AI worker | Python, FastAPI |
 | `scribe/` | Capture frontend | Astro, HTMX, Tailwind |
 | `athena/` | Knowledge base template | Markdown, Git |
 
@@ -56,21 +56,26 @@ Athena supports multiple AI backends:
 |----------|---------|-------------|
 | `GARDENER_BACKEND` | `openai` | Backend type: `openai` or `anthropic` |
 | `AI_API_KEY` | - | API key (falls back to `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`) |
-| `AI_MODEL` | `gpt-4o` / `claude-sonnet-4-20250514` | Model for classification |
+| `AI_MODEL_THINKING` | `gpt-4o` / `claude-sonnet-4-20250514` | Model for classification |
+| `AI_MODEL_FAST` | `AI_MODEL_THINKING` | Model for refinement/quick tasks |
+| `AI_MODEL` | - | Legacy fallback for both models if `AI_MODEL_THINKING` is unset |
 | `AI_BASE_URL` | `https://api.openai.com/v1` | API endpoint (OpenAI backend only) |
+| `AI_TIMEOUT` | `120` | Request timeout in seconds |
 
 **OpenAI example:**
 ```env
 GARDENER_BACKEND=openai
 AI_API_KEY=sk-...
-AI_MODEL=gpt-4o
+AI_MODEL_THINKING=gpt-4o
+AI_MODEL_FAST=gpt-4o-mini
 ```
 
 **Anthropic example:**
 ```env
 GARDENER_BACKEND=anthropic
 ANTHROPIC_API_KEY=sk-ant-...
-AI_MODEL=claude-sonnet-4-20250514
+AI_MODEL_THINKING=claude-sonnet-4-20250514
+AI_MODEL_FAST=claude-3-haiku-20240307
 ```
 
 **LiteLLM example** (use OpenAI backend):
@@ -78,7 +83,8 @@ AI_MODEL=claude-sonnet-4-20250514
 GARDENER_BACKEND=openai
 AI_BASE_URL=http://localhost:4000/v1
 AI_API_KEY=your-key
-AI_MODEL=claude-3-5-sonnet-20241022
+AI_MODEL_THINKING=claude-3-5-sonnet-20241022
+AI_MODEL_FAST=claude-3-haiku-20240307
 ```
 
 ### Automation
@@ -130,6 +136,7 @@ The atlas structure evolves as the Gardener encounters new content types.
 | `POST` | `/api/inbox` | Submit a note |
 | `POST` | `/api/trigger-gardener` | Process inbox |
 | `POST` | `/api/refine` | Get AI suggestions for a note |
+| `POST` | `/api/ask` | Ask a question using your knowledge base |
 | `GET` | `/api/browse/{path}` | Browse atlas |
 
 ## MCP Server

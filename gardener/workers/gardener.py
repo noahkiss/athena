@@ -3,6 +3,7 @@
 import json
 import logging
 import subprocess
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -11,6 +12,8 @@ from config import DATA_DIR, INBOX_DIR, ATLAS_DIR, TASKS_FILE, AGENTS_FILE, GARD
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+_PROCESSING_LOCK = threading.Lock()
 
 
 def read_context_files() -> str:
@@ -34,16 +37,43 @@ def classify_note(backend: GardenerBackend, note_content: str, filename: str) ->
 
 def execute_action(action: GardenerAction) -> Path:
     """Execute the file operation based on gardener's decision."""
-    if action.action == "task":
-        # Append to tasks.md
+    def append_to_tasks(content: str, reasoning: str) -> Path:
         TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(TASKS_FILE, "a") as f:
             f.write(f"\n\n## Unsorted Note {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
-            f.write(action.content)
-            f.write(f"\n\n> Gardener Query: {action.reasoning}\n")
+            f.write(content)
+            f.write(f"\n\n> Gardener Query: {reasoning}\n")
         return TASKS_FILE
 
-    target_path = ATLAS_DIR / action.path
+    def validate_action_path(action_path: str) -> Path:
+        cleaned = action_path.strip()
+        if not cleaned:
+            raise ValueError("Empty action path")
+        if "\x00" in cleaned:
+            raise ValueError("Null byte in path")
+
+        candidate = Path(cleaned)
+        if candidate.is_absolute():
+            raise ValueError("Absolute paths are not allowed")
+        if ".." in candidate.parts:
+            raise ValueError("Path traversal is not allowed")
+
+        target = (ATLAS_DIR / candidate).resolve()
+        atlas_root = ATLAS_DIR.resolve()
+        if not target.is_relative_to(atlas_root):
+            raise ValueError("Path escapes atlas root")
+
+        return target
+
+    if action.action == "task":
+        return append_to_tasks(action.content, action.reasoning)
+
+    try:
+        target_path = validate_action_path(action.path)
+    except ValueError as exc:
+        logger.warning(f"Invalid action path '{action.path}': {exc}")
+        return append_to_tasks(action.content, f"Invalid path '{action.path}': {action.reasoning}")
+
     target_path.parent.mkdir(parents=True, exist_ok=True)
 
     if action.action == "create":
@@ -129,61 +159,65 @@ def process_inbox(backend: GardenerBackend | None = None) -> list[dict]:
     Args:
         backend: Optional backend instance. If not provided, creates one from env.
     """
-    if not INBOX_DIR.exists():
-        logger.info("Inbox directory does not exist")
-        return []
+    if _PROCESSING_LOCK.locked():
+        logger.info("Gardener processing already in progress; waiting for lock")
 
-    # Ensure git repo exists for version control
-    ensure_git_repo()
+    with _PROCESSING_LOCK:
+        if not INBOX_DIR.exists():
+            logger.info("Inbox directory does not exist")
+            return []
 
-    results = []
-    own_backend = backend is None
+        # Ensure git repo exists for version control
+        ensure_git_repo()
 
-    if own_backend:
-        backend = get_backend()
+        results = []
+        own_backend = backend is None
 
-    try:
-        for inbox_file in INBOX_DIR.glob("*.md"):
-            logger.info(f"Processing: {inbox_file.name}")
-
-            try:
-                note_content = inbox_file.read_text()
-                action = classify_note(backend, note_content, inbox_file.name)
-
-                logger.info(f"Action: {action.action} -> {action.path}")
-                logger.info(f"Reasoning: {action.reasoning}")
-
-                target_path = execute_action(action)
-
-                # Git commit
-                git_commit(target_path, f"Gardener: Processed {inbox_file.name}")
-
-                # Delete original
-                inbox_file.unlink()
-
-                # Also commit the deletion
-                git_commit(inbox_file, f"Gardener: Removed {inbox_file.name} from inbox")
-
-                results.append({
-                    "file": inbox_file.name,
-                    "action": action.action,
-                    "path": str(action.path),
-                    "success": True,
-                })
-
-            except Exception as e:
-                logger.error(f"Failed to process {inbox_file.name}: {e}")
-                results.append({
-                    "file": inbox_file.name,
-                    "action": "error",
-                    "error": str(e),
-                    "success": False,
-                })
-    finally:
         if own_backend:
-            backend.close()
+            backend = get_backend()
 
-    return results
+        try:
+            for inbox_file in INBOX_DIR.glob("*.md"):
+                logger.info(f"Processing: {inbox_file.name}")
+
+                try:
+                    note_content = inbox_file.read_text()
+                    action = classify_note(backend, note_content, inbox_file.name)
+
+                    logger.info(f"Action: {action.action} -> {action.path}")
+                    logger.info(f"Reasoning: {action.reasoning}")
+
+                    target_path = execute_action(action)
+
+                    # Git commit
+                    git_commit(target_path, f"Gardener: Processed {inbox_file.name}")
+
+                    # Delete original
+                    inbox_file.unlink()
+
+                    # Also commit the deletion
+                    git_commit(inbox_file, f"Gardener: Removed {inbox_file.name} from inbox")
+
+                    results.append({
+                        "file": inbox_file.name,
+                        "action": action.action,
+                        "path": str(action.path),
+                        "success": True,
+                    })
+
+                except Exception as e:
+                    logger.error(f"Failed to process {inbox_file.name}: {e}")
+                    results.append({
+                        "file": inbox_file.name,
+                        "action": "error",
+                        "error": str(e),
+                        "success": False,
+                    })
+        finally:
+            if own_backend:
+                backend.close()
+
+        return results
 
 
 if __name__ == "__main__":

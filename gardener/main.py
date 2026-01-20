@@ -41,8 +41,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Mount MCP server (FastMCP serves at /mcp internally)
-app.mount("/", mcp.streamable_http_app())
+# Mount MCP server at /mcp (FastMCP app configured to serve at "/")
+app.mount("/mcp", mcp.streamable_http_app())
 
 
 # --- Request/Response Models ---
@@ -75,6 +75,7 @@ class StatusResponse(BaseModel):
     bootstrapped: bool
     gardener_backend: str
     gardener_model: str
+    gardener_model_fast: str | None = None
     automation: AutomationStatus
 
 
@@ -94,6 +95,11 @@ class BootstrapResponse(BaseModel):
 class RefineRequest(BaseModel):
     """Request model for content refinement."""
     content: str
+
+
+class AskRequest(BaseModel):
+    """Request model for knowledge retrieval."""
+    question: str
 
 
 class BrowseItem(BaseModel):
@@ -126,7 +132,8 @@ async def get_status() -> StatusResponse:
         atlas_exists=ATLAS_DIR.exists(),
         bootstrapped=agents_file.exists(),
         gardener_backend=backend_type,
-        gardener_model=config.model,
+        gardener_model=config.model_thinking,
+        gardener_model_fast=config.model_fast,
         automation=AutomationStatus(**auto_status),
     )
 
@@ -239,6 +246,28 @@ def format_refine_html(result: str) -> str:
     return "\n".join(html_parts)
 
 
+def format_ask_html(answer: str, related: list[dict]) -> str:
+    """Format ask result as HTML."""
+    import html
+
+    escaped = html.escape(answer.strip())
+    html_parts = ['<div class="space-y-3 text-sm">']
+    if escaped:
+        html_parts.append(f'<div class="whitespace-pre-wrap text-gray-200">{escaped}</div>')
+    else:
+        html_parts.append('<p class="text-gray-500">No answer returned.</p>')
+
+    if related:
+        html_parts.append('<div class="text-xs text-gray-400">Related files:</div>')
+        html_parts.append('<ul class="list-disc list-inside text-xs text-gray-400">')
+        for item in related:
+            html_parts.append(f'<li>{html.escape(item["path"])}</li>')
+        html_parts.append('</ul>')
+
+    html_parts.append("</div>")
+    return "\n".join(html_parts)
+
+
 @app.post("/api/refine")
 async def refine_content(request: RefineRequest):
     """Analyze content and suggest context, tags, and related notes."""
@@ -263,6 +292,31 @@ async def refine_content(request: RefineRequest):
         return HTMLResponse(f'<p class="text-yellow-500">AI not configured: {e}</p>')
     except Exception as e:
         return HTMLResponse(f'<p class="text-red-500">Refinement failed: {e}</p>')
+
+
+@app.post("/api/ask")
+async def ask_question(request: AskRequest):
+    """Answer a question using the knowledge base as context."""
+    question = request.question.strip()
+    if not question:
+        return HTMLResponse('<p class="text-gray-500">Enter a question to explore your notes.</p>')
+
+    keywords = extract_keywords(question)
+    related = search_atlas(keywords, max_files=8)
+
+    related_context = ""
+    if related:
+        for r in related:
+            related_context += f"- {r['path']}: {r['preview']}...\n"
+
+    try:
+        with get_backend() as backend:
+            result = backend.ask(question, related_context)
+            return HTMLResponse(format_ask_html(result, related))
+    except ValueError as e:
+        return HTMLResponse(f'<p class="text-yellow-500">AI not configured: {e}</p>')
+    except Exception as e:
+        return HTMLResponse(f'<p class="text-red-500">Ask failed: {e}</p>')
 
 
 # --- Browse Endpoint ---

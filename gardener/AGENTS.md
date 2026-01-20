@@ -1,4 +1,4 @@
-# GARDNER DEVELOPMENT CONTEXT (Live Document)
+# GARDENER DEVELOPMENT CONTEXT (Live Document)
 
 **Role:** You are a Senior Python Backend Engineer.
 **Project:** "The Gardener" - A background service and API for Project Athena.
@@ -13,7 +13,7 @@
 ## Project Structure
 
 ```
-gardner/
+gardener/
 ├── main.py              # FastAPI application + MCP server mount
 ├── config.py            # Centralized configuration
 ├── automation.py        # File watcher and polling for auto-processing
@@ -38,6 +38,7 @@ gardner/
 | `/api/inbox` | POST | Accept note content, save to inbox |
 | `/api/trigger-gardener` | POST | Manually trigger inbox processing |
 | `/api/refine` | POST | AI-assisted suggestions |
+| `/api/ask` | POST | Ask questions over the knowledge base |
 | `/api/browse/{path}` | GET | Browse atlas directory/files |
 | `/mcp` | POST | MCP server endpoint (JSON-RPC) |
 
@@ -47,7 +48,9 @@ gardner/
 ```bash
 GARDENER_BACKEND=openai|anthropic  # Default: openai
 AI_API_KEY=...                      # Or OPENAI_API_KEY / ANTHROPIC_API_KEY
-AI_MODEL=gpt-4o                     # Model for classification
+AI_MODEL_THINKING=gpt-4o            # Model for classification
+AI_MODEL_FAST=gpt-4o-mini           # Model for refinement/quick tasks
+AI_MODEL=gpt-4o                     # Legacy fallback for both models
 AI_BASE_URL=...                     # OpenAI backend only
 AI_TIMEOUT=120                      # Request timeout in seconds
 ```

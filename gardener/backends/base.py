@@ -21,7 +21,8 @@ class BackendConfig:
     """Base configuration for all backends."""
 
     api_key: str
-    model: str
+    model_thinking: str
+    model_fast: str
     base_url: str | None = None
     timeout: float = 120.0
 
@@ -73,6 +74,19 @@ class GardenerBackend(ABC):
 
         Returns:
             Formatted suggestions (TAGS, CATEGORY, RELATED, MISSING)
+        """
+        ...
+
+    @abstractmethod
+    def ask(self, question: str, related_context: str) -> str:
+        """Answer a question using related knowledge base context.
+
+        Args:
+            question: The user's question
+            related_context: Related files found in atlas
+
+        Returns:
+            A concise answer
         """
         ...
 

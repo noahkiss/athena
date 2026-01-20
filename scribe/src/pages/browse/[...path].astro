@@ -2,7 +2,10 @@
 import Layout from '../../layouts/Layout.astro';
 import { marked } from 'marked';
 
-const GARDNER_URL = import.meta.env.GARDNER_URL || 'http://localhost:8000';
+const GARDNER_URL =
+  process.env.GARDNER_URL ||
+  import.meta.env.GARDNER_URL ||
+  'http://localhost:8000';
 
 const { path } = Astro.params;
 const currentPath = path || '';

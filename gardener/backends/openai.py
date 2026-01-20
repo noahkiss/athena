@@ -1,15 +1,16 @@
-"""Native Anthropic Claude backend for gardener.
+"""OpenAI-compatible backend for gardener.
 
-Uses the Anthropic SDK directly for:
-- Native Claude features
-- Prompt caching support
-- Better error handling
+Works with:
+- OpenAI directly
+- LiteLLM proxy
+- Azure OpenAI (with appropriate base_url)
+- Ollama and other OpenAI-compatible APIs
 """
 
 import json
 import logging
 
-import anthropic
+import httpx
 
 from .base import BackendConfig, GardenerBackend, GardenerAction
 
@@ -46,41 +47,62 @@ CATEGORY: suggested category (projects/people/home/wellness/tech/journal/reading
 RELATED: any related topics or files mentioned above
 MISSING: what context might improve this note (1 sentence)"""
 
+ASK_PROMPT = """You are a knowledge assistant for a personal knowledge base.
 
-class AnthropicBackend(GardenerBackend):
-    """Native Anthropic Claude backend."""
+Question:
+{question}
+{related_context}
+
+Provide a concise answer based on the related context. If the notes don't contain enough information, say so and suggest what to capture next.
+"""
+
+class OpenAIBackend(GardenerBackend):
+    """OpenAI-compatible backend using httpx."""
 
     def __init__(self, config: BackendConfig):
         super().__init__(config)
-        self._client = anthropic.Anthropic(
-            api_key=config.api_key,
+        base_url = config.base_url or "https://api.openai.com/v1"
+        self._client = httpx.Client(
+            base_url=base_url,
+            headers={
+                "Authorization": f"Bearer {config.api_key}",
+                "Content-Type": "application/json",
+            },
             timeout=config.timeout,
         )
 
     @property
     def name(self) -> str:
-        return "anthropic"
+        return "openai"
 
     def _chat(
         self,
-        user_message: str,
+        messages: list[dict[str, str]],
         system: str | None = None,
+        model: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
     ) -> str:
-        """Send a message to Claude."""
+        """Send a chat completion request."""
         if not self.config.api_key:
-            raise ValueError("ANTHROPIC_API_KEY not configured")
+            raise ValueError("API key not configured")
 
-        response = self._client.messages.create(
-            model=self.config.model,
-            max_tokens=max_tokens,
-            system=system or "",
-            messages=[{"role": "user", "content": user_message}],
-            temperature=temperature,
+        if system:
+            messages = [{"role": "system", "content": system}] + messages
+
+        model_name = model or self.config.model_thinking
+        response = self._client.post(
+            "/chat/completions",
+            json={
+                "model": model_name,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            },
         )
-
-        return response.content[0].text
+        response.raise_for_status()
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
 
     def classify(
         self,
@@ -88,7 +110,7 @@ class AnthropicBackend(GardenerBackend):
         filename: str,
         context: str,
     ) -> GardenerAction:
-        """Classify a note using Claude."""
+        """Classify a note using OpenAI chat completions."""
         user_message = f"""Please classify and process this note.
 
 ## Context Files
@@ -102,12 +124,13 @@ class AnthropicBackend(GardenerBackend):
 Respond with a JSON object specifying the action, path, and formatted content."""
 
         response_text = self._chat(
-            user_message=user_message,
+            messages=[{"role": "user", "content": user_message}],
             system=SYSTEM_PROMPT,
-            temperature=0.3,
+            model=self.config.model_thinking,
+            temperature=0.3,  # Lower for consistent classification
         )
 
-        # Extract JSON from response
+        # Extract JSON from response (handle markdown code blocks)
         if "```json" in response_text:
             json_str = response_text.split("```json")[1].split("```")[0].strip()
         elif "```" in response_text:
@@ -126,11 +149,26 @@ Respond with a JSON object specifying the action, path, and formatted content.""
         )
 
         return self._chat(
-            user_message=prompt,
+            messages=[{"role": "user", "content": prompt}],
+            model=self.config.model_fast,
             max_tokens=1024,
             temperature=0.7,
         )
 
+    def ask(self, question: str, related_context: str) -> str:
+        """Answer a question using the knowledge base."""
+        prompt = ASK_PROMPT.format(
+            question=question,
+            related_context=f"\n\nRelated files in knowledge base:\n{related_context}" if related_context else "",
+        )
+
+        return self._chat(
+            messages=[{"role": "user", "content": prompt}],
+            model=self.config.model_thinking,
+            max_tokens=1024,
+            temperature=0.4,
+        )
+
     def close(self):
-        """Close the Anthropic client."""
+        """Close the HTTP client."""
         self._client.close()

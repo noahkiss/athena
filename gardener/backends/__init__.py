@@ -25,7 +25,9 @@ def get_backend_config() -> tuple[BackendType, BackendConfig]:
     Environment variables:
         GARDENER_BACKEND: Backend type (openai, anthropic). Default: openai
         AI_API_KEY: API key (falls back to OPENAI_API_KEY or ANTHROPIC_API_KEY)
-        AI_MODEL: Model to use (defaults vary by backend)
+        AI_MODEL_THINKING: Model to use for classification (defaults vary by backend)
+        AI_MODEL_FAST: Model to use for refinement/quick tasks (defaults to thinking model)
+        AI_MODEL: Legacy fallback for both models if *_THINKING is unset
         AI_BASE_URL: Base URL for API (OpenAI backend only)
         AI_TIMEOUT: Request timeout in seconds. Default: 120
     """
@@ -43,13 +45,18 @@ def get_backend_config() -> tuple[BackendType, BackendConfig]:
         else:
             api_key = os.environ.get("OPENAI_API_KEY", "")
 
-    model = os.environ.get("AI_MODEL", DEFAULT_MODELS.get(backend_type, "gpt-4o"))
+    model_thinking = os.environ.get(
+        "AI_MODEL_THINKING",
+        os.environ.get("AI_MODEL", DEFAULT_MODELS.get(backend_type, "gpt-4o")),
+    )
+    model_fast = os.environ.get("AI_MODEL_FAST", model_thinking)
     base_url = os.environ.get("AI_BASE_URL")
     timeout = float(os.environ.get("AI_TIMEOUT", "120"))
 
     config = BackendConfig(
         api_key=api_key,
-        model=model,
+        model_thinking=model_thinking,
+        model_fast=model_fast,
         base_url=base_url,
         timeout=timeout,
     )
@@ -65,10 +72,10 @@ def get_backend() -> GardenerBackend:
     backend_type, config = get_backend_config()
 
     if backend_type == "anthropic":
-        logger.info(f"Using Anthropic backend with model {config.model}")
+        logger.info(f"Using Anthropic backend with model {config.model_thinking}")
         return AnthropicBackend(config)
     else:
-        logger.info(f"Using OpenAI backend with model {config.model}")
+        logger.info(f"Using OpenAI backend with model {config.model_thinking}")
         return OpenAIBackend(config)
 
 

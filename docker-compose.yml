@@ -1,6 +1,6 @@
 services:
-  gardner:
-    build: ./gardner
+  gardener:
+    build: ./gardener
     ports:
       - "8000:8000"
     volumes:
@@ -12,15 +12,15 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - gardner
+      - gardener
     environment:
-      - GARDNER_URL=http://gardner:8000
+      - GARDNER_URL=http://gardener:8000
 
-# MCP Server: Run locally with `uv run python mcp_server.py` in gardner/
+# MCP Server: Run locally with `uv run python mcp_server.py` in gardener/
 # Or add to Claude Desktop config:
 #   "athena": {
 #     "command": "uv",
 #     "args": ["run", "python", "mcp_server.py"],
-#     "cwd": "/path/to/pkms/gardner",
+#     "cwd": "/path/to/pkms/gardener",
 #     "env": { "DATA_DIR": "/path/to/pkms/athena" }
 #   }

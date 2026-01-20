@@ -19,7 +19,7 @@ Always prefix Python commands with `uv run` (e.g., `uv run pytest`, `uv run uvic
 ```
 pkms/
 ├── athena/          # The Data Skeleton (source of truth, git-versioned)
-├── gardner/         # Python/FastAPI backend + AI worker
+├── gardener/        # Python/FastAPI backend + AI worker
 ├── scribe/          # Astro/HTMX frontend
 └── docker-compose.yml
 ```

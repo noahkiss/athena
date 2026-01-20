@@ -35,6 +35,7 @@ scribe/
 | Route | Description |
 |-------|-------------|
 | `/` | Capture page - textarea with Submit/Refine buttons |
+| `/api/ask` | Proxy to Gardner /api/ask (Explore/Ask) |
 | `/browse` | Atlas root directory listing |
 | `/browse/{path}` | Directory listing or markdown file view |
 
