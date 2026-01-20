@@ -177,7 +177,8 @@ def get_git_state() -> GitState | None:
     try:
         from state import (
             get_current_head, get_current_branch, get_repo_state,
-            get_dirty_files, get_dirty_summary, check_repo_identity, init_db
+            get_dirty_files, get_dirty_summary, check_repo_identity, init_db,
+            update_last_seen_sha
         )
 
         # Ensure state DB is initialized
@@ -195,8 +196,15 @@ def get_git_state() -> GitState | None:
         if not git_dir.exists():
             return GitState(available=False)
 
-        # Get state from database
+        # Get current HEAD and update last_seen_sha if it differs
+        current_head = get_current_head()
         repo_state = get_repo_state()
+
+        # Update last_seen_sha when we observe a new HEAD (external commits)
+        if current_head and current_head != repo_state.get("last_seen_sha"):
+            update_last_seen_sha(current_head)
+            repo_state = get_repo_state()  # Refresh after update
+
         identity_valid, _ = check_repo_identity()
         dirty = get_dirty_files()
         dirty_summary = get_dirty_summary()
@@ -206,7 +214,7 @@ def get_git_state() -> GitState | None:
 
         return GitState(
             available=True,
-            current_head=get_current_head(),
+            current_head=current_head,
             current_branch=get_current_branch(),
             last_processed_sha=repo_state.get("last_processed_sha"),
             last_seen_sha=repo_state.get("last_seen_sha"),
@@ -296,8 +304,26 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
     # Stage all changes
     subprocess.run(["git", "add", "-A"], cwd=DATA_DIR, check=True, capture_output=True)
 
-    # Get list of changed files before committing (for provenance)
-    changed_file_paths = [line[3:] for line in result.stdout.strip().split("\n") if line]
+    # Parse git status output for proper handling of deletes/renames
+    # Format: XY PATH or XY ORIG -> PATH for renames
+    parsed_changes: list[dict] = []
+    for line in result.stdout.strip().split("\n"):
+        if not line:
+            continue
+        status = line[:2]
+        path_part = line[3:]
+
+        if status[0] == 'R' or status[1] == 'R':
+            # Rename: "old -> new"
+            if ' -> ' in path_part:
+                old_path, new_path = path_part.split(' -> ', 1)
+                parsed_changes.append({'status': 'rename', 'path': new_path, 'old_path': old_path})
+            else:
+                parsed_changes.append({'status': 'modify', 'path': path_part, 'old_path': None})
+        elif status[0] == 'D' or status[1] == 'D':
+            parsed_changes.append({'status': 'delete', 'path': path_part, 'old_path': None})
+        else:
+            parsed_changes.append({'status': 'modify', 'path': path_part, 'old_path': None})
 
     # Commit with provided message or default
     commit_message = request.message or "Manual: Snapshot uncommitted changes"
@@ -313,19 +339,37 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
         try:
             from state import (
                 get_current_head, get_current_branch, record_processed_commit,
-                update_file_state, record_provenance, PROVENANCE_MANUAL
+                update_file_state, record_provenance, remove_file_state,
+                PROVENANCE_MANUAL
             )
             head = get_current_head()
             if head:
                 branch = get_current_branch()
                 record_processed_commit(head, branch, commit_message)
 
-                # Update file state and provenance for each changed file
-                for file_path in changed_file_paths:
+                # Update file state and provenance based on change type
+                for change in parsed_changes:
+                    file_path = change['path']
                     full_path = DATA_DIR / file_path
-                    if full_path.exists():
-                        update_file_state(full_path)
-                        record_provenance(file_path, PROVENANCE_MANUAL, head)
+
+                    if change['status'] == 'delete':
+                        # Remove deleted files from state
+                        remove_file_state(full_path)
+                        record_provenance(file_path, PROVENANCE_MANUAL, head,
+                                          {'action': 'delete'})
+                    elif change['status'] == 'rename':
+                        # Remove old path, add new path
+                        if change['old_path']:
+                            remove_file_state(DATA_DIR / change['old_path'])
+                        if full_path.exists():
+                            update_file_state(full_path)
+                        record_provenance(file_path, PROVENANCE_MANUAL, head,
+                                          {'action': 'rename', 'from': change['old_path']})
+                    else:
+                        # Add/modify
+                        if full_path.exists():
+                            update_file_state(full_path)
+                            record_provenance(file_path, PROVENANCE_MANUAL, head)
         except Exception:
             pass  # State tracking is optional
 
@@ -382,17 +426,13 @@ async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
                 "Run /api/snapshot first to include them."
             )
 
-        # Get changes for detail view
-        repo_state = get_repo_state()
-        from_sha = repo_state.get("last_reconcile_sha") or repo_state.get("last_processed_sha")
-
         # Run reconciliation (on committed changes)
         result = run_reconcile()
 
-        # Get detailed changes if requested
+        # Get detailed changes if requested (use result's from_sha to match the actual scan)
         changes_detail = None
         if include_details:
-            changes = get_changes_since_sha(from_sha)
+            changes = get_changes_since_sha(result["from_sha"])
             changes_detail = [
                 ChangedFileInfo(
                     path=c["path"],
