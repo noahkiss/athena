@@ -6,6 +6,33 @@ from pathlib import Path
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
 
+# .gitignore content for the data directory
+GITIGNORE = """# Athena Knowledge Base .gitignore
+
+# Gardener state (machine-specific, not version controlled)
+.gardener/
+
+# Logs and temporary files
+logs/
+*.log
+tmp/
+cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor artifacts
+*~
+*.swp
+*.swo
+.*.swp
+
+# Python cache (if scripts run in data dir)
+__pycache__/
+*.pyc
+"""
+
 # Default content for system files
 AGENTS_MD = """# ATHENA SYSTEM CONTEXT (Live Document)
 
@@ -110,6 +137,7 @@ def bootstrap(force: bool = False) -> dict:
         DATA_DIR / "AGENTS.md": AGENTS_MD,
         DATA_DIR / "GARDENER.md": GARDENER_MD,
         DATA_DIR / "tasks.md": TASKS_MD,
+        DATA_DIR / ".gitignore": GITIGNORE,
     }
 
     # Create directories
@@ -131,6 +159,7 @@ def bootstrap(force: bool = False) -> dict:
 
     # Initialize git repo if not exists
     git_dir = DATA_DIR / ".git"
+    git_initialized = False
     if not git_dir.exists():
         import subprocess
         try:
@@ -144,8 +173,40 @@ def bootstrap(force: bool = False) -> dict:
                 cwd=DATA_DIR, check=True, capture_output=True
             )
             results["created"].append(str(git_dir))
+            git_initialized = True
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass  # Git not available, that's okay
+
+    # Make baseline commit if we just initialized git and created files
+    if git_initialized and results["created"]:
+        import subprocess
+        try:
+            subprocess.run(["git", "add", "-A"], cwd=DATA_DIR, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "commit", "-m", "Athena: Initialize knowledge base"],
+                cwd=DATA_DIR, check=True, capture_output=True
+            )
+            results["baseline_commit"] = True
+        except subprocess.CalledProcessError:
+            results["baseline_commit"] = False
+
+    # Initialize state database
+    try:
+        from state import init_db, get_current_head, record_processed_commit, get_current_branch, update_repo_root_hash, get_repo_root_hash
+        init_db()
+        results["state_db_initialized"] = True
+
+        # Record baseline commit in state if we just made one
+        if results.get("baseline_commit"):
+            head = get_current_head()
+            if head:
+                branch = get_current_branch()
+                record_processed_commit(head, branch, "Bootstrap baseline commit")
+                repo_hash = get_repo_root_hash()
+                if repo_hash:
+                    update_repo_root_hash(repo_hash)
+    except Exception:
+        results["state_db_initialized"] = False
 
     return results
 

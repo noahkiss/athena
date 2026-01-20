@@ -66,6 +66,19 @@ class AutomationStatus(BaseModel):
     debounce: float | None
 
 
+class GitState(BaseModel):
+    """Git repository state."""
+    available: bool
+    current_head: str | None = None
+    current_branch: str | None = None
+    last_processed_sha: str | None = None
+    last_seen_sha: str | None = None
+    dirty_files: int = 0
+    dirty_by_location: dict[str, int] | None = None
+    dirty_files_preview: list[str] | None = None  # First N dirty files (truncated)
+    repo_identity_valid: bool = True
+
+
 class StatusResponse(BaseModel):
     """Response model for health check."""
     status: str
@@ -77,6 +90,7 @@ class StatusResponse(BaseModel):
     gardener_model: str
     gardener_model_fast: str | None = None
     automation: AutomationStatus
+    git: GitState | None = None
 
 
 class GardenerTriggerResponse(BaseModel):
@@ -90,6 +104,39 @@ class BootstrapResponse(BaseModel):
     created: list[str]
     skipped: list[str]
     exists: list[str]
+    baseline_commit: bool | None = None
+
+
+class SnapshotRequest(BaseModel):
+    """Request model for snapshot endpoint."""
+    message: str | None = None
+
+
+class SnapshotResponse(BaseModel):
+    """Response model for snapshot endpoint."""
+    committed: bool
+    message: str
+    files_changed: int | None = None
+
+
+class ChangedFileInfo(BaseModel):
+    """Info about a changed file."""
+    path: str
+    location: str
+    status: str
+    old_path: str | None = None
+
+
+class ReconcileResponse(BaseModel):
+    """Response model for reconcile endpoint."""
+    run_id: int
+    run_at: str
+    from_sha: str | None
+    to_sha: str | None
+    files_changed: int
+    changes_by_location: dict[str, int]
+    tasks: list[str]
+    changes: list[ChangedFileInfo] | None = None  # Optional detailed list
 
 
 class RefineRequest(BaseModel):
@@ -119,12 +166,61 @@ class BrowseResponse(BaseModel):
 
 # --- Endpoints ---
 
+def get_git_state() -> GitState | None:
+    """Get the current git repository state."""
+    try:
+        from state import (
+            get_current_head, get_current_branch, get_repo_state,
+            get_dirty_files, get_dirty_summary, check_repo_identity, init_db
+        )
+
+        # Ensure state DB is initialized
+        init_db()
+
+        # Check if git is available
+        import subprocess
+        try:
+            subprocess.run(["git", "--version"], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return GitState(available=False)
+
+        # Check if DATA_DIR is a git repo
+        git_dir = DATA_DIR / ".git"
+        if not git_dir.exists():
+            return GitState(available=False)
+
+        # Get state from database
+        repo_state = get_repo_state()
+        identity_valid, _ = check_repo_identity()
+        dirty = get_dirty_files()
+        dirty_summary = get_dirty_summary()
+
+        # Truncate dirty files list for preview (max 10)
+        dirty_preview = dirty[:10] if dirty else None
+
+        return GitState(
+            available=True,
+            current_head=get_current_head(),
+            current_branch=get_current_branch(),
+            last_processed_sha=repo_state.get("last_processed_sha"),
+            last_seen_sha=repo_state.get("last_seen_sha"),
+            dirty_files=len(dirty),
+            dirty_by_location=dirty_summary if dirty else None,
+            dirty_files_preview=dirty_preview,
+            repo_identity_valid=identity_valid,
+        )
+    except Exception:
+        return None
+
+
 @app.get("/api/status", response_model=StatusResponse)
 async def get_status() -> StatusResponse:
     """Health check endpoint."""
     agents_file = DATA_DIR / "AGENTS.md"
     backend_type, config = get_backend_config()
     auto_status = get_automation_status()
+    git_state = get_git_state()
+
     return StatusResponse(
         status="ok",
         inbox_path=str(INBOX_DIR),
@@ -135,6 +231,7 @@ async def get_status() -> StatusResponse:
         gardener_model=config.model_thinking,
         gardener_model_fast=config.model_fast,
         automation=AutomationStatus(**auto_status),
+        git=git_state,
     )
 
 
@@ -144,6 +241,136 @@ async def bootstrap_knowledge_base(force: bool = False) -> BootstrapResponse:
     from bootstrap import bootstrap
     results = bootstrap(force=force)
     return BootstrapResponse(**results)
+
+
+@app.post("/api/snapshot", response_model=SnapshotResponse)
+async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> SnapshotResponse:
+    """Commit any uncommitted changes in the data directory.
+
+    This is for manually snapshotting changes made outside of Gardener
+    (e.g., manual edits, external tools). Does not auto-commit by default;
+    must be explicitly called.
+    """
+    import subprocess
+
+    # Check if git is available
+    try:
+        subprocess.run(["git", "--version"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return SnapshotResponse(
+            committed=False,
+            message="Git is not available",
+        )
+
+    # Check if DATA_DIR is a git repo
+    git_dir = DATA_DIR / ".git"
+    if not git_dir.exists():
+        return SnapshotResponse(
+            committed=False,
+            message="Data directory is not a git repository",
+        )
+
+    # Check for uncommitted changes
+    result = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=DATA_DIR,
+        capture_output=True,
+        text=True,
+    )
+    if not result.stdout.strip():
+        return SnapshotResponse(
+            committed=False,
+            message="No changes to commit",
+            files_changed=0,
+        )
+
+    # Count changed files
+    changed_files = len([l for l in result.stdout.strip().split("\n") if l])
+
+    # Stage all changes
+    subprocess.run(["git", "add", "-A"], cwd=DATA_DIR, check=True, capture_output=True)
+
+    # Commit with provided message or default
+    commit_message = request.message or "Manual: Snapshot uncommitted changes"
+    try:
+        subprocess.run(
+            ["git", "commit", "-m", commit_message],
+            cwd=DATA_DIR,
+            check=True,
+            capture_output=True,
+        )
+        return SnapshotResponse(
+            committed=True,
+            message=f"Committed {changed_files} file(s)",
+            files_changed=changed_files,
+        )
+    except subprocess.CalledProcessError as e:
+        return SnapshotResponse(
+            committed=False,
+            message=f"Commit failed: {e.stderr.decode() if e.stderr else str(e)}",
+        )
+
+
+@app.post("/api/reconcile", response_model=ReconcileResponse)
+async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
+    """Detect and reconcile manual/external changes to the knowledge base.
+
+    This operation:
+    1. Detects changes since last reconcile (or last processed commit)
+    2. Classifies changes by location (inbox/atlas/meta)
+    3. Generates maintenance task recommendations
+    4. Records the reconcile run
+
+    Source-of-truth rules:
+    - Atlas notes are never auto-rewritten (manual edits preserved)
+    - Inbox changes trigger normal gardener processing
+    - Meta changes flag for reindexing
+
+    Args:
+        include_details: If True, include full list of changed files
+    """
+    try:
+        from state import run_reconcile, get_changes_since_sha, get_repo_state, init_db
+
+        init_db()
+
+        # Get changes for detail view
+        repo_state = get_repo_state()
+        from_sha = repo_state.get("last_reconcile_sha") or repo_state.get("last_processed_sha")
+
+        # Run reconciliation
+        result = run_reconcile()
+
+        # Get detailed changes if requested
+        changes_detail = None
+        if include_details:
+            changes = get_changes_since_sha(from_sha)
+            changes_detail = [
+                ChangedFileInfo(
+                    path=c["path"],
+                    location=c["location"],
+                    status=c["status"],
+                    old_path=c.get("old_path"),
+                )
+                for c in changes
+            ]
+
+        return ReconcileResponse(
+            run_id=result["id"],
+            run_at=result["run_at"],
+            from_sha=result["from_sha"],
+            to_sha=result["to_sha"],
+            files_changed=result["files_changed"],
+            changes_by_location={
+                "inbox": result["inbox_changes"],
+                "atlas": result["atlas_changes"],
+                "meta": result["meta_changes"],
+            },
+            tasks=result["tasks_generated"],
+            changes=changes_detail,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reconciliation failed: {e}")
 
 
 @app.post("/api/inbox", response_model=InboxResponse)

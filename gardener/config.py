@@ -7,9 +7,14 @@ from pathlib import Path
 DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
 INBOX_DIR = DATA_DIR / "inbox"
 ATLAS_DIR = DATA_DIR / "atlas"
+META_DIR = DATA_DIR / "meta"
 TASKS_FILE = DATA_DIR / "tasks.md"
 AGENTS_FILE = DATA_DIR / "AGENTS.md"
 GARDENER_FILE = DATA_DIR / "GARDENER.md"
+
+# State tracking (SQLite)
+STATE_DIR = DATA_DIR / ".gardener"
+STATE_DB = STATE_DIR / "state.db"
 
 # Gardener automation settings
 GARDENER_AUTO = os.environ.get("GARDENER_AUTO", "false").lower() in ("true", "1", "yes")

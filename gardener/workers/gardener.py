@@ -127,7 +127,7 @@ def ensure_git_repo() -> bool:
 
 
 def git_commit(file_path: Path, message: str) -> bool:
-    """Commit changes to git."""
+    """Commit changes to git and record in state."""
     if not is_git_available():
         return False
 
@@ -146,6 +146,23 @@ def git_commit(file_path: Path, message: str) -> bool:
                 check=True,
                 capture_output=True,
             )
+            # Record commit in state database
+            try:
+                from state import (
+                    get_current_head, get_current_branch, record_processed_commit,
+                    update_file_state, record_provenance, PROVENANCE_GARDENER
+                )
+                head = get_current_head()
+                if head:
+                    branch = get_current_branch()
+                    record_processed_commit(head, branch, message)
+                # Update file state tracking
+                if file_path.exists():
+                    update_file_state(file_path)
+                    # Record provenance
+                    record_provenance(file_path, PROVENANCE_GARDENER, head)
+            except Exception as e:
+                logger.warning(f"Failed to record commit in state: {e}")
             return True
         return False  # No changes to commit
     except subprocess.CalledProcessError as e:
@@ -192,8 +209,13 @@ def process_inbox(backend: GardenerBackend | None = None) -> list[dict]:
                     # Git commit
                     git_commit(target_path, f"Gardener: Processed {inbox_file.name}")
 
-                    # Delete original
+                    # Delete original and remove from state tracking
                     inbox_file.unlink()
+                    try:
+                        from state import remove_file_state
+                        remove_file_state(inbox_file)
+                    except Exception:
+                        pass  # State tracking is optional
 
                     # Also commit the deletion
                     git_commit(inbox_file, f"Gardener: Removed {inbox_file.name} from inbox")
