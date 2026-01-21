@@ -13,6 +13,7 @@
   - `RUN_ID=20260121-155938-C KEEP_DATA=1 STRESS_SCENARIOS=C STRESS_LARGE_FILE_COUNT=200 STRESS_LARGE_COMMIT_COUNT=200 STRESS_LARGE_MIN_KB=1 STRESS_LARGE_MAX_KB=5 STRESS_RECONCILE_TIMEOUT=120 STRESS_SEARCH_TIMEOUT=30 ./scripts/run_stress_tests.sh` (failed during commit seeding; no metrics)
   - `RUN_ID=20260121-160023-C KEEP_DATA=1 STRESS_SCENARIOS=C STRESS_LARGE_FILE_COUNT=200 STRESS_LARGE_COMMIT_COUNT=1 STRESS_LARGE_MIN_KB=1 STRESS_LARGE_MAX_KB=5 STRESS_RECONCILE_TIMEOUT=120 STRESS_SEARCH_TIMEOUT=30 ./scripts/run_stress_tests.sh`
   - `RUN_ID=20260121-160137-D KEEP_DATA=1 STRESS_SCENARIOS=D STRESS_DB_THREADS=20 STRESS_DB_DURATION_S=30 STRESS_DB_LOCK_HOLD_S=0.2 STRESS_DB_LOCK_IDLE_S=0.05 STRESS_DB_LOCK_CYCLES=100 STRESS_DB_TIMEOUT_S=0 STRESS_DB_RETRY_COUNT=3 STRESS_DB_RETRY_DELAY_S=0.05 STRESS_DB_EXPECT_RECOVERY=1 ./scripts/run_stress_tests.sh` (failed: deadlock_like > 0)
+  - `RUN_ID=20260121-162035-E KEEP_DATA=1 STRESS_SCENARIOS=E STRESS_CHAOS=1 STRESS_CHAOS_ACTIONS=delete-inbox STRESS_CHAOS_CONFIRM_INBOX=1 STRESS_CHAOS_INBOX_DELETE=1 STRESS_CHAOS_INBOX_BACKUP=1 STRESS_CHAOS_RECOVER=1 ./scripts/run_stress_tests.sh`
 
 ## Environment
 
@@ -107,18 +108,26 @@
 
 ### Scenario E (Chaos/manual)
 
-- Metrics file: not run
-- Actions executed: not run
-- Recovery checks: not run
-- Integrity: not run
-- Notes:
+- Run ID: 20260121-162035-E
+- Metrics file: `/home/flight/.pkms-stress/20260121-162035-E/metrics/scenario-E.json`
+- Actions executed:
+  - delete-inbox: ok (deleted 0, backup `/home/flight/.pkms-stress/20260121-162035-E/inbox/chaos-backup`)
+- Recovery checks:
+  - status: ok (200)
+  - reconcile: ok (200)
+- Integrity:
+  - inbox_count: 0
+  - archive_count: 0
+  - db_integrity: ok
+- Notes: light test (no AI usage); no inbox files existed to delete.
 
 ## Aggregated Metrics
 
 - Summary file: `/home/flight/.pkms-stress/20260121-150640-A/metrics/summary.json`
 - Summary file: `/home/flight/.pkms-stress/20260121-154353-B/metrics/summary.json`
 - Summary file: `/home/flight/.pkms-stress/20260121-160023-C/metrics/summary.json`
-- Highlights: scenario A + scenario B low-cost run + scenario C low-cost run (see above)
+- Summary file: `/home/flight/.pkms-stress/20260121-162035-E/metrics/summary.json`
+- Highlights: scenario A + scenario B low-cost run + scenario C low-cost run + scenario E light run (see above)
 
 ## Anomalies / Regressions
 
@@ -127,6 +136,7 @@
 - Scenario B latency is high (p50 ~13s), likely dominated by LLM response time.
 - Scenario C first attempt failed during commit seeding (git reported nothing to commit).
 - Scenario D deadlock_like > 0 caused assertion failure under recovery expectations.
+- Scenario E deleted 0 inbox files because the inbox was empty.
 
 ## Follow-ups
 
