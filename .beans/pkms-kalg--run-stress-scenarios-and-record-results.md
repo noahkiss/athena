@@ -14,6 +14,6 @@ Run stress scenarios A-E (as approved) and fill in TEST-RESULT-YYYY-MM-DD.md wit
 - [x] Confirm scenario order and config with user
 - [x] Run scenario A and record metrics + observations
 - [x] Run scenario B and record metrics + observations
-- [ ] Run scenario C and record metrics + observations
-- [ ] Run scenario D and record DB contention results
+- [x] Run scenario C and record metrics + observations
+- [x] Run scenario D and record DB contention results
 - [ ] Run scenario E (manual) and record recovery outcomes
