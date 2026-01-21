@@ -1,0 +1,34 @@
+---
+# pkms-0k8s
+title: Create stress test orchestration script
+status: draft
+type: task
+created_at: 2026-01-21T07:32:01Z
+updated_at: 2026-01-21T07:32:01Z
+parent: pkms-9qpq
+---
+
+Implement a script to run all stress tests and verify integrity.
+
+## Requirements
+
+- Set up isolated test environment
+- Generate test data
+- Start gardener in background
+- Run all stress test scenarios
+- Verify data integrity after each scenario
+- Generate comprehensive report
+- Clean up test environment
+
+## Deliverables
+
+- `scripts/run_stress_tests.sh` - Main orchestration script
+- JSON metrics output format
+- CI integration (optional, for regression detection)
+
+## CI Integration (Optional)
+
+Add limited stress test to CI for regression detection:
+- Run on main branch pushes only
+- Use smaller dataset (100 notes instead of 1000)
+- Quick smoke test for critical scenarios
