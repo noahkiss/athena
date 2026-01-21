@@ -66,18 +66,13 @@ bootstrap_gardener() {
   curl -s -X POST "http://127.0.0.1:${GARDENER_PORT}/api/bootstrap" >/tmp/gardener-bootstrap.json
 }
 
-ensure_ai_keys() {
-  if [[ -n "${AI_API_KEY:-}" || -n "${OPENAI_API_KEY:-}" || -n "${ANTHROPIC_API_KEY:-}" ]]; then
-    return 0
-  fi
-  echo "Missing AI_API_KEY/OPENAI_API_KEY/ANTHROPIC_API_KEY for ask/refine endpoints."
-  return 1
-}
-
 run_pytest() {
   local scenario=$1
   local test_file=$2
   export STRESS_METRICS_PATH="$STRESS_METRICS_DIR/scenario-${scenario}.json"
+  if [[ -n "${gardener_pid:-}" ]]; then
+    export STRESS_GARDENER_PID="$gardener_pid"
+  fi
   pushd "$ROOT_DIR/gardener" >/dev/null
   uv run pytest "$test_file" -m stress -s
   popd >/dev/null
@@ -98,11 +93,10 @@ for scenario in "${scenario_list[@]}"; do
       run_pytest "A" "tests/stress/test_stress_ingestion.py"
       ;;
     B)
-      if ! ensure_ai_keys; then
-        echo "Skipping scenario B due to missing AI keys."
-        continue
-      fi
       run_pytest "B" "tests/stress/test_stress_concurrent.py"
+      ;;
+    C)
+      run_pytest "C" "tests/stress/test_stress_large_repo.py"
       ;;
     *)
       echo "Unknown scenario: $scenario"
@@ -110,7 +104,7 @@ for scenario in "${scenario_list[@]}"; do
       ;;
   esac
   echo "Scenario $scenario metrics: $STRESS_METRICS_DIR/scenario-${scenario}.json"
-  done
+done
 
 if [[ "$KEEP_DATA" != "1" ]]; then
   echo "Stress test complete. Data dir: $STRESS_DATA_DIR (will be removed on exit)"

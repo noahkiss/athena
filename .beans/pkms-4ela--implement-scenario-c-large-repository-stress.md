@@ -1,10 +1,11 @@
 ---
 # pkms-4ela
 title: 'Implement Scenario C: Large repository stress'
-status: draft
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-21T07:31:25Z
-updated_at: 2026-01-21T07:31:25Z
+updated_at: 2026-01-21T15:42:29Z
 parent: pkms-9qpq
 ---
 
@@ -42,3 +43,10 @@ Test performance degradation with accumulated data (long-term simulation).
 - `gardener/tests/stress/test_stress_large_repo.py`
 - Large data fixture generator
 - Performance benchmark tracking
+
+## Checklist
+- [x] Seed atlas with large note set and git history
+- [x] Exercise reconcile/search/status/inbox operations
+- [x] Record latency, git ops, and DB scan metrics
+- [x] Capture memory usage during reconciliation when possible
+- [x] Wire scenario C into `scripts/run_stress_tests.sh`
