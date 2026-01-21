@@ -21,8 +21,10 @@ STRESS_SCENARIOS=${STRESS_SCENARIOS:-"A"}
 STRESS_METRICS_DIR=${STRESS_METRICS_DIR:-"$STRESS_DATA_DIR/metrics"}
 
 export DATA_DIR="$STRESS_DATA_DIR"
+export RUN_ID
 export STRESS_DATA_DIR
 export STRESS_BASE_URL
+export STRESS_METRICS_DIR
 export RUN_STRESS_TESTS=1
 
 if [[ "$KEEP_DATA" != "1" ]]; then
@@ -78,6 +80,39 @@ run_pytest() {
   popd >/dev/null
 }
 
+aggregate_metrics() {
+  local output_path="$STRESS_METRICS_DIR/summary.json"
+  pushd "$ROOT_DIR/gardener" >/dev/null
+  uv run python - <<'PY'
+import glob
+import json
+import os
+from datetime import datetime, timezone
+
+metrics_dir = os.environ["STRESS_METRICS_DIR"]
+paths = sorted(glob.glob(os.path.join(metrics_dir, "scenario-*.json")))
+scenarios = {}
+for path in paths:
+    with open(path, "r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    scenario = payload.get("scenario") or os.path.splitext(os.path.basename(path))[0]
+    scenarios[str(scenario)] = payload.get("summary", payload)
+
+summary = {
+    "run_id": os.environ.get("RUN_ID"),
+    "data_dir": os.environ.get("STRESS_DATA_DIR"),
+    "base_url": os.environ.get("STRESS_BASE_URL"),
+    "generated_at": datetime.now(timezone.utc).isoformat(),
+    "scenarios": scenarios,
+}
+
+with open(os.path.join(metrics_dir, "summary.json"), "w", encoding="utf-8") as handle:
+    json.dump(summary, handle, indent=2)
+PY
+  popd >/dev/null
+  echo "Aggregated metrics: $output_path"
+}
+
 if [[ "$START_GARDENER" == "1" ]]; then
   start_gardener
 fi
@@ -105,6 +140,10 @@ for scenario in "${scenario_list[@]}"; do
   esac
   echo "Scenario $scenario metrics: $STRESS_METRICS_DIR/scenario-${scenario}.json"
 done
+
+if compgen -G "$STRESS_METRICS_DIR/scenario-*.json" >/dev/null; then
+  aggregate_metrics
+fi
 
 if [[ "$KEEP_DATA" != "1" ]]; then
   echo "Stress test complete. Data dir: $STRESS_DATA_DIR (will be removed on exit)"

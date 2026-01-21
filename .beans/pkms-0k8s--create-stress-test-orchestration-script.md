@@ -29,7 +29,7 @@ Implement a script to run all stress tests and verify integrity.
 ## Checklist
 - [x] Create initial runner script with env wiring
 - [x] Start/stop gardener and bootstrap data dir
-- [ ] Add report aggregation across scenarios
+- [x] Add report aggregation across scenarios
 - [ ] Add optional CI smoke mode
 
 ## CI Integration (Optional)
