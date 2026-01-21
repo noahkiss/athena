@@ -1,10 +1,10 @@
 ---
 # pkms-0k8s
 title: Create stress test orchestration script
-status: draft
+status: in-progress
 type: task
 created_at: 2026-01-21T07:32:01Z
-updated_at: 2026-01-21T07:32:01Z
+updated_at: 2026-01-21T14:33:27Z
 parent: pkms-9qpq
 ---
 
@@ -25,6 +25,12 @@ Implement a script to run all stress tests and verify integrity.
 - `scripts/run_stress_tests.sh` - Main orchestration script
 - JSON metrics output format
 - CI integration (optional, for regression detection)
+
+## Checklist
+- [x] Create initial runner script with env wiring
+- [x] Start/stop gardener and bootstrap data dir
+- [ ] Add report aggregation across scenarios
+- [ ] Add optional CI smoke mode
 
 ## CI Integration (Optional)
 
