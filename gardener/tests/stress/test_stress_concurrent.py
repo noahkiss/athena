@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import random
 from functools import partial
@@ -33,6 +34,7 @@ def test_sustained_concurrent_operations(
     ask_threads = int(os.environ.get("STRESS_ASK_THREADS", "10"))
     refine_threads = int(os.environ.get("STRESS_REFINE_THREADS", "5"))
     submit_rps = float(os.environ.get("STRESS_SUBMIT_RPS", "5"))
+    ai_call_multiplier = float(os.environ.get("STRESS_AI_CALL_MULTIPLIER", "3"))
 
     note_pool_dir = tmp_path / "note-pool"
     manifest = note_generator(
@@ -61,8 +63,47 @@ def test_sustained_concurrent_operations(
     if data_dir:
         baseline_integrity = IntegrityChecker(Path(data_dir)).report()
 
+    ask_interval = 0.8
+    refine_interval = 1.2
+
+    expected_ask = 0
+    expected_refine = 0
+    expected_total = 0
+    ai_call_cap = None
+    if ai_call_multiplier > 0:
+        if ask_threads > 0:
+            expected_ask = int((math.ceil(duration_s / ask_interval) + 1) * ask_threads)
+        if refine_threads > 0:
+            expected_refine = int((math.ceil(duration_s / refine_interval) + 1) * refine_threads)
+        expected_total = expected_ask + expected_refine
+        if expected_total > 0:
+            ai_call_cap = int(math.ceil(expected_total * ai_call_multiplier))
+
     stop_time = time.time() + duration_s
+    stop_event = threading.Event()
     lock = threading.Lock()
+    ai_lock = threading.Lock()
+    ask_count = 0
+    refine_count = 0
+    cap_triggered = False
+    cap_reason = None
+
+    def _reserve_ai_call(kind: str) -> bool:
+        nonlocal ask_count, refine_count, cap_triggered, cap_reason
+        with ai_lock:
+            if stop_event.is_set():
+                return False
+            total = ask_count + refine_count
+            if ai_call_cap is not None and total + 1 > ai_call_cap:
+                cap_triggered = True
+                cap_reason = f"ai_call_cap_exceeded total={total} cap={ai_call_cap}"
+                stop_event.set()
+                return False
+            if kind == "ask":
+                ask_count += 1
+            else:
+                refine_count += 1
+        return True
     def _record(result):
         with lock:
             metrics_collector.record(result)
@@ -72,7 +113,7 @@ def test_sustained_concurrent_operations(
 
     def _submit_worker(seed: int):
         rng = random.Random(seed)
-        while time.time() < stop_time:
+        while time.time() < stop_time and not stop_event.is_set():
             path = rng.choice(note_paths)
             content = path.read_text(encoding="utf-8")
             spec = RequestSpec(method="POST", path="/api/inbox", json_body={"content": content})
@@ -83,24 +124,28 @@ def test_sustained_concurrent_operations(
     def _browse_worker(seed: int):
         rng = random.Random(seed)
         paths = ["/api/browse", "/api/browse/projects", "/api/browse/journal"]
-        while time.time() < stop_time:
+        while time.time() < stop_time and not stop_event.is_set():
             spec = RequestSpec(method="GET", path=rng.choice(paths))
             _record(stress_client.request(spec))
             time.sleep(0.5)
 
     def _ask_worker(seed: int):
         rng = random.Random(seed)
-        while time.time() < stop_time:
+        while time.time() < stop_time and not stop_event.is_set():
+            if not _reserve_ai_call("ask"):
+                break
             spec = RequestSpec(method="POST", path="/api/ask", json_body={"question": rng.choice(questions)})
             _record(stress_client.request(spec))
-            time.sleep(0.8)
+            time.sleep(ask_interval)
 
     def _refine_worker(seed: int):
         rng = random.Random(seed)
-        while time.time() < stop_time:
+        while time.time() < stop_time and not stop_event.is_set():
+            if not _reserve_ai_call("refine"):
+                break
             spec = RequestSpec(method="POST", path="/api/refine", json_body={"content": rng.choice(refine_snippets)})
             _record(stress_client.request(spec))
-            time.sleep(1.2)
+            time.sleep(refine_interval)
 
     workers = []
     workers.extend(partial(_submit_worker, seed) for seed in range(submit_threads))
@@ -117,6 +162,21 @@ def test_sustained_concurrent_operations(
 
     summary = metrics_collector.summary()
     summary["elapsed_s"] = elapsed_s
+    summary["ai_calls"] = {
+        "ask": ask_count,
+        "refine": refine_count,
+        "total": ask_count + refine_count,
+    }
+    summary["ai_call_expected"] = {
+        "ask": expected_ask,
+        "refine": expected_refine,
+        "total": expected_total,
+    }
+    summary["ai_call_cap"] = ai_call_cap
+    summary["ai_call_cap_multiplier"] = ai_call_multiplier
+    summary["ai_call_cap_triggered"] = cap_triggered
+    if cap_triggered:
+        summary["ai_call_cap_reason"] = cap_reason
     submitted_total = sum(1 for result in metrics_collector.results if result.path == "/api/inbox")
     submitted_ok = sum(
         1 for result in metrics_collector.results if result.path == "/api/inbox" and result.ok
@@ -150,4 +210,6 @@ def test_sustained_concurrent_operations(
         payload = {"scenario": "B", "summary": summary}
         Path(metrics_path).write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
+    if cap_triggered:
+        pytest.fail(f"AI call cap exceeded: {cap_reason}")
     assert summary["errors"] == 0

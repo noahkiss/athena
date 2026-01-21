@@ -118,6 +118,7 @@ STRESS_BROWSE_THREADS=10
 STRESS_ASK_THREADS=10
 STRESS_REFINE_THREADS=5
 STRESS_SUBMIT_RPS=5
+STRESS_AI_CALL_MULTIPLIER=3      # Stop ask/refine when total calls exceed expected * multiplier (0 disables)
 STRESS_EXPECT_ARCHIVE=1           # Assert no data loss
 ```
 
