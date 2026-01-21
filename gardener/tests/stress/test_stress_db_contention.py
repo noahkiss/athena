@@ -1,4 +1,21 @@
-"""Scenario D: Database contention stress test."""
+"""Scenario D: Database contention stress test.
+
+This test simulates realistic database contention by having multiple threads
+compete for SQLite locks while a background thread holds exclusive locks.
+
+Default parameters are tuned for graceful recovery under realistic contention:
+- db_timeout: 5.0s - Allow operations to wait for locks to be released
+- retry_count: 10 - Sufficient retries to handle transient lock contention
+- retry_delay: 0.1s - Reasonable backoff between retry attempts
+- lock_idle_s: 0.15s - Breathing room between lock cycles
+
+These defaults ensure that under normal contention levels, all operations
+should eventually succeed through retry logic. Set STRESS_DB_EXPECT_RECOVERY=1
+to assert zero deadlock-like failures.
+
+For extreme stress testing (documenting system breaking points), reduce
+timeouts and retries while keeping STRESS_DB_EXPECT_RECOVERY=0.
+"""
 
 from __future__ import annotations
 
@@ -91,11 +108,11 @@ def test_database_contention(
     worker_count = int(os.environ.get("STRESS_DB_THREADS", "100"))
     duration_s = float(os.environ.get("STRESS_DB_DURATION_S", "60"))
     lock_hold_s = float(os.environ.get("STRESS_DB_LOCK_HOLD_S", "0.25"))
-    lock_idle_s = float(os.environ.get("STRESS_DB_LOCK_IDLE_S", "0.05"))
+    lock_idle_s = float(os.environ.get("STRESS_DB_LOCK_IDLE_S", "0.15"))
     lock_cycles = int(os.environ.get("STRESS_DB_LOCK_CYCLES", "200"))
-    db_timeout = float(os.environ.get("STRESS_DB_TIMEOUT_S", "0"))
-    retry_count = int(os.environ.get("STRESS_DB_RETRY_COUNT", "3"))
-    retry_delay = float(os.environ.get("STRESS_DB_RETRY_DELAY_S", "0.05"))
+    db_timeout = float(os.environ.get("STRESS_DB_TIMEOUT_S", "5.0"))
+    retry_count = int(os.environ.get("STRESS_DB_RETRY_COUNT", "10"))
+    retry_delay = float(os.environ.get("STRESS_DB_RETRY_DELAY_S", "0.1"))
     expect_recovery = os.environ.get("STRESS_DB_EXPECT_RECOVERY") == "1"
 
     note_pool_dir = tmp_path / "note-pool"

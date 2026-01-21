@@ -1,10 +1,11 @@
 ---
 # pkms-7mgr
 title: Plan Scenario D recovery expectations
-status: in-progress
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-21T21:15:20Z
-updated_at: 2026-01-21T21:15:20Z
+updated_at: 2026-01-21T21:34:46Z
 ---
 
 Define a fix for Scenario D (DB contention) recovery expectations so tests can pass meaningfully. Reference investigation bean pkms-pt6j.

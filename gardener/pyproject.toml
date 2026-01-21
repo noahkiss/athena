@@ -35,3 +35,6 @@ ignore = ["E501"]  # Line too long - handled by formatter
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "stress: stress/load testing scenarios (deselect with '-m \"not stress\"')",
+]

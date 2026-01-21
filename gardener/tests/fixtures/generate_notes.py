@@ -11,7 +11,7 @@ import json
 import random
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -123,7 +123,7 @@ def slugify(value: str) -> str:
 
 def random_date(rng: random.Random) -> str:
     days_ago = rng.randint(0, 365)
-    date = datetime.utcnow() - timedelta(days=days_ago, hours=rng.randint(0, 23))
+    date = datetime.now(timezone.utc) - timedelta(days=days_ago, hours=rng.randint(0, 23))
     return date.strftime("%Y-%m-%d")
 
 
@@ -273,7 +273,7 @@ def generate_notes(
             rng=rng,
         )
         slug = slugify(title)
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         filename = f"{timestamp}-{category}-{slug}-{idx:04d}.md"
         (out_dir / filename).write_text(content, encoding="utf-8")
         manifest.append(
