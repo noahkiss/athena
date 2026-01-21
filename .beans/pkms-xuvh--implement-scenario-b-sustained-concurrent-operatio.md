@@ -1,10 +1,10 @@
 ---
 # pkms-xuvh
 title: 'Implement Scenario B: Sustained concurrent operations'
-status: draft
+status: in-progress
 type: task
 created_at: 2026-01-21T07:31:16Z
-updated_at: 2026-01-21T07:31:16Z
+updated_at: 2026-01-21T14:24:44Z
 parent: pkms-9qpq
 ---
 
@@ -38,3 +38,9 @@ Validate raw data preservation under mixed concurrent load.
 - `gardener/tests/stress/test_stress_concurrent.py`
 - Multi-endpoint load simulator
 - Data integrity checker
+
+## Checklist
+- [x] Add sustained mixed-load stress test skeleton
+- [x] Emit JSON metrics summary when configured
+- [x] Add integrity report hook (optional)
+- [ ] Add data loss verification (archive vs inbox counts)
