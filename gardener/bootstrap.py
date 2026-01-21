@@ -1,7 +1,6 @@
 """Bootstrap script to initialize the Athena knowledge base structure."""
 
 import os
-import shutil
 from pathlib import Path
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
@@ -45,6 +44,7 @@ AGENTS_MD = """# ATHENA SYSTEM CONTEXT (Live Document)
 **System Architecture:**
 - This directory is the source of truth.
 - `/inbox`: Where new thoughts land.
+- `/inbox/archive`: Backup of raw inbox notes (ignore unless explicitly asked).
 - `/atlas`: The permanent storage (living structure - categories may evolve).
 - `/meta`: Machine-generated indexes (do not edit manually).
 - `/tasks.md`: Ambiguity log for notes the Gardener couldn't classify.
@@ -57,7 +57,7 @@ AGENTS_MD = """# ATHENA SYSTEM CONTEXT (Live Document)
 
 GARDENER_MD = """# THE GARDENER PROTOCOL
 
-**Goal:** Process files in `/inbox` and move them to `/atlas`.
+**Goal:** Process files in `/inbox`, move them to `/atlas`, and archive originals in `/inbox/archive`.
 
 ## Classification Rules
 Analyze the content and move to the best matching directory:
@@ -162,15 +162,22 @@ def bootstrap(force: bool = False) -> dict:
     git_initialized = False
     if not git_dir.exists():
         import subprocess
+
         try:
-            subprocess.run(["git", "init"], cwd=DATA_DIR, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "init"], cwd=DATA_DIR, check=True, capture_output=True
+            )
             subprocess.run(
                 ["git", "config", "user.email", "gardener@athena.local"],
-                cwd=DATA_DIR, check=True, capture_output=True
+                cwd=DATA_DIR,
+                check=True,
+                capture_output=True,
             )
             subprocess.run(
                 ["git", "config", "user.name", "Athena Gardener"],
-                cwd=DATA_DIR, check=True, capture_output=True
+                cwd=DATA_DIR,
+                check=True,
+                capture_output=True,
             )
             results["created"].append(str(git_dir))
             git_initialized = True
@@ -180,11 +187,16 @@ def bootstrap(force: bool = False) -> dict:
     # Make baseline commit if we just initialized git and created files
     if git_initialized and results["created"]:
         import subprocess
+
         try:
-            subprocess.run(["git", "add", "-A"], cwd=DATA_DIR, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "add", "-A"], cwd=DATA_DIR, check=True, capture_output=True
+            )
             subprocess.run(
                 ["git", "commit", "-m", "Athena: Initialize knowledge base"],
-                cwd=DATA_DIR, check=True, capture_output=True
+                cwd=DATA_DIR,
+                check=True,
+                capture_output=True,
             )
             results["baseline_commit"] = True
         except subprocess.CalledProcessError:
@@ -192,7 +204,15 @@ def bootstrap(force: bool = False) -> dict:
 
     # Initialize state database
     try:
-        from state import init_db, get_current_head, record_processed_commit, get_current_branch, update_repo_root_hash, get_repo_root_hash
+        from db import init_db
+        from git_state import (
+            get_current_branch,
+            get_current_head,
+            get_repo_root_hash,
+            record_processed_commit,
+            update_repo_root_hash,
+        )
+
         init_db()
         results["state_db_initialized"] = True
 
@@ -216,7 +236,9 @@ if __name__ == "__main__":
     import json
 
     parser = argparse.ArgumentParser(description="Bootstrap Athena knowledge base")
-    parser.add_argument("--force", action="store_true", help="Overwrite existing config files")
+    parser.add_argument(
+        "--force", action="store_true", help="Overwrite existing config files"
+    )
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
 

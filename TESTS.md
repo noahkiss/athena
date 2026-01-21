@@ -1,6 +1,6 @@
 # Testing Guide
 
-This repo is designed for end-to-end testing with live LLM backends. The scripts below run repeatable flows that clean a test data directory, generate fresh content each run, and exercise multiple entrypoints.
+This repo includes fast unit tests for the Gardener backend plus end-to-end testing with live LLM backends. The E2E scripts run repeatable flows that clean a test data directory, generate fresh content each run, and exercise multiple entrypoints.
 
 ## Prereqs
 
@@ -11,10 +11,29 @@ This repo is designed for end-to-end testing with live LLM backends. The scripts
   - `AI_API_KEY=...`
   - `AI_MODEL_FAST=...`
   - `AI_MODEL_THINKING=...`
-- Python deps installed via uv:
-  - `cd gardener && uv sync`
+- Python deps installed via uv (include dev deps for tests/lint):
+  - `cd gardener && uv sync --dev`
 - Node deps for Scribe (only needed when `TEST_SCRIBE=1`):
   - `cd scribe && npm ci`
+
+## Quick Start (Unit Tests + Lint)
+
+Fast local checks that mirror CI:
+
+```bash
+cd gardener
+uv run pytest
+uv run ruff format --check .
+uv run ruff check .
+```
+
+Scribe build (runs in CI too):
+
+```bash
+cd scribe
+npm ci
+npm run build
+```
 
 ## Quick Start (Full E2E)
 

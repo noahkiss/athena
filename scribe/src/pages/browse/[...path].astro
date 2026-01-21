@@ -1,11 +1,19 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { marked } from 'marked';
+import DOMPurify from 'isomorphic-dompurify';
 
 const GARDENER_URL =
   process.env.GARDENER_URL ||
   import.meta.env.GARDENER_URL ||
   'http://localhost:8000';
+const AUTH_TOKEN =
+  process.env.ATHENA_AUTH_TOKEN ||
+  import.meta.env.ATHENA_AUTH_TOKEN ||
+  '';
+const authHeaders = AUTH_TOKEN
+  ? { Authorization: `Bearer ${AUTH_TOKEN}`, 'X-Auth-Token': AUTH_TOKEN }
+  : {};
 
 const { path } = Astro.params;
 const currentPath = path || '';
@@ -17,7 +25,7 @@ try {
   const url = currentPath
     ? `${GARDENER_URL}/api/browse/${currentPath}`
     : `${GARDENER_URL}/api/browse`;
-  const response = await fetch(url);
+  const response = await fetch(url, { headers: authHeaders });
   if (response.ok) {
     data = await response.json();
   } else {
@@ -34,10 +42,11 @@ const breadcrumbs = pathParts.map((part, index) => ({
   path: pathParts.slice(0, index + 1).join('/'),
 }));
 
-// Render markdown if it's a file
+// Render markdown if it's a file, then sanitize to prevent XSS
 let renderedContent = '';
 if (data?.is_file && data?.content) {
-  renderedContent = await marked(data.content);
+  const rawHtml = await marked(data.content);
+  renderedContent = DOMPurify.sanitize(rawHtml);
 }
 ---
 
@@ -47,9 +56,14 @@ if (data?.is_file && data?.content) {
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-light text-gray-400">Browse</h1>
-        <a href="/" class="text-blue-400 hover:text-blue-300 text-sm">
-          &larr; Capture
-        </a>
+        <div class="flex items-center gap-3 text-sm">
+          <a href="/" class="text-blue-400 hover:text-blue-300">
+            &larr; Capture
+          </a>
+          <a href="/archive" class="text-blue-400 hover:text-blue-300">
+            Archive
+          </a>
+        </div>
       </div>
 
       <!-- Breadcrumb -->

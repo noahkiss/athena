@@ -2,6 +2,8 @@
 
 An AI-native Personal Knowledge Management System. Capture thoughts quickly, let AI organize them into a structured knowledge base.
 
+> **Note:** Athena is designed for **single-user, self-hosted** deployments. It's your personal knowledge base running on your own hardware. Features like rate limiting and multi-tenancy are intentionally omitted to keep the system simple and focused.
+
 ## Overview
 
 Athena follows a simple philosophy: **capture fast, organize later**. Drop raw notes into an inbox, and the Gardener agent classifies, formats, and files them into your personal atlas.
@@ -105,6 +107,41 @@ GARDENER_MODE=watch
 GARDENER_DEBOUNCE=5.0
 ```
 
+### Logging
+
+Control log verbosity with:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `INFO` | Log level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
+| `LOG_FORMAT` | `%(asctime)s - %(name)s - %(levelname)s - %(message)s` | Python logging format string |
+
+**Examples:**
+```env
+# Verbose debugging
+LOG_LEVEL=DEBUG
+
+# Only warnings and errors
+LOG_LEVEL=WARNING
+```
+
+### Authentication (Optional)
+
+By default, the API and MCP server are open on localhost. To require a shared token, set:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ATHENA_AUTH_TOKEN` | - | Shared token that enables auth for `/api/*` and `/mcp` |
+
+**Example:**
+```env
+ATHENA_AUTH_TOKEN=your-secret-token
+```
+
+**Send the token via:**
+- `Authorization: Bearer <token>`
+- `X-Auth-Token: <token>`
+
 ## Knowledge Base Structure
 
 The `athena/` directory serves as a template. On first run, bootstrap creates:
@@ -115,6 +152,7 @@ athena/
 ├── GARDENER.md     # Classification rules
 ├── tasks.md       # Ambiguity log (uncertain classifications)
 ├── inbox/         # Landing zone for new notes
+│   └── archive/   # Raw backup of processed notes (ignored by agents)
 └── atlas/         # Organized knowledge
     ├── projects/
     ├── people/
@@ -138,6 +176,10 @@ The atlas structure evolves as the Gardener encounters new content types.
 | `POST` | `/api/refine` | Get AI suggestions for a note |
 | `POST` | `/api/ask` | Ask a question using your knowledge base |
 | `GET` | `/api/browse/{path}` | Browse atlas |
+| `GET` | `/api/archive/{path}` | Browse archived inbox notes |
+
+**Notes:**
+- `/api/refine` HTML output is sanitized server-side to strip unsafe tags/attributes.
 
 ## MCP Server
 
@@ -161,6 +203,15 @@ claude mcp add --transport http athena-pkms http://localhost:8000/mcp
 ```
 
 **Tools:** `read_notes`, `add_note`
+
+## Testing & CI
+
+- Gardener unit tests: `cd gardener && uv run pytest`
+- Gardener formatting + lint: `cd gardener && uv run ruff format --check .` then `uv run ruff check .`
+- Scribe build: `cd scribe && npm run build`
+- Full E2E flow: `./scripts/test_e2e_full.sh` (see `TESTS.md` for options)
+
+CI runs the Gardener tests + ruff checks and the Scribe build on PRs.
 
 ## Development
 

@@ -4,6 +4,13 @@ const GARDENER_URL =
   process.env.GARDENER_URL ||
   import.meta.env.GARDENER_URL ||
   'http://localhost:8000';
+const AUTH_TOKEN =
+  process.env.ATHENA_AUTH_TOKEN ||
+  import.meta.env.ATHENA_AUTH_TOKEN ||
+  '';
+const authHeaders = AUTH_TOKEN
+  ? { Authorization: `Bearer ${AUTH_TOKEN}`, 'X-Auth-Token': AUTH_TOKEN }
+  : {};
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -19,7 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     const response = await fetch(`${GARDENER_URL}/api/ask`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ question }),
     });
 

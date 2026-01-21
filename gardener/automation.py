@@ -2,16 +2,15 @@
 
 import asyncio
 import logging
-from pathlib import Path
 
-from watchfiles import awatch, Change
+from watchfiles import Change, awatch
 
 from config import (
-    INBOX_DIR,
     GARDENER_AUTO,
+    GARDENER_DEBOUNCE,
     GARDENER_MODE,
     GARDENER_POLL_INTERVAL,
-    GARDENER_DEBOUNCE,
+    INBOX_DIR,
 )
 
 logger = logging.getLogger(__name__)
@@ -60,7 +59,8 @@ async def watch_inbox() -> None:
         async for changes in awatch(INBOX_DIR, recursive=False):
             # Filter for markdown file additions
             md_changes = [
-                (change, path) for change, path in changes
+                (change, path)
+                for change, path in changes
                 if path.endswith(".md") and change in (Change.added, Change.modified)
             ]
 

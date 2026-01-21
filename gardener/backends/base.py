@@ -1,10 +1,15 @@
 """Abstract base class for gardener AI backends."""
 
+import json
+import logging
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+
+logger = logging.getLogger(__name__)
 
 
 class GardenerAction(BaseModel):
@@ -14,6 +19,88 @@ class GardenerAction(BaseModel):
     path: str
     content: str
     reasoning: str
+
+
+class ParseError(Exception):
+    """Raised when LLM response cannot be parsed into GardenerAction."""
+
+    def __init__(
+        self, message: str, response_text: str, original_error: Exception | None = None
+    ):
+        super().__init__(message)
+        self.response_text = response_text
+        self.original_error = original_error
+
+
+def extract_json_from_response(response_text: str) -> str:
+    """Extract JSON string from LLM response, handling markdown code blocks.
+
+    Args:
+        response_text: Raw response from the LLM
+
+    Returns:
+        Extracted JSON string
+
+    Raises:
+        ParseError: If no valid JSON structure can be found
+    """
+    text = response_text.strip()
+
+    # Try markdown code block with json tag
+    if "```json" in text:
+        match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+
+    # Try generic markdown code block
+    if "```" in text:
+        match = re.search(r"```\s*(.*?)\s*```", text, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+
+    # Try to find JSON object directly (starts with { and ends with })
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        return match.group(0)
+
+    # Return the whole text as a last resort
+    return text
+
+
+def parse_gardener_action(response_text: str) -> GardenerAction:
+    """Parse LLM response into a GardenerAction.
+
+    Args:
+        response_text: Raw response from the LLM
+
+    Returns:
+        Validated GardenerAction
+
+    Raises:
+        ParseError: If the response cannot be parsed or validated
+    """
+    try:
+        json_str = extract_json_from_response(response_text)
+        data = json.loads(json_str)
+        return GardenerAction(**data)
+    except json.JSONDecodeError as e:
+        logger.warning(
+            f"JSON parse error: {e}. Response preview: {response_text[:500]}"
+        )
+        raise ParseError(
+            f"Invalid JSON in response: {e}",
+            response_text=response_text,
+            original_error=e,
+        )
+    except ValidationError as e:
+        logger.warning(
+            f"Validation error: {e}. Response preview: {response_text[:500]}"
+        )
+        raise ParseError(
+            f"Response missing required fields: {e}",
+            response_text=response_text,
+            original_error=e,
+        )
 
 
 @dataclass

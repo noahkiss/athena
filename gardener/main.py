@@ -3,36 +3,149 @@
 import asyncio
 import contextlib
 import logging
+import subprocess
+import time
 from datetime import datetime
+from pathlib import Path
 from uuid import uuid4
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from automation import start_automation, get_automation_status
+from automation import get_automation_status, start_automation
 from backends import get_backend, get_backend_config
-from config import DATA_DIR, INBOX_DIR, ATLAS_DIR
+from config import (
+    ARCHIVE_DIR,
+    ATLAS_DIR,
+    AUTH_ENABLED,
+    AUTH_TOKEN,
+    DATA_DIR,
+    INBOX_DIR,
+    MAX_CONTENT_SIZE,
+    setup_logging,
+)
 from mcp_tools import mcp
 
+# Configure logging before anything else
+setup_logging()
 logger = logging.getLogger(__name__)
+
+
+class FileContentCache:
+    """Simple in-memory cache for file contents with mtime validation."""
+
+    def __init__(self, max_entries: int = 500, ttl_seconds: float = 60.0):
+        self._cache: dict[
+            Path, tuple[float, float, str]
+        ] = {}  # path -> (mtime, cached_at, content)
+        self._max_entries = max_entries
+        self._ttl = ttl_seconds
+
+    def get(self, path: Path) -> str | None:
+        """Get cached content if valid, or None if stale/missing."""
+        if path not in self._cache:
+            return None
+        mtime, cached_at, content = self._cache[path]
+        now = time.time()
+        # Check TTL
+        if now - cached_at > self._ttl:
+            del self._cache[path]
+            return None
+        # Check mtime hasn't changed
+        try:
+            current_mtime = path.stat().st_mtime
+            if current_mtime != mtime:
+                del self._cache[path]
+                return None
+        except OSError:
+            del self._cache[path]
+            return None
+        return content
+
+    def put(self, path: Path, content: str) -> None:
+        """Cache file content."""
+        if len(self._cache) >= self._max_entries:
+            # Evict oldest entry
+            oldest = min(self._cache.items(), key=lambda x: x[1][1])
+            del self._cache[oldest[0]]
+        try:
+            mtime = path.stat().st_mtime
+            self._cache[path] = (mtime, time.time(), content)
+        except OSError:
+            pass
+
+    def clear(self) -> None:
+        """Clear all cached entries."""
+        self._cache.clear()
+
+
+_atlas_content_cache = FileContentCache()
+
+
+# --- Authentication ---
+
+
+async def verify_auth_token(
+    authorization: str | None = Header(None),
+    x_auth_token: str | None = Header(None),
+) -> None:
+    """Verify authentication token if auth is enabled.
+
+    Accepts token via:
+    - Authorization: Bearer <token>
+    - X-Auth-Token: <token>
+
+    If AUTH_ENABLED is False, this is a no-op (always passes).
+    """
+    if not AUTH_ENABLED:
+        return
+
+    token = None
+
+    # Check Authorization header (Bearer token)
+    if authorization:
+        parts = authorization.split(" ", 1)
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
+
+    # Fall back to X-Auth-Token header
+    if not token and x_auth_token:
+        token = x_auth_token
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Provide token via 'Authorization: Bearer <token>' or 'X-Auth-Token' header.",
+        )
+
+    if token != AUTH_TOKEN:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid authentication token.",
+        )
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage MCP session and automation lifecycle."""
+    logger.info("Gardener starting up...")
+
     # Start automation task
     automation_task = asyncio.create_task(start_automation())
 
     async with mcp.session_manager.run():
+        logger.info("Gardener ready to accept requests")
         yield
 
     # Cleanup automation on shutdown
+    logger.info("Gardener shutting down...")
     automation_task.cancel()
     try:
         await automation_task
     except asyncio.CancelledError:
         pass
+    logger.info("Gardener shutdown complete")
 
 
 app = FastAPI(
@@ -41,25 +154,72 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+@app.middleware("http")
+async def auth_middleware(request, call_next):
+    """Check authentication for MCP endpoints when auth is enabled.
+
+    API endpoints use the verify_auth_token dependency directly.
+    This middleware handles auth for the mounted MCP app.
+    """
+    if AUTH_ENABLED and request.url.path.startswith("/mcp"):
+        token = None
+
+        # Check Authorization header (Bearer token)
+        auth_header = request.headers.get("authorization")
+        if auth_header:
+            parts = auth_header.split(" ", 1)
+            if len(parts) == 2 and parts[0].lower() == "bearer":
+                token = parts[1]
+
+        # Fall back to X-Auth-Token header
+        if not token:
+            token = request.headers.get("x-auth-token")
+
+        if not token:
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "detail": "Authentication required. Provide token via 'Authorization: Bearer <token>' or 'X-Auth-Token' header."
+                },
+            )
+
+        if token != AUTH_TOKEN:
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Invalid authentication token."},
+            )
+
+    return await call_next(request)
+
+
 # Mount MCP server at /mcp (FastMCP app configured to serve at "/")
 app.mount("/mcp", mcp.streamable_http_app())
 
 
 # --- Request/Response Models ---
 
+
 class InboxRequest(BaseModel):
     """Request model for submitting a note to the inbox."""
+
     content: str
 
 
 class InboxResponse(BaseModel):
     """Response model for inbox submission."""
+
     filename: str
     message: str
 
 
 class AutomationStatus(BaseModel):
     """Automation configuration status."""
+
     enabled: bool
     mode: str | None
     poll_interval: int | None
@@ -68,6 +228,7 @@ class AutomationStatus(BaseModel):
 
 class GitState(BaseModel):
     """Git repository state."""
+
     available: bool
     current_head: str | None = None
     current_branch: str | None = None
@@ -81,6 +242,7 @@ class GitState(BaseModel):
 
 class StatusResponse(BaseModel):
     """Response model for health check."""
+
     status: str
     inbox_path: str
     inbox_exists: bool
@@ -95,12 +257,14 @@ class StatusResponse(BaseModel):
 
 class GardenerTriggerResponse(BaseModel):
     """Response model for gardener trigger."""
+
     message: str
     status: str
 
 
 class BootstrapResponse(BaseModel):
     """Response model for bootstrap endpoint."""
+
     created: list[str]
     skipped: list[str]
     exists: list[str]
@@ -109,11 +273,13 @@ class BootstrapResponse(BaseModel):
 
 class SnapshotRequest(BaseModel):
     """Request model for snapshot endpoint."""
+
     message: str | None = None
 
 
 class SnapshotResponse(BaseModel):
     """Response model for snapshot endpoint."""
+
     committed: bool
     message: str
     files_changed: int | None = None
@@ -121,6 +287,7 @@ class SnapshotResponse(BaseModel):
 
 class ChangedFileInfo(BaseModel):
     """Info about a changed file."""
+
     path: str
     location: str
     status: str
@@ -129,6 +296,7 @@ class ChangedFileInfo(BaseModel):
 
 class ReconcileResponse(BaseModel):
     """Response model for reconcile endpoint."""
+
     run_id: int
     run_at: str
     from_sha: str | None
@@ -147,16 +315,19 @@ class ReconcileResponse(BaseModel):
 
 class RefineRequest(BaseModel):
     """Request model for content refinement."""
+
     content: str
 
 
 class AskRequest(BaseModel):
     """Request model for knowledge retrieval."""
+
     question: str
 
 
 class BrowseItem(BaseModel):
     """Item in a directory listing."""
+
     name: str
     type: str  # "file" or "directory"
     path: str
@@ -164,6 +335,7 @@ class BrowseItem(BaseModel):
 
 class BrowseResponse(BaseModel):
     """Response model for browse endpoint."""
+
     path: str
     items: list[BrowseItem]
     content: str | None = None
@@ -172,20 +344,25 @@ class BrowseResponse(BaseModel):
 
 # --- Endpoints ---
 
+
 def get_git_state() -> GitState | None:
     """Get the current git repository state."""
     try:
-        from state import (
-            get_current_head, get_current_branch, get_repo_state,
-            get_dirty_files, get_dirty_summary, check_repo_identity, init_db,
-            update_last_seen_sha
+        from db import init_db
+        from file_state import get_dirty_summary
+        from git_state import (
+            check_repo_identity,
+            get_current_branch,
+            get_current_head,
+            get_dirty_files,
+            get_repo_state,
+            update_last_seen_sha,
         )
 
         # Ensure state DB is initialized
         init_db()
 
         # Check if git is available
-        import subprocess
         try:
             subprocess.run(["git", "--version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -223,11 +400,19 @@ def get_git_state() -> GitState | None:
             dirty_files_preview=dirty_preview,
             repo_identity_valid=identity_valid,
         )
-    except Exception:
+    except (ImportError, OSError, subprocess.CalledProcessError) as e:
+        logger.warning(f"Could not get git state: {e}")
+        return None
+    except Exception as e:
+        logger.exception(f"Unexpected error getting git state: {e}")
         return None
 
 
-@app.get("/api/status", response_model=StatusResponse)
+@app.get(
+    "/api/status",
+    response_model=StatusResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
 async def get_status() -> StatusResponse:
     """Health check endpoint."""
     agents_file = DATA_DIR / "AGENTS.md"
@@ -249,23 +434,33 @@ async def get_status() -> StatusResponse:
     )
 
 
-@app.post("/api/bootstrap", response_model=BootstrapResponse)
+@app.post(
+    "/api/bootstrap",
+    response_model=BootstrapResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
 async def bootstrap_knowledge_base(force: bool = False) -> BootstrapResponse:
     """Initialize the knowledge base directory structure."""
     from bootstrap import bootstrap
+
     results = bootstrap(force=force)
     return BootstrapResponse(**results)
 
 
-@app.post("/api/snapshot", response_model=SnapshotResponse)
-async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> SnapshotResponse:
+@app.post(
+    "/api/snapshot",
+    response_model=SnapshotResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def snapshot_changes(
+    request: SnapshotRequest = SnapshotRequest(),
+) -> SnapshotResponse:
     """Commit any uncommitted changes in the data directory.
 
     This is for manually snapshotting changes made outside of Gardener
     (e.g., manual edits, external tools). Does not auto-commit by default;
     must be explicitly called.
     """
-    import subprocess
 
     # Check if git is available
     try:
@@ -306,7 +501,7 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
     # - Regular: "XY path\x00"
     # - Rename/Copy: "XY new_path\x00old_path\x00"
     parsed_changes: list[dict] = []
-    entries = result.stdout.split(b'\x00')
+    entries = result.stdout.split(b"\x00")
     i = 0
     while i < len(entries):
         entry = entries[i]
@@ -314,24 +509,36 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
             i += 1
             continue
 
-        status = entry[:2].decode('utf-8', errors='replace')
-        path = entry[3:].decode('utf-8', errors='replace')
+        status = entry[:2].decode("utf-8", errors="replace")
+        path = entry[3:].decode("utf-8", errors="replace")
 
-        if status[0] == 'R' or status[1] == 'R':
+        if status[0] == "R" or status[1] == "R":
             # Rename: next entry is the old path (old file no longer exists)
-            old_path = entries[i + 1].decode('utf-8', errors='replace') if i + 1 < len(entries) else None
-            parsed_changes.append({'status': 'rename', 'path': path, 'old_path': old_path})
+            old_path = (
+                entries[i + 1].decode("utf-8", errors="replace")
+                if i + 1 < len(entries)
+                else None
+            )
+            parsed_changes.append(
+                {"status": "rename", "path": path, "old_path": old_path}
+            )
             i += 2  # Skip both entries
-        elif status[0] == 'C' or status[1] == 'C':
+        elif status[0] == "C" or status[1] == "C":
             # Copy: next entry is the source path (source file still exists)
-            old_path = entries[i + 1].decode('utf-8', errors='replace') if i + 1 < len(entries) else None
-            parsed_changes.append({'status': 'copy', 'path': path, 'old_path': old_path})
+            old_path = (
+                entries[i + 1].decode("utf-8", errors="replace")
+                if i + 1 < len(entries)
+                else None
+            )
+            parsed_changes.append(
+                {"status": "copy", "path": path, "old_path": old_path}
+            )
             i += 2  # Skip both entries
-        elif status[0] == 'D' or status[1] == 'D':
-            parsed_changes.append({'status': 'delete', 'path': path, 'old_path': None})
+        elif status[0] == "D" or status[1] == "D":
+            parsed_changes.append({"status": "delete", "path": path, "old_path": None})
             i += 1
         else:
-            parsed_changes.append({'status': 'modify', 'path': path, 'old_path': None})
+            parsed_changes.append({"status": "modify", "path": path, "old_path": None})
             i += 1
 
     changed_files = len(parsed_changes)
@@ -348,11 +555,14 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
 
         # Update state DB after successful commit
         try:
-            from state import (
-                get_current_head, get_current_branch, record_processed_commit,
-                update_file_state, record_provenance, remove_file_state,
-                PROVENANCE_MANUAL
+            from file_state import remove_file_state, update_file_state
+            from git_state import (
+                get_current_branch,
+                get_current_head,
+                record_processed_commit,
             )
+            from provenance import PROVENANCE_MANUAL, record_provenance
+
             head = get_current_head()
             if head:
                 branch = get_current_branch()
@@ -360,35 +570,46 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
 
                 # Update file state and provenance based on change type
                 for change in parsed_changes:
-                    file_path = change['path']
+                    file_path = change["path"]
                     full_path = DATA_DIR / file_path
 
-                    if change['status'] == 'delete':
+                    if change["status"] == "delete":
                         # Remove deleted files from state
                         remove_file_state(full_path)
-                        record_provenance(file_path, PROVENANCE_MANUAL, head,
-                                          {'action': 'delete'})
-                    elif change['status'] == 'rename':
+                        record_provenance(
+                            file_path, PROVENANCE_MANUAL, head, {"action": "delete"}
+                        )
+                    elif change["status"] == "rename":
                         # Remove old path, add new path
-                        if change['old_path']:
-                            remove_file_state(DATA_DIR / change['old_path'])
+                        if change["old_path"]:
+                            remove_file_state(DATA_DIR / change["old_path"])
                         if full_path.exists():
                             update_file_state(full_path)
-                        record_provenance(file_path, PROVENANCE_MANUAL, head,
-                                          {'action': 'rename', 'from': change['old_path']})
-                    elif change['status'] == 'copy':
+                        record_provenance(
+                            file_path,
+                            PROVENANCE_MANUAL,
+                            head,
+                            {"action": "rename", "from": change["old_path"]},
+                        )
+                    elif change["status"] == "copy":
                         # Keep source in state, add new path
                         if full_path.exists():
                             update_file_state(full_path)
-                        record_provenance(file_path, PROVENANCE_MANUAL, head,
-                                          {'action': 'copy', 'from': change['old_path']})
+                        record_provenance(
+                            file_path,
+                            PROVENANCE_MANUAL,
+                            head,
+                            {"action": "copy", "from": change["old_path"]},
+                        )
                     else:
                         # Add/modify
                         if full_path.exists():
                             update_file_state(full_path)
                             record_provenance(file_path, PROVENANCE_MANUAL, head)
-        except Exception:
-            pass  # State tracking is optional
+        except (ImportError, OSError) as e:
+            logger.debug(f"State tracking unavailable: {e}")
+        except Exception as e:
+            logger.warning(f"State tracking failed: {e}")
 
         return SnapshotResponse(
             committed=True,
@@ -402,7 +623,11 @@ async def snapshot_changes(request: SnapshotRequest = SnapshotRequest()) -> Snap
         )
 
 
-@app.post("/api/reconcile", response_model=ReconcileResponse)
+@app.post(
+    "/api/reconcile",
+    response_model=ReconcileResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
 async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
     """Detect and reconcile manual/external changes to the knowledge base.
 
@@ -423,10 +648,9 @@ async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
         include_details: If True, include full list of changed files
     """
     try:
-        from state import (
-            run_reconcile, get_changes_since_sha, init_db,
-            check_repo_identity, get_dirty_files, get_dirty_summary
-        )
+        from db import init_db
+        from file_state import get_changes_since_sha, get_dirty_summary, run_reconcile
+        from git_state import check_repo_identity, get_dirty_files
 
         init_db()
 
@@ -482,9 +706,24 @@ async def reconcile_changes(include_details: bool = False) -> ReconcileResponse:
         raise HTTPException(status_code=500, detail=f"Reconciliation failed: {e}")
 
 
-@app.post("/api/inbox", response_model=InboxResponse)
+@app.post(
+    "/api/inbox",
+    response_model=InboxResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
 async def submit_to_inbox(request: InboxRequest) -> InboxResponse:
     """Accept note content and save to inbox as timestamped markdown."""
+    # Validate content
+    content = request.content.strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Content cannot be empty")
+
+    if len(content) > MAX_CONTENT_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Content too large (max {MAX_CONTENT_SIZE // 1024}KB)",
+        )
+
     INBOX_DIR.mkdir(parents=True, exist_ok=True)
 
     now = datetime.now()
@@ -493,8 +732,10 @@ async def submit_to_inbox(request: InboxRequest) -> InboxResponse:
     filepath = INBOX_DIR / filename
 
     try:
-        filepath.write_text(request.content)
+        filepath.write_text(content)
+        logger.info(f"Saved note to inbox: {filename}")
     except OSError as e:
+        logger.error(f"Failed to write inbox file {filename}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to write file: {e}")
 
     return InboxResponse(filename=filename, message="Note saved to inbox")
@@ -503,11 +744,18 @@ async def submit_to_inbox(request: InboxRequest) -> InboxResponse:
 def run_gardener() -> None:
     """Run the gardener worker in the background."""
     from workers.gardener import process_inbox
+
     process_inbox()
 
 
-@app.post("/api/trigger-gardener", response_model=GardenerTriggerResponse)
-async def trigger_gardener(background_tasks: BackgroundTasks) -> GardenerTriggerResponse:
+@app.post(
+    "/api/trigger-gardener",
+    response_model=GardenerTriggerResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def trigger_gardener(
+    background_tasks: BackgroundTasks,
+) -> GardenerTriggerResponse:
     """Manually trigger the gardener to process the inbox."""
     background_tasks.add_task(run_gardener)
     return GardenerTriggerResponse(
@@ -518,24 +766,38 @@ async def trigger_gardener(background_tasks: BackgroundTasks) -> GardenerTrigger
 
 # --- Refine Endpoint ---
 
+
 def search_atlas(keywords: list[str], max_files: int = 5) -> list[dict]:
-    """Search atlas for files containing keywords."""
+    """Search atlas for files containing keywords.
+
+    Uses an in-memory cache for file contents to avoid repeated disk reads.
+    """
     if not ATLAS_DIR.exists():
         return []
 
     matches = []
+    keywords_lower = [kw.lower() for kw in keywords]
     for md_file in ATLAS_DIR.rglob("*.md"):
         try:
-            content = md_file.read_text().lower()
-            score = sum(1 for kw in keywords if kw.lower() in content)
+            # Try cache first, fall back to disk read
+            content = _atlas_content_cache.get(md_file)
+            if content is None:
+                content = md_file.read_text()
+                _atlas_content_cache.put(md_file, content)
+
+            content_lower = content.lower()
+            score = sum(1 for kw in keywords_lower if kw in content_lower)
             if score > 0:
-                preview = md_file.read_text()[:200].replace("\n", " ")
-                matches.append({
-                    "path": str(md_file.relative_to(ATLAS_DIR)),
-                    "score": score,
-                    "preview": preview,
-                })
-        except Exception:
+                preview = content[:200].replace("\n", " ")
+                matches.append(
+                    {
+                        "path": str(md_file.relative_to(ATLAS_DIR)),
+                        "score": score,
+                        "preview": preview,
+                    }
+                )
+        except (OSError, UnicodeDecodeError) as e:
+            logger.debug(f"Could not read {md_file}: {e}")
             continue
 
     matches.sort(key=lambda x: x["score"], reverse=True)
@@ -545,9 +807,27 @@ def search_atlas(keywords: list[str], max_files: int = 5) -> list[dict]:
 def extract_keywords(content: str) -> list[str]:
     """Extract potential keywords from content."""
     stopwords = {
-        "this", "that", "with", "from", "have", "been", "will", "would",
-        "could", "should", "about", "what", "when", "where", "which",
-        "their", "there", "these", "those", "some", "other"
+        "this",
+        "that",
+        "with",
+        "from",
+        "have",
+        "been",
+        "will",
+        "would",
+        "could",
+        "should",
+        "about",
+        "what",
+        "when",
+        "where",
+        "which",
+        "their",
+        "there",
+        "these",
+        "those",
+        "some",
+        "other",
     }
     words = content.lower().split()
     keywords = [
@@ -560,23 +840,33 @@ def extract_keywords(content: str) -> list[str]:
 
 def format_refine_html(result: str) -> str:
     """Format refinement result as HTML."""
+    import html
+
     html_parts = ['<div class="space-y-2 text-sm">']
 
     for line in result.strip().split("\n"):
         if line.startswith("TAGS:"):
-            tags = line.replace("TAGS:", "").strip()
-            html_parts.append(f'<p><span class="text-gray-400">Tags:</span> <span class="text-blue-400">{tags}</span></p>')
+            tags = html.escape(line.replace("TAGS:", "").strip())
+            html_parts.append(
+                f'<p><span class="text-gray-400">Tags:</span> <span class="text-blue-400">{tags}</span></p>'
+            )
         elif line.startswith("CATEGORY:"):
-            category = line.replace("CATEGORY:", "").strip()
-            html_parts.append(f'<p><span class="text-gray-400">Category:</span> <span class="text-green-400">{category}</span></p>')
+            category = html.escape(line.replace("CATEGORY:", "").strip())
+            html_parts.append(
+                f'<p><span class="text-gray-400">Category:</span> <span class="text-green-400">{category}</span></p>'
+            )
         elif line.startswith("RELATED:"):
             related_text = line.replace("RELATED:", "").strip()
             if related_text and related_text.lower() != "none":
-                html_parts.append(f'<p><span class="text-gray-400">Related:</span> <span class="text-purple-400">{related_text}</span></p>')
+                html_parts.append(
+                    f'<p><span class="text-gray-400">Related:</span> <span class="text-purple-400">{html.escape(related_text)}</span></p>'
+                )
         elif line.startswith("MISSING:"):
             missing = line.replace("MISSING:", "").strip()
             if missing and missing.lower() != "none":
-                html_parts.append(f'<p><span class="text-gray-400">Consider adding:</span> <span class="text-yellow-400">{missing}</span></p>')
+                html_parts.append(
+                    f'<p><span class="text-gray-400">Consider adding:</span> <span class="text-yellow-400">{html.escape(missing)}</span></p>'
+                )
 
     html_parts.append("</div>")
     return "\n".join(html_parts)
@@ -589,7 +879,9 @@ def format_ask_html(answer: str, related: list[dict]) -> str:
     escaped = html.escape(answer.strip())
     html_parts = ['<div class="space-y-3 text-sm">']
     if escaped:
-        html_parts.append(f'<div class="whitespace-pre-wrap text-gray-200">{escaped}</div>')
+        html_parts.append(
+            f'<div class="whitespace-pre-wrap text-gray-200">{escaped}</div>'
+        )
     else:
         html_parts.append('<p class="text-gray-500">No answer returned.</p>')
 
@@ -597,19 +889,21 @@ def format_ask_html(answer: str, related: list[dict]) -> str:
         html_parts.append('<div class="text-xs text-gray-400">Related files:</div>')
         html_parts.append('<ul class="list-disc list-inside text-xs text-gray-400">')
         for item in related:
-            html_parts.append(f'<li>{html.escape(item["path"])}</li>')
-        html_parts.append('</ul>')
+            html_parts.append(f"<li>{html.escape(item['path'])}</li>")
+        html_parts.append("</ul>")
 
     html_parts.append("</div>")
     return "\n".join(html_parts)
 
 
-@app.post("/api/refine")
+@app.post("/api/refine", dependencies=[Depends(verify_auth_token)])
 async def refine_content(request: RefineRequest):
     """Analyze content and suggest context, tags, and related notes."""
     content = (request.content or "").strip()
     if not content:
-        return HTMLResponse('<p class="text-gray-500">Enter some content to get suggestions.</p>')
+        return HTMLResponse(
+            '<p class="text-gray-500">Enter some content to get suggestions.</p>'
+        )
 
     # Search for related content
     keywords = extract_keywords(content)
@@ -625,17 +919,27 @@ async def refine_content(request: RefineRequest):
             result = backend.refine(content, related_context)
             return HTMLResponse(format_refine_html(result))
     except ValueError as e:
-        return HTMLResponse(f'<p class="text-yellow-500">AI not configured: {e}</p>')
+        import html
+
+        return HTMLResponse(
+            f'<p class="text-yellow-500">AI not configured: {html.escape(str(e))}</p>'
+        )
     except Exception as e:
-        return HTMLResponse(f'<p class="text-red-500">Refinement failed: {e}</p>')
+        import html
+
+        return HTMLResponse(
+            f'<p class="text-red-500">Refinement failed: {html.escape(str(e))}</p>'
+        )
 
 
-@app.post("/api/ask")
+@app.post("/api/ask", dependencies=[Depends(verify_auth_token)])
 async def ask_question(request: AskRequest):
     """Answer a question using the knowledge base as context."""
     question = (request.question or "").strip()
     if not question:
-        return HTMLResponse('<p class="text-gray-500">Enter a question to explore your notes.</p>')
+        return HTMLResponse(
+            '<p class="text-gray-500">Enter a question to explore your notes.</p>'
+        )
 
     keywords = extract_keywords(question)
     related = search_atlas(keywords, max_files=8)
@@ -650,25 +954,32 @@ async def ask_question(request: AskRequest):
             result = backend.ask(question, related_context)
             return HTMLResponse(format_ask_html(result, related))
     except ValueError as e:
-        return HTMLResponse(f'<p class="text-yellow-500">AI not configured: {e}</p>')
+        import html
+
+        return HTMLResponse(
+            f'<p class="text-yellow-500">AI not configured: {html.escape(str(e))}</p>'
+        )
     except Exception as e:
-        return HTMLResponse(f'<p class="text-red-500">Ask failed: {e}</p>')
+        import html
+
+        return HTMLResponse(
+            f'<p class="text-red-500">Ask failed: {html.escape(str(e))}</p>'
+        )
 
 
-# --- Browse Endpoint ---
+# --- Browse Endpoints ---
 
-@app.get("/api/browse/{path:path}", response_model=BrowseResponse)
-@app.get("/api/browse", response_model=BrowseResponse)
-async def browse_atlas(path: str = "") -> BrowseResponse:
-    """Browse the atlas directory structure."""
-    target = ATLAS_DIR / path if path else ATLAS_DIR
+
+def browse_directory(root: Path, path: str) -> BrowseResponse:
+    """Browse a directory tree rooted at the provided path."""
+    target = root / path if path else root
 
     if not target.exists():
         raise HTTPException(status_code=404, detail="Path not found")
 
-    # Security check: ensure path is within ATLAS_DIR
+    # Security check: ensure path is within root
     try:
-        target.resolve().relative_to(ATLAS_DIR.resolve())
+        target.resolve().relative_to(root.resolve())
     except ValueError:
         raise HTTPException(status_code=403, detail="Access denied")
 
@@ -686,14 +997,47 @@ async def browse_atlas(path: str = "") -> BrowseResponse:
     for item in sorted(target.iterdir()):
         if item.name.startswith("."):
             continue
-        item_path = str(item.relative_to(ATLAS_DIR))
-        items.append(BrowseItem(
-            name=item.name,
-            type="directory" if item.is_dir() else "file",
-            path=item_path,
-        ))
+        item_path = str(item.relative_to(root))
+        items.append(
+            BrowseItem(
+                name=item.name,
+                type="directory" if item.is_dir() else "file",
+                path=item_path,
+            )
+        )
 
     # Sort: directories first, then files
     items.sort(key=lambda x: (0 if x.type == "directory" else 1, x.name.lower()))
 
     return BrowseResponse(path=path, items=items, is_file=False)
+
+
+@app.get(
+    "/api/browse/{path:path}",
+    response_model=BrowseResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+@app.get(
+    "/api/browse",
+    response_model=BrowseResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def browse_atlas(path: str = "") -> BrowseResponse:
+    """Browse the atlas directory structure."""
+    return browse_directory(ATLAS_DIR, path)
+
+
+@app.get(
+    "/api/archive/{path:path}",
+    response_model=BrowseResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+@app.get(
+    "/api/archive",
+    response_model=BrowseResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def browse_archive(path: str = "") -> BrowseResponse:
+    """Browse archived inbox notes."""
+    ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+    return browse_directory(ARCHIVE_DIR, path)

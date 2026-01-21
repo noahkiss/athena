@@ -1,6 +1,6 @@
 # THE GARDENER PROTOCOL
 
-**Goal:** Process files in `/inbox` and move them to `/atlas`.
+**Goal:** Process files in `/inbox`, move them to `/atlas`, and archive originals in `/inbox/archive`.
 
 ## Classification Rules
 Analyze the content and move to the best matching directory:

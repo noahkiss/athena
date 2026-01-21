@@ -40,6 +40,7 @@ gardener/
 | `/api/refine` | POST | AI-assisted suggestions |
 | `/api/ask` | POST | Ask questions over the knowledge base |
 | `/api/browse/{path}` | GET | Browse atlas directory/files |
+| `/api/archive/{path}` | GET | Browse archived inbox notes |
 | `/mcp` | POST | MCP server endpoint (JSON-RPC) |
 
 ## Configuration
@@ -62,6 +63,16 @@ GARDENER_MODE=watch|poll            # Detection mode (default: watch)
 GARDENER_DEBOUNCE=5.0               # Seconds after last change (watch mode)
 GARDENER_POLL_INTERVAL=300          # Seconds between polls (poll mode)
 ```
+
+### Authentication (Optional)
+```bash
+# Enable shared-token auth for /api/* and /mcp endpoints
+ATHENA_AUTH_TOKEN=...               # When set, auth is required
+```
+
+Send the token via:
+- `Authorization: Bearer <token>`
+- `X-Auth-Token: <token>`
 
 ## Backend Architecture
 
@@ -101,7 +112,7 @@ The gardener worker (`workers/gardener.py`):
 3. Sends each note to the configured backend for classification
 4. Executes file operation (create/append/task)
 5. Commits changes to Git
-6. Deletes processed inbox file
+6. Archives processed inbox file to `/data/inbox/archive`
 
 **Automation** (`automation.py`):
 - Watch mode: Uses `watchfiles` to detect new inbox files, debounces, then processes

@@ -105,7 +105,12 @@ async def read_notes(path: str, query: str | None) -> list[TextContent]:
                 results.append(f"📄 {item.name}")
 
     if not results:
-        return [TextContent(type="text", text="No files found" + (f" matching '{query}'" if query else ""))]
+        return [
+            TextContent(
+                type="text",
+                text="No files found" + (f" matching '{query}'" if query else ""),
+            )
+        ]
 
     header = f"Contents of atlas/{path}" if path else "Atlas root"
     if query:
@@ -136,9 +141,12 @@ async def add_note(content: str) -> list[TextContent]:
 async def main():
     """Run the MCP server."""
     async with stdio_server() as (read_stream, write_stream):
-        await server.run(read_stream, write_stream, server.create_initialization_options())
+        await server.run(
+            read_stream, write_stream, server.create_initialization_options()
+        )
 
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

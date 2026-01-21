@@ -6,12 +6,17 @@ Uses the Anthropic SDK directly for:
 - Better error handling
 """
 
-import json
 import logging
 
 import anthropic
 
-from .base import BackendConfig, GardenerBackend, GardenerAction
+from .base import (
+    BackendConfig,
+    GardenerAction,
+    GardenerBackend,
+    ParseError,
+    parse_gardener_action,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +60,7 @@ Question:
 Provide a concise answer based on the related context. If the notes don't contain enough information, say so and suggest what to capture next.
 """
 
+
 class AnthropicBackend(GardenerBackend):
     """Native Anthropic Claude backend."""
 
@@ -97,8 +103,22 @@ class AnthropicBackend(GardenerBackend):
         note_content: str,
         filename: str,
         context: str,
+        max_retries: int = 2,
     ) -> GardenerAction:
-        """Classify a note using Claude."""
+        """Classify a note using Claude.
+
+        Args:
+            note_content: The raw note content
+            filename: Original filename for context
+            context: AGENTS.md + GARDENER.md content
+            max_retries: Number of retries on parse errors (default 2)
+
+        Returns:
+            GardenerAction with classification result
+
+        Raises:
+            ParseError: If classification fails after all retries
+        """
         user_message = f"""Please classify and process this note.
 
 ## Context Files
@@ -111,29 +131,55 @@ class AnthropicBackend(GardenerBackend):
 
 Respond with a JSON object specifying the action, path, and formatted content."""
 
-        response_text = self._chat(
-            user_message=user_message,
-            system=SYSTEM_PROMPT,
-            model=self.config.model_thinking,
-            temperature=0.3,
+        last_error = None
+        for attempt in range(max_retries + 1):
+            try:
+                response_text = self._chat(
+                    user_message=user_message,
+                    system=SYSTEM_PROMPT,
+                    model=self.config.model_thinking,
+                    temperature=0.3,
+                )
+
+                return parse_gardener_action(response_text)
+
+            except ParseError as e:
+                last_error = e
+                if attempt < max_retries:
+                    logger.info(
+                        f"Parse error on attempt {attempt + 1}/{max_retries + 1} "
+                        f"for {filename}, retrying..."
+                    )
+                    # Add hint to the message for retry
+                    user_message = f"""Your previous response could not be parsed as valid JSON.
+Error: {e}
+
+Please try again with a properly formatted JSON response.
+
+## Context Files
+{context}
+
+## Note to Process
+**Filename:** {filename}
+**Content:**
+{note_content}
+
+Respond with ONLY a valid JSON object (no markdown, no explanation):
+{{"action": "create|append|task", "path": "...", "content": "...", "reasoning": "..."}}"""
+
+        # All retries exhausted
+        logger.error(
+            f"Classification failed for {filename} after {max_retries + 1} attempts"
         )
-
-        # Extract JSON from response
-        if "```json" in response_text:
-            json_str = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            json_str = response_text.split("```")[1].split("```")[0].strip()
-        else:
-            json_str = response_text.strip()
-
-        data = json.loads(json_str)
-        return GardenerAction(**data)
+        raise last_error
 
     def refine(self, content: str, related_context: str) -> str:
         """Get refinement suggestions."""
         prompt = REFINE_PROMPT.format(
             content=content,
-            related_context=f"\n\nRelated files in knowledge base:\n{related_context}" if related_context else "",
+            related_context=f"\n\nRelated files in knowledge base:\n{related_context}"
+            if related_context
+            else "",
         )
 
         return self._chat(
@@ -147,7 +193,9 @@ Respond with a JSON object specifying the action, path, and formatted content.""
         """Answer a question using the knowledge base."""
         prompt = ASK_PROMPT.format(
             question=question,
-            related_context=f"\n\nRelated files in knowledge base:\n{related_context}" if related_context else "",
+            related_context=f"\n\nRelated files in knowledge base:\n{related_context}"
+            if related_context
+            else "",
         )
 
         return self._chat(

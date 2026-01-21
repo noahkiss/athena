@@ -1,11 +1,14 @@
 """MCP Tools for Athena PKMS - FastMCP integration."""
 
+import logging
 from datetime import datetime
 from uuid import uuid4
 
 from mcp.server.fastmcp import FastMCP
 
-from config import INBOX_DIR, ATLAS_DIR
+from config import ATLAS_DIR, INBOX_DIR
+
+logger = logging.getLogger(__name__)
 
 # Create MCP server with stateless HTTP mode.
 # Set streamable_http_path="/" so mounting at /mcp exposes /mcp (no double /mcp/mcp).
@@ -61,7 +64,8 @@ def read_notes(path: str = "", query: str | None = None) -> str:
                         rel_path = item.relative_to(ATLAS_DIR)
                         preview = content[:200].replace("\n", " ")
                         results.append(f"📄 {rel_path}: {preview}...")
-                except Exception:
+                except (OSError, UnicodeDecodeError) as e:
+                    logger.debug(f"Could not read {item}: {e}")
                     continue
             else:
                 results.append(f"📄 {item.name}")
@@ -99,5 +103,6 @@ def add_note(content: str) -> str:
     try:
         filepath.write_text(content)
         return f"Note saved to inbox: {filename}"
-    except Exception as e:
+    except OSError as e:
+        logger.warning(f"Failed to save note to {filepath}: {e}")
         return f"Error saving note: {e}"

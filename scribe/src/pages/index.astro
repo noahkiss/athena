@@ -7,9 +7,14 @@ import Layout from '../layouts/Layout.astro';
     <div class="w-full max-w-2xl">
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-light text-gray-400">Capture</h1>
-        <a href="/browse" class="text-blue-400 hover:text-blue-300 text-sm">
-          Browse &rarr;
-        </a>
+        <div class="flex items-center gap-3 text-sm">
+          <a href="/browse" class="text-blue-400 hover:text-blue-300">
+            Browse &rarr;
+          </a>
+          <a href="/archive" class="text-blue-400 hover:text-blue-300">
+            Archive &rarr;
+          </a>
+        </div>
       </div>
 
       <form

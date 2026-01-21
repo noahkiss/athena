@@ -9,6 +9,7 @@
 **System Architecture:**
 - This directory is the source of truth.
 - `/inbox`: Where new thoughts land.
+- `/inbox/archive`: Backup of raw inbox notes (ignore unless explicitly asked).
 - `/atlas`: The permanent storage (living structure - categories may evolve).
 - `/meta`: Machine-generated indexes (do not edit manually).
 - `/tasks.md`: Ambiguity log for notes the Gardener couldn't classify.
