@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import re
 import time
 from pathlib import Path
 
@@ -26,6 +27,13 @@ def _chunk_notes(note_paths: list[Path], buckets: int) -> list[list[Path]]:
     return chunks
 
 
+def _extract_expected_category(content: str) -> str | None:
+    match = re.search(r"^Expected-Category:\\s*(\\w+)", content, flags=re.MULTILINE)
+    if not match:
+        return None
+    return match.group(1).strip().lower()
+
+
 def test_high_volume_ingestion(
     tmp_path: Path,
     note_generator,
@@ -38,6 +46,14 @@ def test_high_volume_ingestion(
     min_kb = int(os.environ.get("STRESS_MIN_KB", "1"))
     max_kb = int(os.environ.get("STRESS_MAX_KB", "50"))
     stagger_max = float(os.environ.get("STRESS_STAGGER_MAX", "10"))
+    expect_classification = os.environ.get("STRESS_EXPECT_CLASSIFICATION") == "1"
+
+    if expect_classification:
+        from backends import get_backend_config
+
+        _, config = get_backend_config()
+        if not config.api_key:
+            pytest.skip("STRESS_EXPECT_CLASSIFICATION=1 requires an AI API key.")
 
     out_dir = tmp_path / "generated-notes"
     manifest = note_generator(
@@ -48,6 +64,7 @@ def test_high_volume_ingestion(
         seed=42,
     )
     note_paths = [out_dir / entry.filename for entry in manifest]
+    note_categories = {out_dir / entry.filename: entry.category for entry in manifest}
 
     rng = random.Random(42)
     chunks = _chunk_notes(note_paths, concurrency)
@@ -59,6 +76,9 @@ def test_high_volume_ingestion(
         results = []
         for path in paths:
             content = path.read_text(encoding="utf-8")
+            category = note_categories.get(path)
+            if expect_classification and category:
+                content = f"Expected-Category: {category}\\n{content}"
             spec = RequestSpec(method="POST", path="/api/inbox", json_body={"content": content})
             results.append(stress_client.request(spec))
         return results
@@ -74,6 +94,50 @@ def test_high_volume_ingestion(
     summary["notes_submitted"] = total_notes
     summary["elapsed_s"] = elapsed_s
     summary["throughput_per_s"] = total_notes / elapsed_s if elapsed_s > 0 else None
+
+    if expect_classification:
+        from workers.gardener import process_inbox
+
+        data_dir = os.environ.get("STRESS_DATA_DIR")
+        if not data_dir:
+            pytest.skip("STRESS_EXPECT_CLASSIFICATION=1 requires STRESS_DATA_DIR.")
+        archive_dir = Path(data_dir) / "inbox" / "archive" if data_dir else None
+        results = process_inbox()
+        classified_total = 0
+        classified_correct = 0
+        by_category: dict[str, dict[str, int]] = {}
+        for result in results:
+            if not result.get("success"):
+                continue
+            archive_path = archive_dir / result["file"] if archive_dir else None
+            if not archive_path or not archive_path.exists():
+                continue
+            expected = _extract_expected_category(
+                archive_path.read_text(encoding="utf-8", errors="ignore")
+            )
+            if not expected:
+                continue
+            classified_total += 1
+            actual_path = str(result.get("path") or "")
+            actual_category = Path(actual_path).parts[0] if actual_path else ""
+            match = actual_category == expected
+            classified_correct += 1 if match else 0
+            stats = by_category.setdefault(expected, {"total": 0, "correct": 0})
+            stats["total"] += 1
+            stats["correct"] += 1 if match else 0
+
+        accuracy = (
+            classified_correct / classified_total if classified_total > 0 else None
+        )
+        summary["classification"] = {
+            "total": classified_total,
+            "correct": classified_correct,
+            "accuracy": accuracy,
+            "by_category": by_category,
+        }
+        min_accuracy = float(os.environ.get("STRESS_MIN_CLASSIFICATION_ACCURACY", "0"))
+        if min_accuracy and accuracy is not None:
+            assert accuracy >= min_accuracy
 
     data_dir = os.environ.get("STRESS_DATA_DIR")
     if data_dir:

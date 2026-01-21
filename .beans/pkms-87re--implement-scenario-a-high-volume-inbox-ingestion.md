@@ -1,10 +1,11 @@
 ---
 # pkms-87re
 title: 'Implement Scenario A: High-volume inbox ingestion'
-status: in-progress
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-21T07:31:07Z
-updated_at: 2026-01-21T14:20:42Z
+updated_at: 2026-01-21T15:52:59Z
 parent: pkms-9qpq
 ---
 
@@ -43,4 +44,4 @@ Test classification accuracy and system stability under high concurrent load.
 - [x] Add ingestion stress test skeleton with env gating
 - [x] Emit JSON metrics summary when configured
 - [x] Add archive/integrity verification hooks
-- [ ] Add classification accuracy verification
+- [x] Add classification accuracy verification
