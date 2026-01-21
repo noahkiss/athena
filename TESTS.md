@@ -168,6 +168,29 @@ CI_SMOKE=1
 - Aggregated metrics: `$STRESS_METRICS_DIR/summary.json`
 - Gardener log (runner-started): `$STRESS_DATA_DIR/gardener.log`
 
+### Stress Test Reporting Framework
+
+Use a dated report file in `tests/` for each run. Start with the template:
+
+- `tests/TEST-RESULT-YYYY-MM-DD.md`
+
+Recommended sections:
+
+1. **Run metadata**
+   - Date/time, run ID, operator, commit SHA, branch
+2. **Environment**
+   - Host/OS, Python/uv versions, backend provider + model(s), auth enabled, hardware notes
+3. **Run configuration**
+   - Scenario list, key env vars, data dir, base URL, CI smoke mode, timeouts
+4. **Scenario results**
+   - Summaries from `scenario-*.json` (latency, errors, throughput, integrity, DB checks)
+5. **Anomalies / regressions**
+   - Errors, non-linear slowdowns, data loss, lock spikes, unexpected behavior
+6. **Follow-ups**
+   - Issues to file, tuning ideas, rerun notes
+
+Attach links or pasted summaries of the metrics JSONs as needed.
+
 ## Environment Flags
 
 Set these when you run the script:
