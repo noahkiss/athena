@@ -56,6 +56,11 @@ def test_sustained_concurrent_operations(
         "Draft a brief status update.",
     ]
 
+    data_dir = os.environ.get("STRESS_DATA_DIR")
+    baseline_integrity = None
+    if data_dir:
+        baseline_integrity = IntegrityChecker(Path(data_dir)).report()
+
     stop_time = time.time() + duration_s
     lock = threading.Lock()
     def _record(result):
@@ -112,14 +117,33 @@ def test_sustained_concurrent_operations(
 
     summary = metrics_collector.summary()
     summary["elapsed_s"] = elapsed_s
+    submitted_total = sum(1 for result in metrics_collector.results if result.path == "/api/inbox")
+    submitted_ok = sum(
+        1 for result in metrics_collector.results if result.path == "/api/inbox" and result.ok
+    )
+    summary["submitted_total"] = submitted_total
+    summary["submitted_ok"] = submitted_ok
 
-    data_dir = os.environ.get("STRESS_DATA_DIR")
     if data_dir:
         integrity = IntegrityChecker(Path(data_dir))
         summary["integrity"] = integrity.report()
         summary["db_integrity"] = integrity.db_integrity_check(
             Path(data_dir) / ".gardener" / "state.db"
         )
+        baseline = baseline_integrity or {"inbox_count": 0, "archive_count": 0}
+        inbox_new = summary["integrity"]["inbox_count"] - baseline["inbox_count"]
+        archive_new = summary["integrity"]["archive_count"] - baseline["archive_count"]
+        stored_new = inbox_new + archive_new
+        missing = max(0, submitted_ok - stored_new)
+        summary["data_loss"] = {
+            "inbox_new": inbox_new,
+            "archive_new": archive_new,
+            "stored_new": stored_new,
+            "submitted_ok": submitted_ok,
+            "missing": missing,
+        }
+        if os.environ.get("STRESS_EXPECT_ARCHIVE") == "1":
+            assert missing == 0
 
     metrics_path = os.environ.get("STRESS_METRICS_PATH")
     if metrics_path:

@@ -1,10 +1,11 @@
 ---
 # pkms-xuvh
 title: 'Implement Scenario B: Sustained concurrent operations'
-status: in-progress
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-21T07:31:16Z
-updated_at: 2026-01-21T14:24:44Z
+updated_at: 2026-01-21T15:48:39Z
 parent: pkms-9qpq
 ---
 
@@ -43,4 +44,4 @@ Validate raw data preservation under mixed concurrent load.
 - [x] Add sustained mixed-load stress test skeleton
 - [x] Emit JSON metrics summary when configured
 - [x] Add integrity report hook (optional)
-- [ ] Add data loss verification (archive vs inbox counts)
+- [x] Add data loss verification (archive vs inbox counts)
