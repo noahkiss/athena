@@ -222,6 +222,36 @@ class IntegrityChecker:
         }
 
 
+class DBLockSimulator:
+    """Hold an exclusive SQLite lock for contention testing."""
+
+    def __init__(self, db_path: Path, *, timeout: float = 0.0) -> None:
+        self.db_path = Path(db_path)
+        self.timeout = timeout
+        self._conn: sqlite3.Connection | None = None
+
+    def acquire(self) -> None:
+        if self._conn is not None:
+            return
+        self._conn = sqlite3.connect(self.db_path, timeout=self.timeout)
+        self._conn.execute("BEGIN EXCLUSIVE")
+
+    def release(self) -> None:
+        if self._conn is None:
+            return
+        try:
+            self._conn.execute("ROLLBACK")
+        except sqlite3.Error:
+            pass
+        self._conn.close()
+        self._conn = None
+
+    def hold_for(self, seconds: float) -> None:
+        self.acquire()
+        time.sleep(seconds)
+        self.release()
+
+
 def git_commit_count(repo_dir: Path) -> int | None:
     try:
         output = subprocess.check_output(

@@ -156,6 +156,12 @@ for scenario in "${scenario_list[@]}"; do
     C)
       run_pytest "C" "tests/stress/test_stress_large_repo.py"
       ;;
+    D)
+      run_pytest "D" "tests/stress/test_stress_db_contention.py"
+      ;;
+    E)
+      run_pytest "E" "tests/stress/test_stress_chaos.py"
+      ;;
     *)
       echo "Unknown scenario: $scenario"
       exit 1

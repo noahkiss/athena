@@ -76,6 +76,8 @@ RUN_STRESS_TESTS=1 STRESS_DATA_DIR=$HOME/.pkms-stress/manual \
 - **Scenario A (Ingestion throughput)**: High-volume `/api/inbox` ingestion with optional classification accuracy checks.
 - **Scenario B (Concurrent load)**: Sustained mixed traffic (`/api/inbox`, `/api/browse`, `/api/ask`, `/api/refine`) with optional data-loss checks.
 - **Scenario C (Large repo)**: Large atlas + git history, reconcile + search/refine + trigger flow with git/DB/memory metrics.
+- **Scenario D (DB contention)**: Forces SQLite locks while hitting write-heavy endpoints and direct DB writes.
+- **Scenario E (Chaos/manual)**: Opt-in failure injection to validate recovery and integrity (see `gardener/tests/stress/CHAOS.md`).
 
 Classification accuracy checks require a configured AI backend (API key + model) and `STRESS_DATA_DIR` (the runner sets this automatically).
 
@@ -127,6 +129,31 @@ STRESS_LARGE_COMMIT_COUNT=20000
 STRESS_LARGE_MIN_KB=1 STRESS_LARGE_MAX_KB=20
 STRESS_RECONCILE_TIMEOUT=300
 STRESS_SEARCH_TIMEOUT=60
+```
+
+Scenario D:
+
+```bash
+STRESS_DB_THREADS=100
+STRESS_DB_DURATION_S=60
+STRESS_DB_LOCK_HOLD_S=0.25
+STRESS_DB_LOCK_IDLE_S=0.05
+STRESS_DB_LOCK_CYCLES=200
+STRESS_DB_TIMEOUT_S=0
+STRESS_DB_RETRY_COUNT=3
+STRESS_DB_RETRY_DELAY_S=0.05
+STRESS_DB_EXPECT_RECOVERY=1
+```
+
+Scenario E (manual):
+
+```bash
+STRESS_CHAOS=1
+STRESS_CHAOS_ACTIONS=corrupt-db,delete-inbox,kill
+STRESS_CHAOS_CONFIRM_DB=1
+STRESS_CHAOS_CONFIRM_INBOX=1
+STRESS_CHAOS_CONFIRM_KILL=1
+STRESS_CHAOS_RECOVER=1
 ```
 
 CI smoke mode sets smaller defaults for load-based scenarios and disables optional asserts:

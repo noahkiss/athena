@@ -1,10 +1,11 @@
 ---
 # pkms-l740
 title: 'Implement Scenario E: Chaos testing (manual)'
-status: draft
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-21T07:31:43Z
-updated_at: 2026-01-21T07:31:43Z
+updated_at: 2026-01-21T16:19:12Z
 parent: pkms-9qpq
 ---
 
@@ -36,3 +37,10 @@ Test resilience and data integrity under failure conditions (manual execution on
 - `gardener/tests/stress/test_stress_chaos.py` (marked as manual-only)
 - Failure injection tools
 - Recovery procedure documentation
+
+## Checklist
+- [x] Add chaos failure injection helpers
+- [x] Implement Scenario E manual stress test
+- [x] Document chaos recovery procedures
+- [x] Wire Scenario E into stress runner
+- [x] Update TESTS.md for Scenario E coverage
