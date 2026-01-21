@@ -11,7 +11,8 @@ if [[ -f "$ROOT_DIR/.env" ]]; then
 fi
 
 RUN_ID=${RUN_ID:-"$(date +%Y%m%d-%H%M%S)-$RANDOM"}
-TEST_DATA_DIR=${TEST_DATA_DIR:-"$HOME/.pkms-test/$RUN_ID"}
+E2E_DATE=${E2E_DATE:-"$(date +%Y-%m-%d-%H%M%S)"}
+TEST_DATA_DIR=${TEST_DATA_DIR:-"$ROOT_DIR/tests/TEST-E2E-$E2E_DATE"}
 KEEP_DATA=${KEEP_DATA:-0}
 TEST_SCRIBE=${TEST_SCRIBE:-1}
 FORCE_BUILD=${FORCE_BUILD:-0}

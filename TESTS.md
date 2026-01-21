@@ -16,6 +16,40 @@ This repo includes fast unit tests for the Gardener backend plus end-to-end test
 - Node deps for Scribe (only needed when `TEST_SCRIBE=1`):
   - `cd scribe && npm ci`
 
+## Cost Management
+
+**Default approach: Prefer low-cost test runs**
+
+Tests that invoke AI backends (classification, ask, refine) incur API costs. Our default test parameters are tuned for **cost-conscious validation**:
+
+- **Small data sets**: 100-200 notes instead of 1,000-10,000
+- **Short durations**: 30-60s runs instead of 10+ minutes
+- **AI call caps**: Scenario B stops after expected AI call count × multiplier (default 3x)
+- **Minimal classification checks**: Only validate core functionality, not full accuracy
+
+**When to run full-scale tests:**
+- Before major releases (quarterly or as needed)
+- When investigating performance regressions
+- When validating LLM provider changes
+
+**Cost control environment variables:**
+```bash
+# Scenario A: Limit note count
+STRESS_NOTE_COUNT=100
+
+# Scenario B: Cap AI calls and reduce duration
+STRESS_DURATION_S=60
+STRESS_AI_CALL_MULTIPLIER=3  # Stop after 3x expected calls
+STRESS_ASK_THREADS=1
+STRESS_REFINE_THREADS=1
+
+# Scenario C: Smaller repository
+STRESS_LARGE_FILE_COUNT=200
+STRESS_LARGE_COMMIT_COUNT=1
+```
+
+**Recommended practice:** Run unit tests frequently (free), E2E tests regularly (low cost), and stress tests with reduced parameters. Reserve full-scale stress runs for validation milestones.
+
 ## Quick Start (Unit Tests + Lint)
 
 Fast local checks that mirror CI:
@@ -44,7 +78,7 @@ Runs Gardener API, MCP, retrieval, and (optionally) Scribe proxy checks.
 ```
 
 Defaults:
-- Creates a new test data dir under `$HOME/.pkms-test/<run-id>`
+- Creates a new test data dir under `tests/TEST-E2E-<timestamp>/`
 - Boots Gardener on `127.0.0.1:8000`
 - Builds and runs Scribe on `127.0.0.1:3000` (can be disabled)
 
@@ -67,7 +101,7 @@ If you need to invoke pytest directly:
 
 ```bash
 cd gardener
-RUN_STRESS_TESTS=1 STRESS_DATA_DIR=$HOME/.pkms-stress/manual \
+RUN_STRESS_TESTS=1 STRESS_DATA_DIR=../tests/TEST-RESULT-manual \
   uv run pytest tests/stress/test_stress_ingestion.py -m stress -s
 ```
 
@@ -138,13 +172,15 @@ Scenario D:
 STRESS_DB_THREADS=100
 STRESS_DB_DURATION_S=60
 STRESS_DB_LOCK_HOLD_S=0.25
-STRESS_DB_LOCK_IDLE_S=0.05
+STRESS_DB_LOCK_IDLE_S=0.15          # Default: realistic breathing room
 STRESS_DB_LOCK_CYCLES=200
-STRESS_DB_TIMEOUT_S=0
-STRESS_DB_RETRY_COUNT=3
-STRESS_DB_RETRY_DELAY_S=0.05
-STRESS_DB_EXPECT_RECOVERY=1
+STRESS_DB_TIMEOUT_S=5.0             # Default: allow waiting for locks (realistic)
+STRESS_DB_RETRY_COUNT=10            # Default: sufficient retry attempts
+STRESS_DB_RETRY_DELAY_S=0.1         # Default: reasonable backoff
+STRESS_DB_EXPECT_RECOVERY=1         # Asserts zero deadlock-like failures
 ```
+
+**Note:** Test defaults are tuned for **realistic contention** where retry logic should succeed. For extreme stress testing (documenting system limits), reduce timeout to 0 and retries to 3, and set `STRESS_DB_EXPECT_RECOVERY=0`.
 
 Scenario E (manual):
 
@@ -200,8 +236,8 @@ Set these when you run the script:
 # Keep test data directory after run
 KEEP_DATA=1 ./scripts/test_e2e_full.sh
 
-# Use a fixed test data directory
-TEST_DATA_DIR=$HOME/.pkms-test/manual ./scripts/test_e2e_full.sh
+# Use a custom test data directory
+TEST_DATA_DIR=./tests/TEST-E2E-custom ./scripts/test_e2e_full.sh
 
 # Skip Scribe proxy checks
 TEST_SCRIBE=0 ./scripts/test_e2e_full.sh
@@ -268,10 +304,32 @@ claude -p "Use read_notes to list atlas root, then summarize the relevant files 
 
 3) Confirm the tool call and verify the summary references the new atlas file.
 
+## Test Data Organization
+
+Test data is stored in repo-tracked `tests/` subdirectories:
+
+**Stress tests:**
+- Directory: `tests/TEST-RESULT-YYYY-MM-DD/`
+- Contains: metrics JSON files and test data (inbox, atlas, .gardener DB, etc.)
+- Report: `tests/TEST-RESULT-YYYY-MM-DD.md` (adjacent to data directory)
+
+**E2E tests:**
+- Directory: `tests/TEST-E2E-YYYY-MM-DD-HHMMSS/`
+- Contains: test data (not typically documented in reports)
+
+**Version control:**
+- Test report `.md` files and `metrics/*.json` are tracked in git
+- Large data subdirectories (inbox/, atlas/, .gardener/) are ignored via `tests/.gitignore`
+- This allows validating test results alongside test data without bloating the repo
+
 ## Cleanup
 
-Remove test data:
+Remove old test data (preserves reports):
 
 ```bash
-rm -rf $HOME/.pkms-test
+# Remove all test data subdirectories but keep .md reports
+find tests/ -type d \( -name "TEST-RESULT-*" -o -name "TEST-E2E-*" \) -exec rm -rf {} +
+
+# Or remove everything including reports
+rm -rf tests/TEST-RESULT-* tests/TEST-E2E-*
 ```

@@ -1,0 +1,20 @@
+# Track test reports and metrics
+!*.md
+!metrics/*.json
+
+# Ignore test data subdirectories
+TEST-RESULT-*/data/
+TEST-RESULT-*/inbox/
+TEST-RESULT-*/archive/
+TEST-RESULT-*/atlas/
+TEST-RESULT-*/.gardener/
+TEST-RESULT-*/meta/
+TEST-RESULT-*/gardener.log
+
+TEST-E2E-*/data/
+TEST-E2E-*/inbox/
+TEST-E2E-*/archive/
+TEST-E2E-*/atlas/
+TEST-E2E-*/.gardener/
+TEST-E2E-*/meta/
+TEST-E2E-*/gardener.log
