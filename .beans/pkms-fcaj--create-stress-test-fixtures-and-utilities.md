@@ -1,10 +1,11 @@
 ---
 # pkms-fcaj
 title: Create stress test fixtures and utilities
-status: in-progress
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-21T07:31:53Z
-updated_at: 2026-01-21T14:20:52Z
+updated_at: 2026-01-21T15:45:47Z
 parent: pkms-9qpq
 ---
 
@@ -47,4 +48,4 @@ Implement shared testing infrastructure for stress tests.
 - [x] Implement IntegrityChecker helpers
 - [x] Implement MetricsCollector with latency summary
 - [x] Add stress fixtures to `gardener/tests/conftest.py`
-- [ ] Add richer system metrics (DB/file/git)
+- [x] Add richer system metrics (DB/file/git)

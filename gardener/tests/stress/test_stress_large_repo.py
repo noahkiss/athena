@@ -4,14 +4,20 @@ from __future__ import annotations
 
 import json
 import os
-import sqlite3
 import subprocess
 import time
 from pathlib import Path
 
 import pytest
 
-from tests.stress.utils import MetricsCollector, RequestSpec
+from tests.stress.utils import (
+    MetricsCollector,
+    RequestSpec,
+    git_commit_count,
+    measure_db_scan,
+    measure_git_ops,
+    read_rss_kb,
+)
 
 
 pytestmark = pytest.mark.stress
@@ -71,83 +77,6 @@ def _add_commits(data_dir: Path, commit_count: int, *, start_index: int = 0) -> 
         _commit_all(data_dir, f"stress commit {idx}")
 
 
-def _git_commit_count(data_dir: Path) -> int | None:
-    try:
-        output = subprocess.check_output(
-            ["git", "-C", str(data_dir), "rev-list", "--count", "HEAD"],
-            stderr=subprocess.STDOUT,
-        )
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return None
-    try:
-        return int(output.decode("utf-8").strip())
-    except ValueError:
-        return None
-
-
-def _timed_command(command: list[str]) -> tuple[float | None, str | None]:
-    start = time.perf_counter()
-    try:
-        subprocess.check_output(command, stderr=subprocess.STDOUT)
-    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-        return None, str(exc)
-    return (time.perf_counter() - start) * 1000, None
-
-
-def _measure_git_ops(data_dir: Path) -> dict:
-    timings: dict[str, float | str | None] = {}
-    for label, cmd in (
-        ("git_status_ms", ["git", "-C", str(data_dir), "status", "--porcelain"]),
-        ("git_diff_ms", ["git", "-C", str(data_dir), "diff", "--stat"]),
-    ):
-        elapsed_ms, error = _timed_command(cmd)
-        timings[label] = elapsed_ms
-        if error:
-            timings[f"{label}_error"] = error
-    return timings
-
-
-def _read_rss_kb(pid: int) -> int | None:
-    status_path = Path("/proc") / str(pid) / "status"
-    try:
-        text = status_path.read_text(encoding="utf-8")
-    except OSError:
-        return None
-    for line in text.splitlines():
-        if line.startswith("VmRSS:"):
-            parts = line.split()
-            if len(parts) >= 2:
-                try:
-                    return int(parts[1])
-                except ValueError:
-                    return None
-    return None
-
-
-def _measure_db_scan(data_dir: Path) -> dict | None:
-    db_path = data_dir / ".gardener" / "state.db"
-    if not db_path.exists():
-        return None
-    conn = sqlite3.connect(db_path)
-    try:
-        start = time.perf_counter()
-        row = conn.execute("SELECT COUNT(*) FROM file_state").fetchone()
-        count = row[0] if row else 0
-        count_ms = (time.perf_counter() - start) * 1000
-        start = time.perf_counter()
-        cursor = conn.execute("SELECT file_path FROM file_state")
-        for _ in cursor:
-            pass
-        scan_ms = (time.perf_counter() - start) * 1000
-        return {
-            "row_count": count,
-            "count_ms": count_ms,
-            "scan_ms": scan_ms,
-        }
-    finally:
-        conn.close()
-
-
 def test_large_repository_stress(tmp_path: Path, note_generator, stress_client):
     data_dir_env = os.environ.get("STRESS_DATA_DIR")
     if not data_dir_env:
@@ -163,7 +92,7 @@ def test_large_repository_stress(tmp_path: Path, note_generator, stress_client):
     _ensure_git_repo(data_dir)
     _seed_atlas(data_dir, note_generator, tmp_path, file_count)
     _commit_all(data_dir, "seed large repo data", allow_empty=True)
-    current_commits = _git_commit_count(data_dir) or 0
+    current_commits = git_commit_count(data_dir) or 0
     if current_commits < commit_target:
         _add_commits(
             data_dir,
@@ -178,7 +107,7 @@ def test_large_repository_stress(tmp_path: Path, note_generator, stress_client):
     rss_before_reconcile = None
     if gardener_pid:
         try:
-            rss_before_reconcile = _read_rss_kb(int(gardener_pid))
+            rss_before_reconcile = read_rss_kb(int(gardener_pid))
         except ValueError:
             rss_before_reconcile = None
 
@@ -192,7 +121,7 @@ def test_large_repository_stress(tmp_path: Path, note_generator, stress_client):
     rss_after_reconcile = None
     if gardener_pid:
         try:
-            rss_after_reconcile = _read_rss_kb(int(gardener_pid))
+            rss_after_reconcile = read_rss_kb(int(gardener_pid))
         except ValueError:
             rss_after_reconcile = None
 
@@ -241,9 +170,9 @@ def test_large_repository_stress(tmp_path: Path, note_generator, stress_client):
     summary["elapsed_s"] = elapsed_s
     summary["file_count"] = file_count
     summary["commit_target"] = commit_target
-    summary["commit_count"] = _git_commit_count(data_dir)
-    summary["git_ops"] = _measure_git_ops(data_dir)
-    summary["db_scan"] = _measure_db_scan(data_dir)
+    summary["commit_count"] = git_commit_count(data_dir)
+    summary["git_ops"] = measure_git_ops(data_dir)
+    summary["db_scan"] = measure_db_scan(data_dir / ".gardener" / "state.db")
     summary["memory_kb"] = {
         "rss_before_reconcile": rss_before_reconcile,
         "rss_after_reconcile": rss_after_reconcile,

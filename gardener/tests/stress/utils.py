@@ -205,17 +205,7 @@ class IntegrityChecker:
             conn.close()
 
     def git_commit_count(self, repo_dir: Path) -> int | None:
-        try:
-            output = subprocess.check_output(
-                ["git", "-C", str(repo_dir), "rev-list", "--count", "HEAD"],
-                stderr=subprocess.STDOUT,
-            )
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return None
-        try:
-            return int(output.decode("utf-8").strip())
-        except ValueError:
-            return None
+        return git_commit_count(repo_dir)
 
     def report(self) -> dict:
         inbox_files = self.list_markdown(self.inbox_dir)
@@ -230,6 +220,82 @@ class IntegrityChecker:
                 digest: [str(path) for path in paths] for digest, paths in duplicates.items()
             },
         }
+
+
+def git_commit_count(repo_dir: Path) -> int | None:
+    try:
+        output = subprocess.check_output(
+            ["git", "-C", str(repo_dir), "rev-list", "--count", "HEAD"],
+            stderr=subprocess.STDOUT,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+    try:
+        return int(output.decode("utf-8").strip())
+    except ValueError:
+        return None
+
+
+def timed_command(command: list[str]) -> tuple[float | None, str | None]:
+    start = time.perf_counter()
+    try:
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        return None, str(exc)
+    return (time.perf_counter() - start) * 1000, None
+
+
+def measure_git_ops(repo_dir: Path) -> dict:
+    timings: dict[str, float | str | None] = {"commit_count": git_commit_count(repo_dir)}
+    for label, cmd in (
+        ("git_status_ms", ["git", "-C", str(repo_dir), "status", "--porcelain"]),
+        ("git_diff_ms", ["git", "-C", str(repo_dir), "diff", "--stat"]),
+    ):
+        elapsed_ms, error = timed_command(cmd)
+        timings[label] = elapsed_ms
+        if error:
+            timings[f"{label}_error"] = error
+    return timings
+
+
+def read_rss_kb(pid: int) -> int | None:
+    status_path = Path("/proc") / str(pid) / "status"
+    try:
+        text = status_path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    for line in text.splitlines():
+        if line.startswith("VmRSS:"):
+            parts = line.split()
+            if len(parts) >= 2:
+                try:
+                    return int(parts[1])
+                except ValueError:
+                    return None
+    return None
+
+
+def measure_db_scan(db_path: Path) -> dict | None:
+    if not db_path.exists():
+        return None
+    conn = sqlite3.connect(db_path)
+    try:
+        start = time.perf_counter()
+        row = conn.execute("SELECT COUNT(*) FROM file_state").fetchone()
+        count = row[0] if row else 0
+        count_ms = (time.perf_counter() - start) * 1000
+        start = time.perf_counter()
+        cursor = conn.execute("SELECT file_path FROM file_state")
+        for _ in cursor:
+            pass
+        scan_ms = (time.perf_counter() - start) * 1000
+        return {
+            "row_count": count,
+            "count_ms": count_ms,
+            "scan_ms": scan_ms,
+        }
+    finally:
+        conn.close()
 
 
 class concurrent_executor:
