@@ -48,6 +48,99 @@ Defaults:
 - Boots Gardener on `127.0.0.1:8000`
 - Builds and runs Scribe on `127.0.0.1:3000` (can be disabled)
 
+## Stress Tests (Scenarios A-C)
+
+Stress tests live under `gardener/tests/stress` and are driven by the runner script.
+
+```bash
+# Scenario A only (default)
+./scripts/run_stress_tests.sh
+
+# All scenarios
+STRESS_SCENARIOS=A,B,C KEEP_DATA=1 ./scripts/run_stress_tests.sh
+
+# CI smoke defaults (small sizes, no optional asserts)
+CI_SMOKE=1 ./scripts/run_stress_tests.sh
+```
+
+If you need to invoke pytest directly:
+
+```bash
+cd gardener
+RUN_STRESS_TESTS=1 STRESS_DATA_DIR=$HOME/.pkms-stress/manual \
+  uv run pytest tests/stress/test_stress_ingestion.py -m stress -s
+```
+
+### Stress Test Scenarios
+
+- **Scenario A (Ingestion throughput)**: High-volume `/api/inbox` ingestion with optional classification accuracy checks.
+- **Scenario B (Concurrent load)**: Sustained mixed traffic (`/api/inbox`, `/api/browse`, `/api/ask`, `/api/refine`) with optional data-loss checks.
+- **Scenario C (Large repo)**: Large atlas + git history, reconcile + search/refine + trigger flow with git/DB/memory metrics.
+
+Classification accuracy checks require a configured AI backend (API key + model) and `STRESS_DATA_DIR` (the runner sets this automatically).
+
+### Stress Test Environment Flags
+
+General:
+
+```bash
+STRESS_SCENARIOS=A,B,C            # Comma-separated scenario list
+STRESS_DATA_DIR=...               # Data dir (also sets DATA_DIR)
+STRESS_METRICS_DIR=...            # Metrics output dir
+KEEP_DATA=1                       # Preserve data dir after run
+START_GARDENER=0                  # Skip starting Gardener (assumes running)
+RUN_BOOTSTRAP=0                   # Skip /api/bootstrap
+GARDENER_PORT=8010                # Port for runner when starting Gardener
+STRESS_BASE_URL=http://...        # Override API base URL
+```
+
+Scenario A:
+
+```bash
+STRESS_CONCURRENCY=50
+STRESS_NOTES_PER_CLIENT=20
+STRESS_NOTE_COUNT=...             # Overrides concurrency * notes per client
+STRESS_MIN_KB=1 STRESS_MAX_KB=50
+STRESS_STAGGER_MAX=10
+STRESS_EXPECT_CLASSIFICATION=1    # Adds Expected-Category header + accuracy checks
+STRESS_MIN_CLASSIFICATION_ACCURACY=0.8
+STRESS_EXPECT_ARCHIVE=1           # Assert archive count/no empties
+```
+
+Scenario B:
+
+```bash
+STRESS_DURATION_S=600
+STRESS_SUBMIT_THREADS=20
+STRESS_BROWSE_THREADS=10
+STRESS_ASK_THREADS=10
+STRESS_REFINE_THREADS=5
+STRESS_SUBMIT_RPS=5
+STRESS_EXPECT_ARCHIVE=1           # Assert no data loss
+```
+
+Scenario C:
+
+```bash
+STRESS_LARGE_FILE_COUNT=10000
+STRESS_LARGE_COMMIT_COUNT=20000
+STRESS_LARGE_MIN_KB=1 STRESS_LARGE_MAX_KB=20
+STRESS_RECONCILE_TIMEOUT=300
+STRESS_SEARCH_TIMEOUT=60
+```
+
+CI smoke mode sets smaller defaults for load-based scenarios and disables optional asserts:
+
+```bash
+CI_SMOKE=1
+```
+
+### Stress Test Outputs
+
+- Per-scenario metrics: `$STRESS_METRICS_DIR/scenario-A.json`, `scenario-B.json`, `scenario-C.json`
+- Aggregated metrics: `$STRESS_METRICS_DIR/summary.json`
+- Gardener log (runner-started): `$STRESS_DATA_DIR/gardener.log`
+
 ## Environment Flags
 
 Set these when you run the script:
