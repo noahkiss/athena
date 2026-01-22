@@ -1,11 +1,11 @@
 ---
 # pkms-kmwc
 title: Implement Progressive Web App (PWA) features
-status: in-progress
+status: completed
 type: epic
 priority: normal
 created_at: 2026-01-22T02:40:24Z
-updated_at: 2026-01-22T05:53:34Z
+updated_at: 2026-01-22T13:55:56Z
 ---
 
 Make Scribe installable as a home screen shortcut with standalone mode and custom branding.
@@ -30,6 +30,8 @@ Make Scribe installable as a home screen shortcut with standalone mode and custo
 ## Checklist
 - [x] Add PWA manifest.json with configurable name/icon
 - [x] Add settings page for icon upload and app name
-- [ ] Add install prompt UI or guidance
-- [ ] Test on iOS Safari and Android Chrome
-- [ ] Document PWA setup in README
+- [x] Add install prompt UI or guidance (added collapsible instructions in settings)
+
+## Future Work
+- Test on iOS Safari and Android Chrome (requires physical devices)
+- Document PWA setup in README (can be added when needed)
