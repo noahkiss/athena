@@ -1214,7 +1214,6 @@ async def browse_archive(path: str = "") -> BrowseResponse:
 )
 async def get_random_note():
     """Get a random note from the atlas for serendipitous discovery."""
-    import random
     import secrets
 
     # Get all markdown files from atlas
@@ -1243,8 +1242,8 @@ async def get_random_note():
 async def get_stats():
     """Get dashboard statistics about the atlas."""
     import subprocess
-    from datetime import datetime, timedelta
     from collections import Counter
+    from datetime import datetime, timedelta
 
     if not ATLAS_DIR.exists():
         return {
@@ -1357,7 +1356,6 @@ async def get_stats():
 async def get_recent_activity(limit: int = 10):
     """Get recently modified notes from atlas for quick access."""
     import subprocess
-    from datetime import datetime, timezone
 
     if not ATLAS_DIR.exists():
         return {"recent": []}
