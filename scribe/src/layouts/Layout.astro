@@ -1,5 +1,6 @@
 ---
 import { getTheme, themeToCssVars, themes } from '../lib/themes';
+import { getFont, fonts } from '../lib/fonts';
 
 interface Props {
   title: string;
@@ -24,6 +25,7 @@ const defaultBranding = {
   app_name: 'Athena Scribe',
   icon_version: 'default',
   theme: 'default',
+  font: 'system',
 };
 
 let branding = { ...defaultBranding };
@@ -43,6 +45,7 @@ const iconVersion = branding.icon_version || defaultBranding.icon_version;
 const iconQuery = iconVersion ? `?v=${iconVersion}` : '';
 const theme = getTheme(branding.theme);
 const themeStyle = themeToCssVars(theme);
+const font = getFont(branding.font);
 
 // Prepare theme data for client-side color scheme detection
 const lightTheme = themes['rose-pine-dawn'];
@@ -52,11 +55,11 @@ const darkThemeVars = themeToCssVars(darkTheme);
 ---
 
 <!doctype html>
-<html lang="en" data-theme={theme.id} style={themeStyle}>
+<html lang="en" data-theme={theme.id} data-font={font.id} style={`${themeStyle} --font-family: ${font.family};`}>
   <head>
     <meta charset="UTF-8" />
     <!-- Blocking script to prevent theme flash -->
-    <script is:inline define:vars={{ lightThemeVars, darkThemeVars, serverThemeId: theme.id }}>
+    <script is:inline define:vars={{ lightThemeVars, darkThemeVars, serverThemeId: theme.id, serverFontFamily: font.family }}>
       (function() {
         const html = document.documentElement;
 
@@ -71,9 +74,28 @@ const darkThemeVars = themeToCssVars(darkTheme);
           html.setAttribute('data-theme', themeId);
         }
 
+        function applyFont(fontFamily, fontId) {
+          html.style.setProperty('--font-family', fontFamily);
+          html.setAttribute('data-font', fontId);
+        }
+
         // Check localStorage first (faster than API)
         const savedTheme = localStorage.getItem('athena-theme');
+        const savedFont = localStorage.getItem('athena-font');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        // Apply saved font if available
+        if (savedFont && savedFont !== 'system') {
+          // Font families for each font option (synced with fonts.ts)
+          const fontFamilies = {
+            'system': '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+            'serif': 'ui-serif, "New York", "Iowan Old Style", "Apple Garamond", Baskerville, "Times New Roman", "Droid Serif", "Times", serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
+            'mono': 'ui-monospace, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", "Courier New", Courier, monospace',
+            'humanist': '"Inter Var", Inter, "Source Sans Pro", "Noto Sans", "Open Sans", system-ui, -apple-system, sans-serif'
+          };
+          const fontFamily = fontFamilies[savedFont] || serverFontFamily;
+          applyFont(fontFamily, savedFont);
+        }
 
         // If server says "default" or we have localStorage override
         if (serverThemeId === 'default' || (savedTheme && savedTheme !== serverThemeId)) {
@@ -183,10 +205,15 @@ const darkThemeVars = themeToCssVars(darkTheme);
         }
       }
 
-      /* System font stack (Apple San Francisco, Windows Segoe UI, Android Roboto) */
+      :root {
+        /* Default font family - can be overridden by branding settings */
+        --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+                       "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      /* Apply font family from CSS variable */
       * {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-                     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: var(--font-family);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
@@ -418,6 +445,76 @@ const darkThemeVars = themeToCssVars(darkTheme);
 
       .category-text {
         color: rgb(var(--category-rgb));
+      }
+
+      /* Page header styles - polished, consistent hierarchy */
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-section);
+        padding-bottom: var(--spacing-element);
+        border-bottom: 1px solid rgb(var(--color-border) / 0.3);
+      }
+
+      .page-title {
+        font-size: var(--font-size-3xl);
+        font-weight: var(--font-weight-light);
+        color: rgb(var(--color-primary));
+        letter-spacing: -0.02em;
+        margin: 0;
+      }
+
+      .page-nav {
+        display: none;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      @media (min-width: 768px) {
+        .page-nav {
+          display: flex;
+        }
+      }
+
+      /* Enhanced navigation links */
+      .nav-link {
+        position: relative;
+        padding: 0.5rem 0.875rem;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: rgb(var(--color-muted));
+        text-decoration: none;
+        border-radius: 0.5rem;
+        transition: all 0.15s ease;
+        letter-spacing: -0.01em;
+      }
+
+      .nav-link:hover {
+        color: rgb(var(--color-primary));
+        background-color: rgb(var(--color-surface-muted) / 0.5);
+        transform: translateY(-1px);
+      }
+
+      .nav-link:active {
+        transform: translateY(0);
+      }
+
+      /* Optional: Add subtle indicator for current page */
+      .nav-link.active {
+        color: rgb(var(--color-accent));
+        background-color: rgb(var(--color-accent) / 0.1);
+      }
+
+      /* Button-like nav link variant */
+      .nav-link-primary {
+        color: rgb(var(--color-accent));
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .nav-link-primary:hover {
+        color: rgb(var(--color-accent));
+        background-color: rgb(var(--color-accent) / 0.15);
       }
 
       .prose-theme {

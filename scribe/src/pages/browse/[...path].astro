@@ -115,34 +115,23 @@ if (data?.is_file && data?.content) {
 <Layout title={`Browse - ${currentPath || 'Atlas'}`}>
   <main class="min-h-screen p-4 md:p-8">
     <div class="max-w-4xl mx-auto">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-light text-muted">Browse</h1>
-        <div class="hidden md:flex items-center gap-3 text-sm">
-          <a href="/" class="link">
-            &larr; Capture
-          </a>
-          <a href="/dashboard" class="link">
-            Dashboard
-          </a>
-          <a href="/timeline" class="link">
-            Timeline
-          </a>
+      <header class="page-header">
+        <h1 class="page-title">Browse</h1>
+        <nav class="page-nav">
+          <a href="/" class="nav-link">Capture</a>
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <a href="/timeline" class="nav-link">Timeline</a>
           <button
             id="random-note-btn"
-            class="link cursor-pointer"
+            class="nav-link cursor-pointer"
             title="Random note (Ctrl+Shift+R)"
           >
             🎲 Random
           </button>
-          <a href="/archive" class="link">
-            Archive
-          </a>
-          <a href="/settings" class="link">
-            Settings
-          </a>
-        </div>
-      </div>
+          <a href="/archive" class="nav-link">Archive</a>
+          <a href="/settings" class="nav-link">Settings</a>
+        </nav>
+      </header>
 
       <!-- Breadcrumb -->
       <nav class="mb-6 text-sm">

@@ -105,24 +105,15 @@ for (const item of timelineData) {
 <Layout title="Timeline">
   <main class="min-h-screen p-4 md:p-8">
     <div class="max-w-4xl mx-auto">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-light text-muted">Timeline</h1>
-        <div class="hidden md:flex items-center gap-3 text-sm">
-          <a href="/" class="link">
-            Capture
-          </a>
-          <a href="/dashboard" class="link">
-            Dashboard
-          </a>
-          <a href="/browse" class="link">
-            Browse
-          </a>
-          <a href="/settings" class="link">
-            Settings
-          </a>
-        </div>
-      </div>
+      <header class="page-header">
+        <h1 class="page-title">Timeline</h1>
+        <nav class="page-nav">
+          <a href="/" class="nav-link">Capture</a>
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <a href="/browse" class="nav-link">Browse</a>
+          <a href="/settings" class="nav-link">Settings</a>
+        </nav>
+      </header>
 
       <p class="text-sm text-subtle mb-6">
         Chronological view of all notes in your atlas (last 100 entries)

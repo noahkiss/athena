@@ -23,6 +23,7 @@ ICON_SOURCE_FILE: Final[Path] = BRANDING_DIR / "icon-source.png"
 
 DEFAULT_APP_NAME: Final[str] = "Athena Scribe"
 DEFAULT_THEME: Final[str] = "default"
+DEFAULT_FONT: Final[str] = "system"
 DEFAULT_ICON_VERSION: Final[str] = "default"
 DEFAULT_BG: Final[str] = "#0f172a"
 DEFAULT_ACCENT: Final[str] = "#38bdf8"
@@ -39,6 +40,7 @@ class BrandingSettings(BaseModel):
         max_length=40,
     )
     theme: str = Field(default=DEFAULT_THEME, min_length=1, max_length=40)
+    font: str = Field(default=DEFAULT_FONT, min_length=1, max_length=40)
     icon_version: str = Field(default=DEFAULT_ICON_VERSION)
 
 
@@ -90,20 +92,24 @@ def save_settings(settings: BrandingSettings) -> None:
 
 
 def update_settings(
-    app_name: str | None = None, theme: str | None = None
+    app_name: str | None = None, theme: str | None = None, font: str | None = None
 ) -> BrandingSettings:
     settings = load_settings()
     next_app_name = settings.app_name
     next_theme = settings.theme
+    next_font = settings.font
 
     if app_name is not None:
         next_app_name = app_name.strip() or DEFAULT_APP_NAME
     if theme is not None:
         next_theme = theme.strip() or DEFAULT_THEME
+    if font is not None:
+        next_font = font.strip() or DEFAULT_FONT
 
     updated = BrandingSettings(
         app_name=next_app_name,
         theme=next_theme,
+        font=next_font,
         icon_version=settings.icon_version,
     )
     save_settings(updated)

@@ -53,21 +53,14 @@ if (data?.is_file && data?.content) {
 <Layout title={`Archive - ${currentPath || 'Inbox'}`}>
   <main class="min-h-screen p-4 md:p-8">
     <div class="max-w-4xl mx-auto">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-light text-muted">Archive</h1>
-        <div class="hidden md:flex items-center gap-3 text-sm">
-          <a href="/" class="link">
-            &larr; Capture
-          </a>
-          <a href="/browse" class="link">
-            Browse
-          </a>
-          <a href="/settings" class="link">
-            Settings
-          </a>
-        </div>
-      </div>
+      <header class="page-header">
+        <h1 class="page-title">Archive</h1>
+        <nav class="page-nav">
+          <a href="/" class="nav-link">Capture</a>
+          <a href="/browse" class="nav-link">Browse</a>
+          <a href="/settings" class="nav-link">Settings</a>
+        </nav>
+      </header>
 
       <!-- Breadcrumb -->
       <nav class="mb-6 text-sm">

@@ -3,22 +3,17 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Athena - Capture">
-  <main class="flex flex-col items-center justify-center min-h-screen" style="padding: var(--spacing-page);">
-    <div class="w-full max-w-2xl">
-      <div class="flex items-center justify-between" style="margin-bottom: var(--spacing-section);">
-        <h1 class="text-primary" style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-normal);">Capture</h1>
-        <div class="hidden md:flex items-center gap-3 text-sm">
-          <a href="/browse" class="link">
-            Browse &rarr;
-          </a>
-          <a href="/archive" class="link">
-            Archive &rarr;
-          </a>
-          <a href="/settings" class="link">
-            Settings &rarr;
-          </a>
-        </div>
-      </div>
+  <main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-2xl mx-auto">
+      <header class="page-header">
+        <h1 class="page-title">Capture</h1>
+        <nav class="page-nav">
+          <a href="/dashboard" class="nav-link">Dashboard</a>
+          <a href="/browse" class="nav-link">Browse</a>
+          <a href="/archive" class="nav-link">Archive</a>
+          <a href="/settings" class="nav-link">Settings</a>
+        </nav>
+      </header>
 
       <form
         id="capture-form"
