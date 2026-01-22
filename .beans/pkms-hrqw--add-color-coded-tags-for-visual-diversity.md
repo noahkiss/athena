@@ -1,11 +1,11 @@
 ---
 # pkms-hrqw
 title: Add color-coded tags for visual diversity
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-22T02:42:47Z
-updated_at: 2026-01-22T04:10:46Z
+updated_at: 2026-01-22T04:14:44Z
 ---
 
 Assign colors to tags/categories for visual differentiation and better UI aesthetics.
