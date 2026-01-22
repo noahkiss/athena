@@ -6,6 +6,7 @@ interface Props {
 }
 
 const { title } = Astro.props;
+const currentPath = Astro.url.pathname;
 
 const GARDENER_URL =
   process.env.GARDENER_URL ||
@@ -393,6 +394,13 @@ const themeStyle = themeToCssVars(theme);
       .stagger-item:nth-child(8) { animation-delay: 350ms; }
       .stagger-item:nth-child(9) { animation-delay: 400ms; }
       .stagger-item:nth-child(10) { animation-delay: 450ms; }
+
+      /* Mobile bottom nav spacing */
+      @media (max-width: 768px) {
+        body {
+          padding-bottom: 4rem; /* 64px for nav bar */
+        }
+      }
     </style>
   </head>
   <body class="min-h-screen bg-app text-primary">
@@ -625,5 +633,55 @@ const themeStyle = themeToCssVars(theme);
       });
 
     </script>
+
+    <!-- Mobile Bottom Navigation (PWA) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-default z-40 safe-area-bottom">
+      <div class="flex items-center justify-around h-16">
+        <a
+          href="/"
+          class={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentPath === '/' ? 'text-accent' : 'text-muted hover:text-primary'}`}
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="text-xs mt-1">Capture</span>
+        </a>
+        <a
+          href="/browse"
+          class={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentPath.startsWith('/browse') ? 'text-accent' : 'text-muted hover:text-primary'}`}
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+          <span class="text-xs mt-1">Browse</span>
+        </a>
+        <a
+          href="/archive"
+          class={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentPath.startsWith('/archive') ? 'text-accent' : 'text-muted hover:text-primary'}`}
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+          </svg>
+          <span class="text-xs mt-1">Archive</span>
+        </a>
+        <a
+          href="/settings"
+          class={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentPath === '/settings' ? 'text-accent' : 'text-muted hover:text-primary'}`}
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="text-xs mt-1">Settings</span>
+        </a>
+      </div>
+    </nav>
+
+    <style>
+      /* iOS safe area support for bottom nav */
+      .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    </style>
   </body>
 </html>

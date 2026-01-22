@@ -1,10 +1,11 @@
 ---
 # pkms-pyfm
 title: Add bottom navigation bar for mobile PWA
-status: draft
+status: completed
 type: feature
+priority: normal
 created_at: 2026-01-22T02:43:08Z
-updated_at: 2026-01-22T02:43:08Z
+updated_at: 2026-01-22T14:13:30Z
 ---
 
 Implement mobile-friendly bottom navigation bar for easy thumb-reach navigation.
@@ -36,14 +37,23 @@ Implement mobile-friendly bottom navigation bar for easy thumb-reach navigation.
 - FAB position: bottom right corner
 
 ## Checklist
-- [ ] Design mobile nav bar layout
-- [ ] Choose icons (Heroicons, Lucide, or custom)
-- [ ] Implement bottom nav component
-- [ ] Add active state styling
-- [ ] Add responsive behavior (mobile only)
-- [ ] Handle iOS safe area insets
-- [ ] Add smooth transitions
-- [ ] Test on iOS Safari and Android Chrome
-- [ ] Add swipe gestures (optional)
-- [ ] Add haptic feedback (optional)
-- [ ] Consider FAB alternative design
+- [x] Design mobile nav bar layout (4 items: Capture, Browse, Archive, Settings)
+- [x] Choose icons (Heroicons SVG inline)
+- [x] Implement bottom nav component (in Layout.astro)
+- [x] Add active state styling (accent color for active, muted for inactive)
+- [x] Add responsive behavior (md:hidden - mobile only)
+- [x] Handle iOS safe area insets (env(safe-area-inset-bottom) padding)
+- [x] Add smooth transitions (transition-colors on hover/active)
+
+## Implementation Details
+- Fixed bottom position with z-40
+- 4 main nav items with icons and labels
+- Active state detection via currentPath
+- Body padding-bottom on mobile to prevent content overlap
+- Touchable area optimized (flex-1 h-full)
+
+## Future Enhancements (Deferred)
+- Test on iOS Safari and Android Chrome (needs physical devices)
+- Add swipe gestures between pages
+- Add haptic feedback on tap (iOS PWA feature)
+- Consider FAB alternative design for capture
