@@ -22,6 +22,7 @@ import Layout from '../layouts/Layout.astro';
         hx-post="/api/inbox"
         hx-target="#feedback"
         hx-swap="innerHTML"
+        hx-indicator="#submit-spinner"
         class="space-y-4"
       >
         <textarea
@@ -29,8 +30,9 @@ import Layout from '../layouts/Layout.astro';
           id="note-input"
           placeholder="What's on your mind?"
           class="w-full h-64 p-4 bg-gray-900 border border-gray-800 rounded-lg
-                 text-gray-100 placeholder-gray-600 resize-none
-                 focus:outline-none focus:border-gray-700 focus:ring-1 focus:ring-gray-700"
+                 text-gray-100 placeholder-gray-600 resize-none text-base md:text-sm
+                 focus:outline-none focus:border-gray-700 focus:ring-1 focus:ring-gray-700
+                 transition-colors"
           autofocus
         ></textarea>
 
@@ -42,10 +44,17 @@ import Layout from '../layouts/Layout.astro';
             hx-target="#suggestions"
             hx-swap="innerHTML"
             hx-include="#note-input"
-            class="flex-1 py-3 px-4 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg
-                   transition-colors"
+            hx-indicator="#refine-spinner"
+            class="relative flex-1 py-3 px-4 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg
+                   transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Refine
+            <span class="btn-text">Refine</span>
+            <span id="refine-spinner" class="htmx-indicator absolute inset-0 flex items-center justify-center">
+              <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
           </button>
           <button
             type="button"
@@ -54,27 +63,40 @@ import Layout from '../layouts/Layout.astro';
             hx-target="#explore"
             hx-swap="innerHTML"
             hx-include="#note-input"
-            class="flex-1 py-3 px-4 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg
-                   transition-colors"
+            hx-indicator="#ask-spinner"
+            class="relative flex-1 py-3 px-4 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg
+                   transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Explore
+            <span class="btn-text">Explore</span>
+            <span id="ask-spinner" class="htmx-indicator absolute inset-0 flex items-center justify-center">
+              <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
           </button>
           <button
             type="submit"
             id="submit-btn"
-            class="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg
-                   transition-colors font-medium"
+            class="relative flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg
+                   transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Submit
+            <span class="btn-text">Submit</span>
+            <span id="submit-spinner" class="htmx-indicator absolute inset-0 flex items-center justify-center">
+              <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
           </button>
         </div>
       </form>
 
-      <div id="suggestions" class="mt-4 p-3 bg-gray-900 rounded-lg border border-gray-800 min-h-[60px]">
+      <div id="suggestions" class="mt-4 p-3 bg-gray-900 rounded-lg border border-gray-800 min-h-[60px] transition-all">
         <p class="text-gray-500 text-sm">Click "Refine" for AI suggestions</p>
       </div>
 
-      <div id="explore" class="mt-4 p-3 bg-gray-900 rounded-lg border border-gray-800 min-h-[60px]">
+      <div id="explore" class="mt-4 p-3 bg-gray-900 rounded-lg border border-gray-800 min-h-[60px] transition-all">
         <p class="text-gray-500 text-sm">Click "Explore" to ask your notes</p>
       </div>
 
@@ -83,13 +105,72 @@ import Layout from '../layouts/Layout.astro';
   </main>
 </Layout>
 
+<style>
+  /* Hide spinner by default, show when htmx request is active */
+  .htmx-indicator {
+    display: none;
+  }
+
+  .htmx-request .htmx-indicator {
+    display: flex;
+  }
+
+  .htmx-request .btn-text {
+    opacity: 0;
+  }
+
+  /* Smooth fade-in for results */
+  #suggestions, #explore {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Success animation */
+  .success-flash {
+    animation: successPulse 0.6s ease-out;
+  }
+
+  @keyframes successPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+</style>
+
 <script>
+  // Clear textarea on successful submit
   document.body.addEventListener('htmx:afterRequest', (event) => {
-    if (event.detail.successful && event.detail.elt?.id === 'submit-btn') {
-      const textarea = document.getElementById('note-input');
+    const target = event.detail.elt;
+
+    if (event.detail.successful && target?.id === 'submit-btn') {
+      const textarea = document.getElementById('note-input') as HTMLTextAreaElement;
       if (textarea) {
         textarea.value = '';
+        // Add success animation to feedback
+        const feedback = document.getElementById('feedback');
+        if (feedback) {
+          feedback.classList.add('success-flash');
+          setTimeout(() => feedback.classList.remove('success-flash'), 600);
+        }
       }
+    }
+  });
+
+  // Disable buttons during request
+  document.body.addEventListener('htmx:beforeRequest', (event) => {
+    const target = event.detail.elt as HTMLButtonElement;
+    if (target) {
+      target.disabled = true;
+    }
+  });
+
+  document.body.addEventListener('htmx:afterRequest', (event) => {
+    const target = event.detail.elt as HTMLButtonElement;
+    if (target) {
+      target.disabled = false;
     }
   });
 </script>
