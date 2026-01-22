@@ -1,11 +1,11 @@
 ---
 # pkms-hmbp
 title: Improve empty states with helpful messaging
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-22T02:44:54Z
-updated_at: 2026-01-22T03:41:23Z
+updated_at: 2026-01-22T03:45:02Z
 ---
 
 Replace generic empty states with contextual, helpful messages and calls to action.
