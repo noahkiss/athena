@@ -16,6 +16,10 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 | `scribe/` | Capture frontend | Astro, HTMX, Tailwind |
 | `athena/` | Knowledge base template | Markdown, Git |
 
+**Capture Interface:**
+
+![Scribe Capture UI](assets/scribe-capture-ui.png)
+
 ## Quick Start (All-in-one)
 
 **Prerequisites:** Docker, an OpenAI-compatible API key
