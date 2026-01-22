@@ -1,0 +1,25 @@
+---
+import { Icon as AstroIcon } from 'astro-icon/components';
+
+interface Props {
+  name: string;
+  size?: number | string;
+  class?: string;
+  'aria-label'?: string;
+}
+
+const { name, size = 24, class: className, 'aria-label': ariaLabel } = Astro.props;
+
+// Determine icon collection (Solar first, Material Symbols fallback)
+const iconName = name.startsWith('solar:') || name.startsWith('material-symbols:')
+  ? name
+  : `solar:${name}`;
+---
+
+<AstroIcon
+  name={iconName}
+  width={size}
+  height={size}
+  class={className}
+  aria-label={ariaLabel}
+/>
