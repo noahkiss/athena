@@ -1,0 +1,95 @@
+/**
+ * Font System - Self-hosted fonts via Fontsource
+ *
+ * 3-category font system:
+ * - Headers: Display fonts for headings (h1-h6)
+ * - Body: Readable fonts for body text (p, span, etc.)
+ * - Mono: Monospace fonts for code and editor
+ *
+ * All fonts are self-hosted via Fontsource packages (bundled by Vite)
+ */
+
+/* ============================================================================
+   HEADER FONTS
+   ============================================================================ */
+
+/* Inter Variable - Clean, modern sans-serif */
+@import '@fontsource-variable/inter/wght.css';
+
+/* Roboto Flex - Google's flexible display font */
+@import '@fontsource-variable/roboto-flex/wght.css';
+
+/* Rubik - Rounded, friendly sans-serif */
+@import '@fontsource/rubik/400.css';
+@import '@fontsource/rubik/500.css';
+@import '@fontsource/rubik/600.css';
+@import '@fontsource/rubik/700.css';
+
+/* Atkinson Hyperlegible - Designed for maximum legibility */
+@import '@fontsource/atkinson-hyperlegible/400.css';
+@import '@fontsource/atkinson-hyperlegible/700.css';
+
+/* EB Garamond - Classic serif for elegance */
+@import '@fontsource/eb-garamond/400.css';
+@import '@fontsource/eb-garamond/500.css';
+@import '@fontsource/eb-garamond/600.css';
+@import '@fontsource/eb-garamond/700.css';
+
+/* Fraunces Variable - Expressive display font */
+@import '@fontsource-variable/fraunces/wght.css';
+
+/* ============================================================================
+   BODY FONTS
+   ============================================================================ */
+
+/* Inter Variable already imported above */
+
+/* Atkinson Hyperlegible already imported above */
+
+/* Source Sans 3 - Adobe's readable sans-serif */
+@import '@fontsource/source-sans-3/400.css';
+@import '@fontsource/source-sans-3/500.css';
+@import '@fontsource/source-sans-3/600.css';
+@import '@fontsource/source-sans-3/700.css';
+
+/* Noto Sans Variable - Google's universal sans-serif */
+@import '@fontsource-variable/noto-sans/wght.css';
+
+/* Literata - Serif optimized for reading */
+@import '@fontsource/literata/400.css';
+@import '@fontsource/literata/500.css';
+@import '@fontsource/literata/600.css';
+@import '@fontsource/literata/700.css';
+
+/* IBM Plex Sans - IBM's corporate sans-serif */
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+
+/* ============================================================================
+   MONOSPACE FONTS
+   ============================================================================ */
+
+/* Fira Code Variable - Popular coding font with ligatures */
+@import '@fontsource-variable/fira-code/wght.css';
+
+/* JetBrains Mono - Optimized for developers */
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+/* Source Code Pro Variable - Adobe's monospace */
+@import '@fontsource-variable/source-code-pro/wght.css';
+
+/* IBM Plex Mono - IBM's monospace variant */
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
+@import '@fontsource/ibm-plex-mono/700.css';
+
+/* Cascadia Code - Microsoft's coding font */
+@import '@fontsource/cascadia-code/400.css';
+@import '@fontsource/cascadia-code/600.css';
+@import '@fontsource/cascadia-code/700.css';

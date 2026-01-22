@@ -1,6 +1,7 @@
 ---
 import { getTheme, themeToCssVars, themes } from '../lib/themes';
-import { getFont, fonts } from '../lib/fonts';
+import { getHeaderFont, getBodyFont, getMonoFont, getFontFamily } from '../lib/fonts';
+import '../styles/fonts.css';
 
 interface Props {
   title: string;
@@ -25,7 +26,9 @@ const defaultBranding = {
   app_name: 'Athena Scribe',
   icon_version: 'default',
   theme: 'default',
-  font: 'system',
+  font_header: 'inter',
+  font_body: 'inter',
+  font_mono: 'fira-code',
 };
 
 let branding = { ...defaultBranding };
@@ -45,7 +48,9 @@ const iconVersion = branding.icon_version || defaultBranding.icon_version;
 const iconQuery = iconVersion ? `?v=${iconVersion}` : '';
 const theme = getTheme(branding.theme);
 const themeStyle = themeToCssVars(theme);
-const font = getFont(branding.font);
+const headerFont = getHeaderFont(branding.font_header);
+const bodyFont = getBodyFont(branding.font_body);
+const monoFont = getMonoFont(branding.font_mono);
 
 // Prepare theme data for client-side color scheme detection
 const lightTheme = themes['rose-pine-dawn'];
@@ -55,11 +60,18 @@ const darkThemeVars = themeToCssVars(darkTheme);
 ---
 
 <!doctype html>
-<html lang="en" data-theme={theme.id} data-font={font.id} style={`${themeStyle} --font-family: ${font.family};`}>
+<html lang="en" data-theme={theme.id} data-font-header={headerFont.id} data-font-body={bodyFont.id} data-font-mono={monoFont.id} style={`${themeStyle} --font-family-header: ${getFontFamily(headerFont)}; --font-family-body: ${getFontFamily(bodyFont)}; --font-family-mono: ${getFontFamily(monoFont)};`}>
   <head>
     <meta charset="UTF-8" />
     <!-- Blocking script to prevent theme flash -->
-    <script is:inline define:vars={{ lightThemeVars, darkThemeVars, serverThemeId: theme.id, serverFontFamily: font.family }}>
+    <script is:inline define:vars={{
+      lightThemeVars,
+      darkThemeVars,
+      serverThemeId: theme.id,
+      serverHeaderFontFamily: getFontFamily(headerFont),
+      serverBodyFontFamily: getFontFamily(bodyFont),
+      serverMonoFontFamily: getFontFamily(monoFont)
+    }}>
       (function() {
         const html = document.documentElement;
 
@@ -74,27 +86,59 @@ const darkThemeVars = themeToCssVars(darkTheme);
           html.setAttribute('data-theme', themeId);
         }
 
-        function applyFont(fontFamily, fontId) {
-          html.style.setProperty('--font-family', fontFamily);
-          html.setAttribute('data-font', fontId);
+        function applyFonts(headerFamily, bodyFamily, monoFamily, headerFontId, bodyFontId, monoFontId) {
+          html.style.setProperty('--font-family-header', headerFamily);
+          html.style.setProperty('--font-family-body', bodyFamily);
+          html.style.setProperty('--font-family-mono', monoFamily);
+          html.setAttribute('data-font-header', headerFontId);
+          html.setAttribute('data-font-body', bodyFontId);
+          html.setAttribute('data-font-mono', monoFontId);
         }
 
         // Check localStorage first (faster than API)
         const savedTheme = localStorage.getItem('athena-theme');
-        const savedFont = localStorage.getItem('athena-font');
+        const savedHeaderFont = localStorage.getItem('athena-font-header');
+        const savedBodyFont = localStorage.getItem('athena-font-body');
+        const savedMonoFont = localStorage.getItem('athena-font-mono');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-        // Apply saved font if available
-        if (savedFont && savedFont !== 'system') {
+        // Apply saved fonts if available (use server fonts as fallback)
+        const headerFontId = savedHeaderFont || 'inter';
+        const bodyFontId = savedBodyFont || 'inter';
+        const monoFontId = savedMonoFont || 'fira-code';
+
+        if (savedHeaderFont || savedBodyFont || savedMonoFont) {
           // Font families for each font option (synced with fonts.ts)
-          const fontFamilies = {
-            'system': '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-            'serif': 'ui-serif, "New York", "Iowan Old Style", "Apple Garamond", Baskerville, "Times New Roman", "Droid Serif", "Times", serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
-            'mono': 'ui-monospace, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", "Courier New", Courier, monospace',
-            'humanist': '"Inter Var", Inter, "Source Sans Pro", "Noto Sans", "Open Sans", system-ui, -apple-system, sans-serif'
+          const headerFonts = {
+            'inter': '"Inter Variable", Inter, sans-serif',
+            'roboto-flex': '"Roboto Flex", Roboto, sans-serif',
+            'rubik': 'Rubik, sans-serif',
+            'atkinson-hyperlegible': '"Atkinson Hyperlegible", sans-serif',
+            'eb-garamond': '"EB Garamond", serif',
+            'fraunces': '"Fraunces Variable", Fraunces, serif'
           };
-          const fontFamily = fontFamilies[savedFont] || serverFontFamily;
-          applyFont(fontFamily, savedFont);
+          const bodyFonts = {
+            'inter': '"Inter Variable", Inter, sans-serif',
+            'atkinson-hyperlegible': '"Atkinson Hyperlegible", sans-serif',
+            'source-sans-3': '"Source Sans 3", sans-serif',
+            'noto-sans': '"Noto Sans Variable", "Noto Sans", sans-serif',
+            'literata': 'Literata, serif',
+            'ibm-plex-sans': '"IBM Plex Sans", sans-serif'
+          };
+          const monoFonts = {
+            'fira-code': '"Fira Code Variable", "Fira Code", monospace',
+            'jetbrains-mono': '"JetBrains Mono", monospace',
+            'source-code-pro': '"Source Code Pro Variable", "Source Code Pro", monospace',
+            'ibm-plex-mono': '"IBM Plex Mono", monospace',
+            'cascadia-code': '"Cascadia Code", monospace',
+            'system-mono': 'ui-monospace, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace'
+          };
+
+          const headerFamily = headerFonts[headerFontId] || serverHeaderFontFamily;
+          const bodyFamily = bodyFonts[bodyFontId] || serverBodyFontFamily;
+          const monoFamily = monoFonts[monoFontId] || serverMonoFontFamily;
+
+          applyFonts(headerFamily, bodyFamily, monoFamily, headerFontId, bodyFontId, monoFontId);
         }
 
         // If server says "default" or we have localStorage override
@@ -206,16 +250,29 @@ const darkThemeVars = themeToCssVars(darkTheme);
       }
 
       :root {
-        /* Default font family - can be overridden by branding settings */
-        --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-                       "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        /* Default font families - can be overridden by branding settings */
+        --font-family-header: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-family-body: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-family-mono: "Fira Code Variable", "Fira Code", ui-monospace, monospace;
       }
 
-      /* Apply font family from CSS variable */
+      /* Apply font families from CSS variables */
       * {
-        font-family: var(--font-family);
+        font-family: var(--font-family-body);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Header fonts */
+      h1, h2, h3, h4, h5, h6,
+      .page-title {
+        font-family: var(--font-family-header);
+      }
+
+      /* Monospace fonts */
+      code, pre, kbd, samp,
+      .font-mono, .editor, textarea[name="content"] {
+        font-family: var(--font-family-mono);
       }
 
       .bg-app {

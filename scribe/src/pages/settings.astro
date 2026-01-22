@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Icon from '../components/Icon.astro';
 import { getTheme, themeList } from '../lib/themes';
-import { getFont, fontList } from '../lib/fonts';
+import { getHeaderFont, getBodyFont, getMonoFont, headerFontList, bodyFontList, monoFontList } from '../lib/fonts';
 
 const GARDENER_URL =
   process.env.GARDENER_URL ||
@@ -20,7 +20,9 @@ const defaultBranding = {
   app_name: 'Athena Scribe',
   icon_version: 'default',
   theme: 'default',
-  font: 'system',
+  font_header: 'inter',
+  font_body: 'inter',
+  font_mono: 'fira-code',
   has_icon: false,
 };
 
@@ -38,7 +40,9 @@ try {
 
 const iconQuery = branding.icon_version ? `?v=${branding.icon_version}` : '';
 const currentTheme = getTheme(branding.theme);
-const currentFont = getFont(branding.font);
+const currentHeaderFont = getHeaderFont(branding.font_header);
+const currentBodyFont = getBodyFont(branding.font_body);
+const currentMonoFont = getMonoFont(branding.font_mono);
 ---
 
 <Layout title="Athena - Settings">
@@ -108,15 +112,51 @@ const currentFont = getFont(branding.font);
           </fieldset>
 
           <fieldset class="space-y-3">
-            <legend class="text-sm text-muted">Font</legend>
-            <div class="grid gap-3">
-              {fontList.map((font) => {
-                const selected = currentFont.id === font.id;
+            <legend class="text-sm text-muted" style="font-weight: var(--font-weight-semibold);">Header Font (for headings)</legend>
+            <div class="grid gap-2">
+              {headerFontList.map((font) => {
+                const selected = currentHeaderFont.id === font.id;
                 return (
                   <label class={`theme-option ${selected ? 'theme-option-selected' : ''}`}>
-                    <input type="radio" name="font" value={font.id} checked={selected} class="sr-only" />
+                    <input type="radio" name="font_header" value={font.id} checked={selected} class="sr-only" />
                     <div>
-                      <p class="text-sm font-medium text-primary">{font.label}</p>
+                      <p class="text-sm font-medium text-primary" style={`font-family: ${font.family}, ${font.fallback};`}>{font.label}</p>
+                      <p class="text-xs text-subtle">{font.description}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <fieldset class="space-y-3">
+            <legend class="text-sm text-muted" style="font-weight: var(--font-weight-semibold);">Body Font (for text)</legend>
+            <div class="grid gap-2">
+              {bodyFontList.map((font) => {
+                const selected = currentBodyFont.id === font.id;
+                return (
+                  <label class={`theme-option ${selected ? 'theme-option-selected' : ''}`}>
+                    <input type="radio" name="font_body" value={font.id} checked={selected} class="sr-only" />
+                    <div>
+                      <p class="text-sm font-medium text-primary" style={`font-family: ${font.family}, ${font.fallback};`}>{font.label}</p>
+                      <p class="text-xs text-subtle">{font.description}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <fieldset class="space-y-3">
+            <legend class="text-sm text-muted" style="font-weight: var(--font-weight-semibold);">Mono Font (for code & editor)</legend>
+            <div class="grid gap-2">
+              {monoFontList.map((font) => {
+                const selected = currentMonoFont.id === font.id;
+                return (
+                  <label class={`theme-option ${selected ? 'theme-option-selected' : ''}`}>
+                    <input type="radio" name="font_mono" value={font.id} checked={selected} class="sr-only" />
+                    <div>
+                      <p class="text-sm font-medium text-primary font-mono" style={`font-family: ${font.family}, ${font.fallback};`}>{font.label}</p>
                       <p class="text-xs text-subtle">{font.description}</p>
                     </div>
                   </label>
@@ -231,15 +271,17 @@ const currentFont = getFont(branding.font);
   </main>
 
   <script>
-    // Save theme and font to localStorage when branding form is submitted
+    // Save theme and fonts to localStorage when branding form is submitted
     document.addEventListener('htmx:afterRequest', (event) => {
       const target = event.detail.target;
       if (target && target.id === 'branding-feedback') {
-        // Get the selected theme and font from the form
+        // Get the selected theme and fonts from the form
         const form = document.querySelector('form[hx-post="/api/branding"]');
         if (form) {
           const themeInput = form.querySelector('input[name="theme"]:checked');
-          const fontInput = form.querySelector('input[name="font"]:checked');
+          const headerFontInput = form.querySelector('input[name="font_header"]:checked');
+          const bodyFontInput = form.querySelector('input[name="font_body"]:checked');
+          const monoFontInput = form.querySelector('input[name="font_mono"]:checked');
 
           if (themeInput) {
             const selectedTheme = themeInput.value;
@@ -249,12 +291,22 @@ const currentFont = getFont(branding.font);
             document.documentElement.removeAttribute('data-auto-theme');
           }
 
-          if (fontInput) {
-            const selectedFont = fontInput.value;
-            localStorage.setItem('athena-font', selectedFont);
+          if (headerFontInput) {
+            const selectedFont = headerFontInput.value;
+            localStorage.setItem('athena-font-header', selectedFont);
           }
 
-          // Reload to apply the new theme and font
+          if (bodyFontInput) {
+            const selectedFont = bodyFontInput.value;
+            localStorage.setItem('athena-font-body', selectedFont);
+          }
+
+          if (monoFontInput) {
+            const selectedFont = monoFontInput.value;
+            localStorage.setItem('athena-font-mono', selectedFont);
+          }
+
+          // Reload to apply the new theme and fonts
           setTimeout(() => window.location.reload(), 500);
         }
       }
