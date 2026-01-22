@@ -1,0 +1,260 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const GARDENER_URL =
+  process.env.GARDENER_URL ||
+  import.meta.env.GARDENER_URL ||
+  'http://localhost:8000';
+const AUTH_TOKEN =
+  process.env.ATHENA_AUTH_TOKEN ||
+  import.meta.env.ATHENA_AUTH_TOKEN ||
+  '';
+const authHeaders = AUTH_TOKEN
+  ? { Authorization: `Bearer ${AUTH_TOKEN}`, 'X-Auth-Token': AUTH_TOKEN }
+  : {};
+
+let stats: any = {
+  total_notes: 0,
+  notes_today: 0,
+  notes_this_week: 0,
+  notes_this_month: 0,
+  categories: {},
+};
+let recentActivity: any[] = [];
+let error: string | null = null;
+
+try {
+  const [statsResponse, recentResponse] = await Promise.all([
+    fetch(`${GARDENER_URL}/api/stats`, { headers: authHeaders }),
+    fetch(`${GARDENER_URL}/api/recent?limit=5`, { headers: authHeaders }),
+  ]);
+
+  if (statsResponse.ok) {
+    stats = await statsResponse.json();
+  }
+
+  if (recentResponse.ok) {
+    const recentData = await recentResponse.json();
+    recentActivity = recentData.recent || [];
+  }
+} catch (e) {
+  error = 'Could not connect to Gardener. Is it running?';
+}
+
+const categoryStyles: Record<string, { className: string; icon: string }> = {
+  projects: { className: 'category-1', icon: '💼' },
+  people: { className: 'category-2', icon: '👥' },
+  journal: { className: 'category-3', icon: '📓' },
+  tech: { className: 'category-4', icon: '⚙️' },
+  reading: { className: 'category-5', icon: '📚' },
+  wellness: { className: 'category-6', icon: '🧘' },
+  home: { className: 'category-7', icon: '🏠' },
+};
+
+const categoryFallbacks = [
+  'category-1',
+  'category-2',
+  'category-3',
+  'category-4',
+  'category-5',
+  'category-6',
+  'category-7',
+  'category-8',
+];
+
+function getCategoryStyle(name: string) {
+  const lowerName = name.toLowerCase();
+  for (const [key, value] of Object.entries(categoryStyles)) {
+    if (lowerName.includes(key)) {
+      return value;
+    }
+  }
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: '📁' };
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now() / 1000;
+  const diff = now - timestamp;
+
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 2592000) return `${Math.floor(diff / 604800)}w ago`;
+  return `${Math.floor(diff / 2592000)}mo ago`;
+}
+
+const sortedCategories = Object.entries(stats.categories || {})
+  .sort(([, a], [, b]) => (b as number) - (a as number))
+  .slice(0, 8);
+---
+
+<Layout title="Dashboard">
+  <main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-light text-muted">Dashboard</h1>
+        <div class="flex items-center gap-3 text-sm">
+          <a href="/" class="link">
+            Capture
+          </a>
+          <a href="/browse" class="link">
+            Browse
+          </a>
+          <a href="/settings" class="link">
+            Settings
+          </a>
+        </div>
+      </div>
+
+      {error ? (
+        <div class="p-4 bg-danger-soft border border-danger rounded-lg">
+          <p class="text-danger">{error}</p>
+        </div>
+      ) : (
+        <div class="space-y-6">
+          <!-- Stats Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Total Notes -->
+            <div class="panel p-6 hover:bg-surface-muted transition-colors stagger-item">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-3xl">📚</span>
+                <span class="text-3xl font-light text-primary">{stats.total_notes}</span>
+              </div>
+              <p class="text-sm text-muted">Total Notes</p>
+            </div>
+
+            <!-- Today -->
+            <div class="panel p-6 hover:bg-surface-muted transition-colors stagger-item">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-3xl">📝</span>
+                <span class="text-3xl font-light text-primary">{stats.notes_today}</span>
+              </div>
+              <p class="text-sm text-muted">Today</p>
+            </div>
+
+            <!-- This Week -->
+            <div class="panel p-6 hover:bg-surface-muted transition-colors stagger-item">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-3xl">📅</span>
+                <span class="text-3xl font-light text-primary">{stats.notes_this_week}</span>
+              </div>
+              <p class="text-sm text-muted">This Week</p>
+            </div>
+
+            <!-- This Month -->
+            <div class="panel p-6 hover:bg-surface-muted transition-colors stagger-item">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-3xl">🗓️</span>
+                <span class="text-3xl font-light text-primary">{stats.notes_this_month}</span>
+              </div>
+              <p class="text-sm text-muted">This Month</p>
+            </div>
+          </div>
+
+          <!-- Categories & Recent Activity Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Categories Breakdown -->
+            <div class="panel p-6">
+              <h2 class="text-lg font-medium text-primary mb-4 flex items-center gap-2">
+                <span>🏷️</span>
+                <span>Categories</span>
+              </h2>
+              {sortedCategories.length > 0 ? (
+                <div class="space-y-3">
+                  {sortedCategories.map(([category, count]) => {
+                    const style = getCategoryStyle(category);
+                    const percentage = Math.round(((count as number) / stats.total_notes) * 100);
+                    return (
+                      <div class="space-y-1">
+                        <div class="flex items-center justify-between text-sm">
+                          <span class="flex items-center gap-2">
+                            <span>{style.icon}</span>
+                            <span class={`category-text ${style.className}`}>{category}</span>
+                          </span>
+                          <span class="text-muted">{count} ({percentage}%)</span>
+                        </div>
+                        <div class="h-2 bg-surface-muted rounded-full overflow-hidden">
+                          <div
+                            class={`h-full ${style.className} opacity-50`}
+                            style={`width: ${percentage}%`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p class="text-sm text-subtle">No categories yet. Start adding notes!</p>
+              )}
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="panel p-6">
+              <h2 class="text-lg font-medium text-primary mb-4 flex items-center gap-2">
+                <span>⚡</span>
+                <span>Recent Activity</span>
+              </h2>
+              {recentActivity.length > 0 ? (
+                <div class="space-y-2">
+                  {recentActivity.map((item: any) => {
+                    const category = item.category ? getCategoryStyle(item.category) : null;
+                    const fileName = item.path.split('/').pop()?.replace('.md', '') || item.path;
+                    const relativeTime = formatRelativeTime(item.timestamp);
+
+                    return (
+                      <a
+                        href={`/browse/${item.path}`}
+                        class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-muted transition-colors group"
+                      >
+                        <span class="text-lg">
+                          {category?.icon || '📄'}
+                        </span>
+                        <span class="flex-1 text-sm">
+                          <span class={category ? `category-text ${category.className}` : 'text-primary'}>
+                            {fileName}
+                          </span>
+                        </span>
+                        <span class="text-xs text-subtle opacity-60 group-hover:opacity-100 transition-opacity">
+                          {relativeTime}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p class="text-sm text-subtle">No recent activity yet.</p>
+              )}
+              <div class="mt-4 pt-4 border-t border-default">
+                <a href="/browse" class="text-sm link">
+                  View all notes →
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="panel p-6">
+            <h2 class="text-lg font-medium text-primary mb-4 flex items-center gap-2">
+              <span>🚀</span>
+              <span>Quick Actions</span>
+            </h2>
+            <div class="flex flex-wrap gap-3">
+              <a href="/" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
+                ✍️ Capture Note
+              </a>
+              <a href="/browse" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
+                📁 Browse Atlas
+              </a>
+              <a href="/archive" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
+                📦 View Archive
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>

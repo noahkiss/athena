@@ -1237,6 +1237,120 @@ async def get_random_note():
 
 
 @app.get(
+    "/api/stats",
+    dependencies=[Depends(verify_auth_token)],
+)
+async def get_stats():
+    """Get dashboard statistics about the atlas."""
+    import subprocess
+    from datetime import datetime, timedelta
+    from collections import Counter
+
+    if not ATLAS_DIR.exists():
+        return {
+            "total_notes": 0,
+            "notes_today": 0,
+            "notes_this_week": 0,
+            "notes_this_month": 0,
+            "categories": {},
+        }
+
+    try:
+        # Count total markdown files
+        total_notes = sum(1 for _ in ATLAS_DIR.rglob("*.md"))
+
+        # Get category breakdown (top-level directories)
+        categories = Counter()
+        for md_file in ATLAS_DIR.rglob("*.md"):
+            try:
+                rel_path = md_file.relative_to(ATLAS_DIR)
+                parts = rel_path.parts
+                if len(parts) > 1:
+                    category = parts[0]
+                    categories[category] += 1
+            except (OSError, ValueError):
+                continue
+
+        # Get commit timestamps for time-based counts
+        now = datetime.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_start = now - timedelta(days=7)
+        month_start = now - timedelta(days=30)
+
+        # Use git log to get commit times
+        result = subprocess.run(
+            [
+                "git",
+                "log",
+                "--name-only",
+                "--pretty=format:%ct",
+                "--diff-filter=AM",
+                "-n",
+                "1000",  # Get last 1000 commits
+            ],
+            cwd=ATLAS_DIR,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        notes_today = 0
+        notes_this_week = 0
+        notes_this_month = 0
+        seen_files = set()
+
+        if result.returncode == 0:
+            lines = result.stdout.strip().split("\n")
+            current_timestamp = None
+
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+
+                if line.isdigit():
+                    current_timestamp = int(line)
+                elif line.endswith(".md") and current_timestamp:
+                    if line not in seen_files:
+                        seen_files.add(line)
+                        commit_time = datetime.fromtimestamp(current_timestamp)
+
+                        if commit_time >= today_start:
+                            notes_today += 1
+                        if commit_time >= week_start:
+                            notes_this_week += 1
+                        if commit_time >= month_start:
+                            notes_this_month += 1
+
+        return {
+            "total_notes": total_notes,
+            "notes_today": notes_today,
+            "notes_this_week": notes_this_week,
+            "notes_this_month": notes_this_month,
+            "categories": dict(categories.most_common(10)),  # Top 10 categories
+        }
+
+    except subprocess.TimeoutExpired:
+        logger.error("Git log timeout in stats")
+        return {
+            "total_notes": 0,
+            "notes_today": 0,
+            "notes_this_week": 0,
+            "notes_this_month": 0,
+            "categories": {},
+        }
+    except Exception as e:
+        logger.error(f"Error getting stats: {e}")
+        return {
+            "total_notes": 0,
+            "notes_today": 0,
+            "notes_this_week": 0,
+            "notes_this_month": 0,
+            "categories": {},
+        }
+
+
+@app.get(
     "/api/recent",
     dependencies=[Depends(verify_auth_token)],
 )
