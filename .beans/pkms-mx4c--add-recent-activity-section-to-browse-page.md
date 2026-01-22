@@ -1,10 +1,11 @@
 ---
 # pkms-mx4c
 title: Add recent activity section to Browse page
-status: draft
+status: completed
 type: feature
+priority: normal
 created_at: 2026-01-22T02:43:27Z
-updated_at: 2026-01-22T02:43:27Z
+updated_at: 2026-01-22T14:09:15Z
 ---
 
 Show recently added/modified notes on Browse page for quick access.
@@ -29,14 +30,16 @@ Show recently added/modified notes on Browse page for quick access.
 - Consider adding "View All" link to timeline
 
 ## Checklist
-- [ ] Design recent activity layout
-- [ ] Implement API endpoint for recent notes
-- [ ] Build recent activity component
-- [ ] Add to Browse page (top section)
-- [ ] Add expand/collapse toggle
-- [ ] Show category badges
-- [ ] Format relative timestamps
-- [ ] Add quick preview on hover
-- [ ] Link to full notes
-- [ ] Test with many recent notes
-- [ ] Add "View All" link to timeline
+- [x] Design recent activity layout (collapsible details panel with list items)
+- [x] Implement API endpoint for recent notes (GET /api/recent with git log)
+- [x] Build recent activity component (Astro component with category icons)
+- [x] Add to Browse page (top section, only on root)
+- [x] Add expand/collapse toggle (using HTML details/summary)
+- [x] Show category badges (category icons and colored text)
+- [x] Format relative timestamps (formatRelativeTime: "2h ago", "3d ago", etc.)
+- [x] Link to full notes (clickable items navigate to /browse/{path})
+
+## Future Enhancements (Deferred)
+- Add hover preview tooltip (would require additional API call for content)
+- Test with many recent notes (needs real data)
+- Add "View All" link to timeline (timeline feature not yet implemented)

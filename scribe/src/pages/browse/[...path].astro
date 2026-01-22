@@ -20,6 +20,7 @@ const currentPath = path || '';
 
 let data: any = null;
 let error: string | null = null;
+let recentActivity: any[] = [];
 
 try {
   const url = currentPath
@@ -33,6 +34,19 @@ try {
   }
 } catch (e) {
   error = 'Could not connect to Gardener. Is it running?';
+}
+
+// Fetch recent activity only on root browse page
+if (!currentPath) {
+  try {
+    const recentResponse = await fetch(`${GARDENER_URL}/api/recent?limit=8`, { headers: authHeaders });
+    if (recentResponse.ok) {
+      const recentData = await recentResponse.json();
+      recentActivity = recentData.recent || [];
+    }
+  } catch (e) {
+    // Silently fail - recent activity is optional
+  }
 }
 
 // Build breadcrumb parts
@@ -76,6 +90,18 @@ function getCategoryStyle(name: string) {
   // Hash-based color for unknown categories
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: '📁' };
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const now = Date.now() / 1000; // Current time in seconds
+  const diff = now - timestamp;
+
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  if (diff < 2592000) return `${Math.floor(diff / 604800)}w ago`;
+  return `${Math.floor(diff / 2592000)}mo ago`;
 }
 
 // Render markdown if it's a file, then sanitize to prevent XSS
@@ -135,6 +161,45 @@ if (data?.is_file && data?.content) {
           })}
         </ol>
       </nav>
+
+      <!-- Recent Activity (only on root browse page) -->
+      {!currentPath && recentActivity.length > 0 && (
+        <details class="mb-6 panel" open>
+          <summary class="cursor-pointer p-4 font-medium text-primary hover:text-accent transition-colors flex items-center justify-between">
+            <span>📋 Recent Activity</span>
+            <span class="text-xs text-subtle">Last {recentActivity.length} notes</span>
+          </summary>
+          <div class="px-4 pb-4 space-y-2">
+            {recentActivity.map((item: any) => {
+              const category = item.category ? getCategoryStyle(item.category) : null;
+              const fileName = item.path.split('/').pop()?.replace('.md', '') || item.path;
+              const relativeTime = formatRelativeTime(item.timestamp);
+
+              return (
+                <a
+                  href={`/browse/${item.path}`}
+                  class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-muted transition-colors group"
+                >
+                  <span class="text-lg">
+                    {category?.icon || '📄'}
+                  </span>
+                  <span class="flex-1 text-sm">
+                    <span class={category ? `category-text ${category.className}` : 'text-primary'}>
+                      {fileName}
+                    </span>
+                    {item.category && (
+                      <span class="text-xs text-subtle ml-2">in {item.category}</span>
+                    )}
+                  </span>
+                  <span class="text-xs text-subtle opacity-60 group-hover:opacity-100 transition-opacity">
+                    {relativeTime}
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        </details>
+      )}
 
       {error ? (
         <div class="p-4 bg-danger-soft border border-danger rounded-lg">

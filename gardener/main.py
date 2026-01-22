@@ -1234,3 +1234,80 @@ async def get_random_note():
     random_note = secrets.choice(atlas_files)
 
     return {"path": random_note}
+
+
+@app.get(
+    "/api/recent",
+    dependencies=[Depends(verify_auth_token)],
+)
+async def get_recent_activity(limit: int = 10):
+    """Get recently modified notes from atlas for quick access."""
+    import subprocess
+    from datetime import datetime, timezone
+
+    if not ATLAS_DIR.exists():
+        return {"recent": []}
+
+    try:
+        # Use git log to get recently committed files
+        # Format: commit_time|file_path (one per line)
+        result = subprocess.run(
+            [
+                "git",
+                "log",
+                "--name-only",
+                "--pretty=format:%ct",
+                "--diff-filter=AM",  # Added or Modified files only
+                f"-{limit * 3}",  # Get more than needed to account for duplicates
+            ],
+            cwd=ATLAS_DIR,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+
+        if result.returncode != 0:
+            logger.warning(f"Git log failed: {result.stderr}")
+            return {"recent": []}
+
+        # Parse git log output
+        lines = result.stdout.strip().split("\n")
+        seen_files = set()
+        recent_notes = []
+        current_timestamp = None
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+
+            # Lines with only digits are timestamps
+            if line.isdigit():
+                current_timestamp = int(line)
+            elif line.endswith(".md") and current_timestamp:
+                # This is a file path
+                if line not in seen_files:
+                    seen_files.add(line)
+                    # Extract category from path (first directory)
+                    parts = line.split("/")
+                    category = parts[0] if len(parts) > 1 else None
+
+                    recent_notes.append(
+                        {
+                            "path": line,
+                            "timestamp": current_timestamp,
+                            "category": category,
+                        }
+                    )
+
+                    if len(recent_notes) >= limit:
+                        break
+
+        return {"recent": recent_notes}
+
+    except subprocess.TimeoutExpired:
+        logger.error("Git log timeout")
+        return {"recent": []}
+    except Exception as e:
+        logger.error(f"Error getting recent activity: {e}")
+        return {"recent": []}
