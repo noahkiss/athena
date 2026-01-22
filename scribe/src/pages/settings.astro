@@ -38,8 +38,9 @@ const currentTheme = getTheme(branding.theme);
 ---
 
 <Layout title="Athena - Settings">
-  <main class="min-h-screen p-4 md:p-8">
-    <div class="max-w-3xl mx-auto space-y-8">
+  <main class="min-h-screen" style="padding: var(--spacing-page);">
+    <div class="max-w-3xl mx-auto" style="margin-top: var(--spacing-section); margin-bottom: var(--spacing-section);">
+      <div style="display: flex; flex-direction: column; gap: var(--spacing-section);">
       <header class="flex items-center justify-between">
         <h1 class="text-2xl font-light text-muted">Settings</h1>
         <div class="hidden md:flex items-center gap-3 text-sm">
@@ -55,9 +56,9 @@ const currentTheme = getTheme(branding.theme);
         </div>
       </header>
 
-      <section class="p-6 panel space-y-6">
+      <section class="panel" style="padding: var(--spacing-card); display: flex; flex-direction: column; gap: var(--spacing-element);">
         <div>
-          <h2 class="text-lg font-medium text-primary">App branding</h2>
+          <h2 class="text-lg text-primary" style="font-weight: var(--font-weight-semibold); margin-bottom: 0.5rem;">App branding</h2>
           <p class="text-sm text-subtle">
             Update the app name shown in the home screen shortcut and install banner.
           </p>
@@ -118,9 +119,9 @@ const currentTheme = getTheme(branding.theme);
         <div id="branding-feedback"></div>
       </section>
 
-      <section class="p-6 panel space-y-4">
+      <section class="panel" style="padding: var(--spacing-card); display: flex; flex-direction: column; gap: var(--spacing-element);">
         <div>
-          <h2 class="text-lg font-medium text-primary">App icon</h2>
+          <h2 class="text-lg text-primary" style="font-weight: var(--font-weight-semibold); margin-bottom: 0.5rem;">App icon</h2>
           <p class="text-sm text-subtle">
             Upload a 512x512 PNG, JPG, or WebP. We generate all required favicon and iOS sizes.
           </p>
@@ -160,9 +161,9 @@ const currentTheme = getTheme(branding.theme);
         <div id="icon-feedback"></div>
       </section>
 
-      <section class="p-6 panel space-y-4">
+      <section class="panel" style="padding: var(--spacing-card); display: flex; flex-direction: column; gap: var(--spacing-element);">
         <div>
-          <h2 class="text-lg font-medium text-primary">Install as App</h2>
+          <h2 class="text-lg text-primary" style="font-weight: var(--font-weight-semibold); margin-bottom: 0.5rem;">Install as App</h2>
           <p class="text-sm text-subtle">
             Add {branding.app_name} to your home screen for a native app experience.
           </p>
@@ -198,6 +199,7 @@ const currentTheme = getTheme(branding.theme);
           </div>
         </details>
       </section>
+      </div>
     </div>
   </main>
 

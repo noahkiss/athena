@@ -111,6 +111,7 @@ const darkThemeVars = themeToCssVars(darkTheme);
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <style is:global>
       :root {
+        /* Color variables */
         --color-bg: #0b1120;
         --color-surface: #111827;
         --color-surface-alt: #1f2937;
@@ -142,6 +143,52 @@ const darkThemeVars = themeToCssVars(darkTheme);
         --danger-border: rgb(var(--danger-rgb) / 0.35);
         --success: rgb(var(--success-rgb) / 1);
         --warning: rgb(var(--warning-rgb) / 1);
+
+        /* iOS spacing guidelines */
+        --spacing-page: 16px;        /* Mobile page margins */
+        --spacing-section: 24px;      /* Section spacing */
+        --spacing-card: 16px;         /* Card internal padding */
+        --spacing-element: 12px;      /* Element spacing */
+
+        /* Typography scale (iOS-inspired) */
+        --font-size-xs: 0.75rem;      /* 12px - captions */
+        --font-size-sm: 0.875rem;     /* 14px - body small */
+        --font-size-base: 1rem;       /* 16px - body */
+        --font-size-lg: 1.125rem;     /* 18px - subheadings */
+        --font-size-xl: 1.25rem;      /* 20px - headings */
+        --font-size-2xl: 1.5rem;      /* 24px - large headings */
+        --font-size-3xl: 1.875rem;    /* 30px - hero */
+
+        /* Line heights */
+        --line-height-tight: 1.25;
+        --line-height-normal: 1.5;
+        --line-height-relaxed: 1.75;
+
+        /* Font weights */
+        --font-weight-normal: 400;
+        --font-weight-medium: 500;
+        --font-weight-semibold: 600;
+        --font-weight-bold: 700;
+
+        /* Touch targets */
+        --touch-target-min: 44px;     /* iOS minimum touch target */
+      }
+
+      /* Tablet and larger spacing */
+      @media (min-width: 768px) {
+        :root {
+          --spacing-page: 24px;
+          --spacing-section: 32px;
+          --spacing-card: 24px;
+        }
+      }
+
+      /* System font stack (Apple San Francisco, Windows Segoe UI, Android Roboto) */
+      * {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+                     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
       .bg-app {
@@ -172,6 +219,46 @@ const darkThemeVars = themeToCssVars(darkTheme);
         color: var(--color-text-subtle);
       }
 
+      /* Typography utilities */
+      h1, .text-3xl {
+        font-size: var(--font-size-3xl);
+        line-height: var(--line-height-tight);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      h2, .text-2xl {
+        font-size: var(--font-size-2xl);
+        line-height: var(--line-height-tight);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      h3, .text-xl {
+        font-size: var(--font-size-xl);
+        line-height: var(--line-height-normal);
+        font-weight: var(--font-weight-medium);
+      }
+
+      h4, .text-lg {
+        font-size: var(--font-size-lg);
+        line-height: var(--line-height-normal);
+        font-weight: var(--font-weight-medium);
+      }
+
+      p, .text-base {
+        font-size: var(--font-size-base);
+        line-height: var(--line-height-relaxed);
+      }
+
+      .text-sm {
+        font-size: var(--font-size-sm);
+        line-height: var(--line-height-normal);
+      }
+
+      .text-xs {
+        font-size: var(--font-size-xs);
+        line-height: var(--line-height-normal);
+      }
+
       .border-default {
         border-color: var(--color-border);
       }
@@ -189,7 +276,10 @@ const darkThemeVars = themeToCssVars(darkTheme);
         color: var(--accent-contrast);
         border-radius: 0.875rem;
         padding: 0.75rem 1.5rem;
-        font-weight: 500;
+        min-height: var(--touch-target-min);
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-medium);
+        line-height: var(--line-height-tight);
         box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
         transition: all var(--transition-fast) var(--ease-in-out);
       }
@@ -206,7 +296,10 @@ const darkThemeVars = themeToCssVars(darkTheme);
         color: var(--color-text-muted);
         border-radius: 0.875rem;
         padding: 0.75rem 1.5rem;
-        font-weight: 500;
+        min-height: var(--touch-target-min);
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-medium);
+        line-height: var(--line-height-tight);
         box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         transition: all var(--transition-fast) var(--ease-in-out);
       }
@@ -732,43 +825,47 @@ const darkThemeVars = themeToCssVars(darkTheme);
 
     <!-- Mobile Bottom Navigation (PWA) -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-t border-default z-40 safe-area-bottom ios-bottom-nav">
-      <div class="flex items-center justify-around h-16">
+      <div class="flex items-center justify-around" style="min-height: var(--touch-target-min);">
         <a
           href="/"
-          class={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentPath === '/' ? 'text-accent' : 'text-muted hover:text-primary'}`}
+          class={`flex flex-col items-center justify-center flex-1 py-2 transition-colors ${currentPath === '/' ? 'text-accent' : 'text-muted hover:text-primary'}`}
+          style="min-height: var(--touch-target-min);"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
-          <span class="text-xs mt-1">Capture</span>
+          <span class="text-xs mt-0.5">Capture</span>
         </a>
         <a
           href="/browse"
-          class={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentPath.startsWith('/browse') ? 'text-accent' : 'text-muted hover:text-primary'}`}
+          class={`flex flex-col items-center justify-center flex-1 py-2 transition-colors ${currentPath.startsWith('/browse') ? 'text-accent' : 'text-muted hover:text-primary'}`}
+          style="min-height: var(--touch-target-min);"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
           </svg>
-          <span class="text-xs mt-1">Browse</span>
+          <span class="text-xs mt-0.5">Browse</span>
         </a>
         <a
           href="/dashboard"
-          class={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentPath === '/dashboard' ? 'text-accent' : 'text-muted hover:text-primary'}`}
+          class={`flex flex-col items-center justify-center flex-1 py-2 transition-colors ${currentPath === '/dashboard' ? 'text-accent' : 'text-muted hover:text-primary'}`}
+          style="min-height: var(--touch-target-min);"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span class="text-xs mt-1">Dashboard</span>
+          <span class="text-xs mt-0.5">Dashboard</span>
         </a>
         <a
           href="/settings"
-          class={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${currentPath === '/settings' ? 'text-accent' : 'text-muted hover:text-primary'}`}
+          class={`flex flex-col items-center justify-center flex-1 py-2 transition-colors ${currentPath === '/settings' ? 'text-accent' : 'text-muted hover:text-primary'}`}
+          style="min-height: var(--touch-target-min);"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span class="text-xs mt-1">Settings</span>
+          <span class="text-xs mt-0.5">Settings</span>
         </a>
       </div>
     </nav>

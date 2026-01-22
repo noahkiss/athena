@@ -38,15 +38,16 @@ Improve the overall UI/UX to have a premium, native iOS/macOS feel with proper d
 - [x] Use concentric corners where nested (buttons have 0.875rem, panels 1rem)
 
 ### 3. Spacing & Layout
-- [ ] Update to iOS spacing: 16px margins on mobile, 24px on tablet
-- [ ] Increase whitespace between sections
-- [ ] Ensure touch targets are 44x44pt minimum
+- [x] Update to iOS spacing: 16px margins on mobile, 24px on tablet
+- [x] Increase whitespace between sections
+- [x] Ensure touch targets are 44x44pt minimum
 - [x] Add proper padding inside cards/panels (increased padding on buttons and theme options)
 
 ### 4. Visual Polish
 - [ ] Improve color palette with better contrast
 - [x] Add subtle shadows to create depth (panels, buttons, theme options, bottom nav)
-- [ ] Better typography hierarchy (sizes, weights)
+- [x] Better typography hierarchy (sizes, weights)
+- [x] System font stack (San Francisco, Segoe UI, Roboto)
 - [x] Smooth transitions and animations (hover effects with transforms)
 - [x] iOS-style mobile bottom nav (backdrop blur + shadow)
 
