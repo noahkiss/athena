@@ -15,7 +15,9 @@ const { title} = Astro.props;
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon.svg" />
     <meta name="theme-color" content="#030712" />
+    <meta name="application-name" content="Scribe" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Scribe" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
     <title>{title}</title>
@@ -223,7 +225,6 @@ const { title} = Astro.props;
       // Keyboard shortcuts system
       let gPressed = false;
       let gPressedTimeout: number | null = null;
-      const isProd = import.meta.env.PROD;
 
       // Check if user is typing in an input/textarea
       function isTyping() {
@@ -356,13 +357,6 @@ const { title} = Astro.props;
         }
       });
 
-      if (isProd && 'serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch((error) => {
-            console.warn('Service worker registration failed', error);
-          });
-        });
-      }
     </script>
   </body>
 </html>
