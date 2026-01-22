@@ -278,3 +278,7 @@ CI runs the Gardener tests + ruff checks and the Scribe build on PRs.
 ## Development
 
 Each component has an `AGENTS.md` file with context for AI-assisted development. Point your coding assistant to the relevant file when working on that component.
+
+## Credits
+
+**Icons:** This project uses [Solar Icons](https://www.figma.com/community/file/1166831539721848736) licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Icons are provided via [@iconify-json/solar](https://www.npmjs.com/package/@iconify-json/solar).

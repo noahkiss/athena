@@ -27,8 +27,8 @@ Install @iconify-json/solar and @iconify-json/material-symbols, create Icon comp
 - [x] settings.astro (3 instances)
 
 ### Backend Files (Replace Emoji)
-- [ ] gardener/mcp_tools.py (2 instances: 📁📄)
-- [ ] gardener/mcp_server.py (2 instances: 📁📄)
+- [x] gardener/mcp_tools.py (3 instances: 📁📄 → [DIR][FILE])
+- [x] gardener/mcp_server.py (3 instances: 📁📄 → [DIR][FILE])
 
 ### Documentation
 - [ ] Add icon license attribution to README
