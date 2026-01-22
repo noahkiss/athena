@@ -89,7 +89,7 @@ async def read_notes(path: str, query: str | None) -> list[TextContent]:
             continue
 
         if item.is_dir():
-            results.append(f"📁 {item.name}/")
+            results.append(f"[DIR] {item.name}/")
         else:
             # If query provided, search content
             if query:
@@ -98,11 +98,11 @@ async def read_notes(path: str, query: str | None) -> list[TextContent]:
                     if query.lower() in content.lower():
                         rel_path = item.relative_to(ATLAS_DIR)
                         preview = content[:200].replace("\n", " ")
-                        results.append(f"📄 {rel_path}: {preview}...")
+                        results.append(f"[FILE] {rel_path}: {preview}...")
                 except Exception:
                     continue
             else:
-                results.append(f"📄 {item.name}")
+                results.append(f"[FILE] {item.name}")
 
     if not results:
         return [

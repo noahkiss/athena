@@ -24,7 +24,7 @@ Install @iconify-json/solar and @iconify-json/material-symbols, create Icon comp
 - [x] browse/[...path].astro (10 instances)
 - [x] timeline.astro (8 instances)
 - [x] archive/[...path].astro (3 instances)
-- [ ] settings.astro (3 instances)
+- [x] settings.astro (3 instances)
 
 ### Backend Files (Replace Emoji)
 - [ ] gardener/mcp_tools.py (2 instances: 📁📄)

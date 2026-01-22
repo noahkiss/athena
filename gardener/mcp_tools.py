@@ -54,7 +54,7 @@ def read_notes(path: str = "", query: str | None = None) -> str:
             continue
 
         if item.is_dir():
-            results.append(f"📁 {item.name}/")
+            results.append(f"[DIR] {item.name}/")
         else:
             # If query provided, search content
             if query:
@@ -63,12 +63,12 @@ def read_notes(path: str = "", query: str | None = None) -> str:
                     if query.lower() in content.lower():
                         rel_path = item.relative_to(ATLAS_DIR)
                         preview = content[:200].replace("\n", " ")
-                        results.append(f"📄 {rel_path}: {preview}...")
+                        results.append(f"[FILE] {rel_path}: {preview}...")
                 except (OSError, UnicodeDecodeError) as e:
                     logger.debug(f"Could not read {item}: {e}")
                     continue
             else:
-                results.append(f"📄 {item.name}")
+                results.append(f"[FILE] {item.name}")
 
     if not results:
         msg = "No files found"
