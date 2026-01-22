@@ -1,10 +1,11 @@
 ---
 # pkms-hrqw
 title: Add color-coded tags for visual diversity
-status: draft
+status: in-progress
 type: feature
+priority: normal
 created_at: 2026-01-22T02:42:47Z
-updated_at: 2026-01-22T02:42:47Z
+updated_at: 2026-01-22T04:10:46Z
 ---
 
 Assign colors to tags/categories for visual differentiation and better UI aesthetics.
@@ -39,14 +40,15 @@ function hashTagColor(tag) {
 ```
 
 ## Checklist
-- [ ] Design tag color system (hash-based + custom)
-- [ ] Implement tag color generation function
-- [ ] Add colored tag badges component
-- [ ] Apply colors to Browse category folders
-- [ ] Apply colors to Timeline note cards
-- [ ] Apply colors to Dashboard charts
-- [ ] Apply colors to Search results
-- [ ] Add tag color customization UI
-- [ ] Store custom colors in config
-- [ ] Test accessibility (contrast ratios)
-- [ ] Add color palette selector (pastel, vibrant, muted)
+- [x] Design tag color system (hash-based + known categories)
+- [x] Implement tag color generation function
+- [x] Add colored category badges/cards
+- [x] Apply colors to Browse category folders (with borders, backgrounds, icons)
+- [x] Apply colors to Browse breadcrumbs
+- [ ] Apply colors to Timeline note cards (page not implemented)
+- [ ] Apply colors to Dashboard charts (page not implemented)
+- [ ] Apply colors to Search results (search not implemented)
+- [ ] Add tag color customization UI (future enhancement)
+- [ ] Store custom colors in config (future enhancement)
+- [x] Test accessibility (dark theme with 40% opacity backgrounds, good contrast)
+- [ ] Add color palette selector (future enhancement)
