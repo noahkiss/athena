@@ -23,7 +23,9 @@ ICON_SOURCE_FILE: Final[Path] = BRANDING_DIR / "icon-source.png"
 
 DEFAULT_APP_NAME: Final[str] = "Athena Scribe"
 DEFAULT_THEME: Final[str] = "default"
-DEFAULT_FONT: Final[str] = "system"
+DEFAULT_FONT_HEADER: Final[str] = "inter"
+DEFAULT_FONT_BODY: Final[str] = "inter"
+DEFAULT_FONT_MONO: Final[str] = "fira-code"
 DEFAULT_ICON_VERSION: Final[str] = "default"
 DEFAULT_BG: Final[str] = "#0f172a"
 DEFAULT_ACCENT: Final[str] = "#38bdf8"
@@ -40,7 +42,9 @@ class BrandingSettings(BaseModel):
         max_length=40,
     )
     theme: str = Field(default=DEFAULT_THEME, min_length=1, max_length=40)
-    font: str = Field(default=DEFAULT_FONT, min_length=1, max_length=40)
+    font_header: str = Field(default=DEFAULT_FONT_HEADER, min_length=1, max_length=40)
+    font_body: str = Field(default=DEFAULT_FONT_BODY, min_length=1, max_length=40)
+    font_mono: str = Field(default=DEFAULT_FONT_MONO, min_length=1, max_length=40)
     icon_version: str = Field(default=DEFAULT_ICON_VERSION)
 
 
@@ -92,24 +96,36 @@ def save_settings(settings: BrandingSettings) -> None:
 
 
 def update_settings(
-    app_name: str | None = None, theme: str | None = None, font: str | None = None
+    app_name: str | None = None,
+    theme: str | None = None,
+    font_header: str | None = None,
+    font_body: str | None = None,
+    font_mono: str | None = None,
 ) -> BrandingSettings:
     settings = load_settings()
     next_app_name = settings.app_name
     next_theme = settings.theme
-    next_font = settings.font
+    next_font_header = settings.font_header
+    next_font_body = settings.font_body
+    next_font_mono = settings.font_mono
 
     if app_name is not None:
         next_app_name = app_name.strip() or DEFAULT_APP_NAME
     if theme is not None:
         next_theme = theme.strip() or DEFAULT_THEME
-    if font is not None:
-        next_font = font.strip() or DEFAULT_FONT
+    if font_header is not None:
+        next_font_header = font_header.strip() or DEFAULT_FONT_HEADER
+    if font_body is not None:
+        next_font_body = font_body.strip() or DEFAULT_FONT_BODY
+    if font_mono is not None:
+        next_font_mono = font_mono.strip() or DEFAULT_FONT_MONO
 
     updated = BrandingSettings(
         app_name=next_app_name,
         theme=next_theme,
-        font=next_font,
+        font_header=next_font_header,
+        font_body=next_font_body,
+        font_mono=next_font_mono,
         icon_version=settings.icon_version,
     )
     save_settings(updated)

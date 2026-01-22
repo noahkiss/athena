@@ -324,6 +324,9 @@ class BrandingUpdateRequest(BaseModel):
 
     app_name: str | None = None
     theme: str | None = None
+    font_header: str | None = None
+    font_body: str | None = None
+    font_mono: str | None = None
 
 
 class BrandingSettingsResponse(BaseModel):
@@ -331,6 +334,9 @@ class BrandingSettingsResponse(BaseModel):
 
     app_name: str
     theme: str
+    font_header: str
+    font_body: str
+    font_mono: str
     icon_version: str
     has_icon: bool
 
@@ -507,6 +513,9 @@ async def get_branding_settings() -> BrandingSettingsResponse:
     return BrandingSettingsResponse(
         app_name=settings.app_name,
         theme=settings.theme,
+        font_header=settings.font_header,
+        font_body=settings.font_body,
+        font_mono=settings.font_mono,
         icon_version=settings.icon_version,
         has_icon=has_custom_icon(settings),
     )
@@ -520,11 +529,14 @@ async def get_branding_settings() -> BrandingSettingsResponse:
 async def update_branding_settings(
     payload: BrandingUpdateRequest,
 ) -> BrandingSettingsResponse:
-    """Update branding settings (name/theme)."""
+    """Update branding settings (name/theme/fonts)."""
     try:
         settings = update_settings(
             app_name=payload.app_name,
             theme=payload.theme,
+            font_header=payload.font_header,
+            font_body=payload.font_body,
+            font_mono=payload.font_mono,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -532,6 +544,9 @@ async def update_branding_settings(
     return BrandingSettingsResponse(
         app_name=settings.app_name,
         theme=settings.theme,
+        font_header=settings.font_header,
+        font_body=settings.font_body,
+        font_mono=settings.font_mono,
         icon_version=settings.icon_version,
         has_icon=has_custom_icon(settings),
     )
