@@ -61,6 +61,16 @@ CREATE TABLE IF NOT EXISTS edit_provenance (
     metadata TEXT  -- Optional JSON for additional context
 );
 
+-- Track individual API calls for usage monitoring and rate limiting
+CREATE TABLE IF NOT EXISTS api_calls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    backend TEXT NOT NULL,
+    operation TEXT NOT NULL,  -- 'classify', 'refine', 'ask'
+    timestamp TEXT DEFAULT (datetime('now')),
+    success INTEGER DEFAULT 1,  -- 1 for success, 0 for failure
+    error TEXT
+);
+
 -- Schema version tracking
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY
@@ -72,6 +82,9 @@ CREATE INDEX IF NOT EXISTS idx_processed_commits_sha ON processed_commits(sha);
 CREATE INDEX IF NOT EXISTS idx_reconcile_runs_run_at ON reconcile_runs(run_at);
 CREATE INDEX IF NOT EXISTS idx_edit_provenance_file ON edit_provenance(file_path);
 CREATE INDEX IF NOT EXISTS idx_edit_provenance_source ON edit_provenance(source);
+CREATE INDEX IF NOT EXISTS idx_api_calls_timestamp ON api_calls(timestamp);
+CREATE INDEX IF NOT EXISTS idx_api_calls_backend ON api_calls(backend);
+CREATE INDEX IF NOT EXISTS idx_api_calls_operation ON api_calls(operation);
 """
 
 

@@ -1,10 +1,11 @@
 ---
 # pkms-0xj8
 title: Investigate and prevent runaway API usage
-status: todo
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-22T02:57:26Z
-updated_at: 2026-01-22T02:57:26Z
+updated_at: 2026-01-22T03:22:23Z
 ---
 
 Investigate why 250 API requests were made when tests only documented ~14 calls, and implement safeguards.
@@ -58,14 +59,14 @@ These could have made 236+ API calls over 20 hours if:
    - Document how to check for running instances
 
 ## Checklist
-- [ ] Check logs from old processes (if available)
-- [ ] Check data dirs for activity (inbox, atlas, git history)
-- [ ] Count commits to estimate API usage
-- [ ] Add API call counter to gardener state
-- [ ] Add API counter to /api/status response
-- [ ] Add MAX_API_CALLS_PER_HOUR config
-- [ ] Implement rate limiting with graceful stop
-- [ ] Add cleanup handlers to test scripts
-- [ ] Add API usage logging
-- [ ] Update TESTS.md with warnings about background processes
-- [ ] Document how to check for runaway processes
+- [x] Check logs from old processes (if available)
+- [x] Check data dirs for activity (inbox, atlas, git history)
+- [x] Count commits to estimate API usage
+- [x] Add API call counter to gardener state
+- [x] Add API counter to /api/status response
+- [x] Add MAX_API_CALLS_PER_HOUR config
+- [x] Implement rate limiting with graceful stop
+- [x] Add cleanup handlers to test scripts
+- [x] Add API usage logging
+- [x] Update TESTS.md with warnings about background processes
+- [x] Document how to check for runaway processes

@@ -11,6 +11,8 @@ import logging
 
 import httpx
 
+from api_usage import track_api_call
+
 from .base import (
     BackendConfig,
     GardenerAction,
@@ -146,12 +148,13 @@ Respond with a JSON object specifying the action, path, and formatted content.""
         last_error = None
         for attempt in range(max_retries + 1):
             try:
-                response_text = self._chat(
-                    messages=[{"role": "user", "content": user_message}],
-                    system=SYSTEM_PROMPT,
-                    model=self.config.model_thinking,
-                    temperature=0.3,
-                )
+                with track_api_call(self.name, "classify"):
+                    response_text = self._chat(
+                        messages=[{"role": "user", "content": user_message}],
+                        system=SYSTEM_PROMPT,
+                        model=self.config.model_thinking,
+                        temperature=0.3,
+                    )
 
                 return parse_gardener_action(response_text)
 
@@ -194,12 +197,13 @@ Respond with ONLY a valid JSON object (no markdown, no explanation):
             else "",
         )
 
-        return self._chat(
-            messages=[{"role": "user", "content": prompt}],
-            model=self.config.model_fast,
-            max_tokens=1024,
-            temperature=0.7,
-        )
+        with track_api_call(self.name, "refine"):
+            return self._chat(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.config.model_fast,
+                max_tokens=1024,
+                temperature=0.7,
+            )
 
     def ask(self, question: str, related_context: str) -> str:
         """Answer a question using the knowledge base."""
@@ -210,12 +214,13 @@ Respond with ONLY a valid JSON object (no markdown, no explanation):
             else "",
         )
 
-        return self._chat(
-            messages=[{"role": "user", "content": prompt}],
-            model=self.config.model_thinking,
-            max_tokens=1024,
-            temperature=0.4,
-        )
+        with track_api_call(self.name, "ask"):
+            return self._chat(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.config.model_thinking,
+                max_tokens=1024,
+                temperature=0.4,
+            )
 
     def close(self):
         """Close the HTTP client."""

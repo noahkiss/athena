@@ -322,6 +322,116 @@ Test data is stored in repo-tracked `tests/` subdirectories:
 - Large data subdirectories (inbox/, atlas/, .gardener/) are ignored via `tests/.gitignore`
 - This allows validating test results alongside test data without bloating the repo
 
+## API Usage Monitoring and Rate Limiting
+
+**IMPORTANT:** Gardener now tracks all AI backend API calls to prevent runaway usage and enforce quotas.
+
+### Features
+
+The API usage tracking system provides:
+- Per-operation call counters (classify, refine, ask)
+- Hourly and daily rate limits with configurable thresholds
+- Warning logs when approaching limits (default: 80% of quota)
+- Automatic rate limit enforcement with graceful errors
+- Usage statistics in `/api/status` endpoint
+
+### Configuration
+
+Set these environment variables to control API usage limits:
+
+```bash
+# Maximum API calls per hour (default: 100)
+MAX_API_CALLS_PER_HOUR=100
+
+# Maximum API calls per day (default: 500)
+MAX_API_CALLS_PER_DAY=500
+
+# Warning threshold percentage (default: 80)
+API_WARN_THRESHOLD_PERCENT=80
+```
+
+### Checking API Usage
+
+View current API usage via the status endpoint:
+
+```bash
+curl http://localhost:8000/api/status | jq '.api_usage'
+```
+
+Response includes:
+- `total_calls`: Total API calls since database creation
+- `calls_last_hour`: Calls in the last 60 minutes
+- `calls_last_day`: Calls in the last 24 hours
+- `hourly_limit` / `daily_limit`: Configured limits
+- `hourly_usage_percent` / `daily_usage_percent`: Usage as percentage
+- `is_near_hourly_limit` / `is_near_daily_limit`: Warning flags
+
+### Checking for Runaway Processes
+
+After running tests, verify no gardener processes are still running:
+
+```bash
+# Check for gardener processes
+ps aux | grep -i gardener | grep -v grep
+
+# Or check specifically for uvicorn/python processes on gardener port
+lsof -i :8000  # Replace 8000 with your GARDENER_PORT
+
+# Kill any lingering processes
+pkill -f "uvicorn main:app"
+```
+
+**Note:** The test scripts (`test_e2e_full.sh`, `run_stress_tests.sh`) include automatic cleanup handlers (`trap cleanup EXIT`) that kill gardener processes when the script exits. However, if a script is interrupted with `SIGKILL` or system crash, processes may survive.
+
+### Expected API Call Counts
+
+Reference counts for common test scenarios:
+
+**E2E Test (`test_e2e_full.sh`):**
+- 1-2 classify calls (inbox notes)
+- 1 ask call
+- 1 refine call
+- 1 MCP add_note call (if enabled)
+- **Total: ~4-5 API calls**
+
+**Stress Test Scenario A** (ingestion, 100 notes):
+- 100 classify calls (if classification enabled)
+- **Total: ~100 API calls**
+
+**Stress Test Scenario B** (concurrent, 60s):
+- Variable classify calls (depends on submit threads and duration)
+- Configurable ask/refine calls (capped by `STRESS_AI_CALL_MULTIPLIER`)
+- **Total: 10-200+ API calls** (depends on configuration)
+
+**Stress Test Scenario C** (large repo):
+- Minimal classify calls (tests search/refine on existing data)
+- ~5 ask/refine calls
+- **Total: ~5-10 API calls**
+
+### Debugging High API Usage
+
+If you see unexpectedly high API usage:
+
+1. Check recent API calls in the database:
+   ```bash
+   sqlite3 /path/to/data/.gardener/state.db "SELECT backend, operation, timestamp, success FROM api_calls ORDER BY timestamp DESC LIMIT 50;"
+   ```
+
+2. Count calls by operation type:
+   ```bash
+   sqlite3 /path/to/data/.gardener/state.db "SELECT operation, COUNT(*) as count FROM api_calls WHERE success = 1 GROUP BY operation;"
+   ```
+
+3. Look for automation running in background:
+   ```bash
+   curl http://localhost:8000/api/status | jq '.automation'
+   ```
+
+4. Check gardener logs for rate limit warnings:
+   ```bash
+   grep -i "API usage at" /path/to/gardener.log
+   ```
+
 ## Cleanup
 
 Remove old test data (preserves reports):

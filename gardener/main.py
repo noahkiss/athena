@@ -13,6 +13,7 @@ from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from api_usage import get_usage_stats
 from automation import get_automation_status, start_automation
 from backends import get_backend, get_backend_config
 from config import (
@@ -240,6 +241,20 @@ class GitState(BaseModel):
     repo_identity_valid: bool = True
 
 
+class ApiUsageStats(BaseModel):
+    """API usage statistics."""
+
+    total_calls: int
+    calls_last_hour: int
+    calls_last_day: int
+    hourly_limit: int
+    daily_limit: int
+    hourly_usage_percent: float
+    daily_usage_percent: float
+    is_near_hourly_limit: bool
+    is_near_daily_limit: bool
+
+
 class StatusResponse(BaseModel):
     """Response model for health check."""
 
@@ -253,6 +268,7 @@ class StatusResponse(BaseModel):
     gardener_model_fast: str | None = None
     automation: AutomationStatus
     git: GitState | None = None
+    api_usage: ApiUsageStats
 
 
 class GardenerTriggerResponse(BaseModel):
@@ -419,6 +435,7 @@ async def get_status() -> StatusResponse:
     backend_type, config = get_backend_config()
     auto_status = get_automation_status()
     git_state = get_git_state()
+    usage_stats = get_usage_stats()
 
     return StatusResponse(
         status="ok",
@@ -431,6 +448,17 @@ async def get_status() -> StatusResponse:
         gardener_model_fast=config.model_fast,
         automation=AutomationStatus(**auto_status),
         git=git_state,
+        api_usage=ApiUsageStats(
+            total_calls=usage_stats.total_calls,
+            calls_last_hour=usage_stats.calls_last_hour,
+            calls_last_day=usage_stats.calls_last_day,
+            hourly_limit=usage_stats.hourly_limit,
+            daily_limit=usage_stats.daily_limit,
+            hourly_usage_percent=usage_stats.hourly_usage_percent,
+            daily_usage_percent=usage_stats.daily_usage_percent,
+            is_near_hourly_limit=usage_stats.is_near_hourly_limit,
+            is_near_daily_limit=usage_stats.is_near_daily_limit,
+        ),
     )
 
 
