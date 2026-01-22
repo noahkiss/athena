@@ -200,4 +200,28 @@ const currentTheme = getTheme(branding.theme);
       </section>
     </div>
   </main>
+
+  <script>
+    // Save theme to localStorage when branding form is submitted
+    document.addEventListener('htmx:afterRequest', (event) => {
+      const target = event.detail.target;
+      if (target && target.id === 'branding-feedback') {
+        // Get the selected theme from the form
+        const form = document.querySelector('form[hx-post="/api/branding"]');
+        if (form) {
+          const themeInput = form.querySelector('input[name="theme"]:checked');
+          if (themeInput) {
+            const selectedTheme = themeInput.value;
+            localStorage.setItem('athena-theme', selectedTheme);
+
+            // Remove auto-theme flag if user explicitly selects a theme
+            document.documentElement.removeAttribute('data-auto-theme');
+
+            // Reload to apply the new theme
+            setTimeout(() => window.location.reload(), 500);
+          }
+        }
+      }
+    });
+  </script>
 </Layout>

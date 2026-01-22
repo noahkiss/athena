@@ -55,6 +55,42 @@ const darkThemeVars = themeToCssVars(darkTheme);
 <html lang="en" data-theme={theme.id} style={themeStyle}>
   <head>
     <meta charset="UTF-8" />
+    <!-- Blocking script to prevent theme flash -->
+    <script is:inline define:vars={{ lightThemeVars, darkThemeVars, serverThemeId: theme.id }}>
+      (function() {
+        const html = document.documentElement;
+
+        function applyTheme(themeVarsString, themeId) {
+          const pairs = themeVarsString.split(';').filter(Boolean);
+          pairs.forEach(pair => {
+            const [key, value] = pair.split(':').map(s => s.trim());
+            if (key && value) {
+              html.style.setProperty(key, value);
+            }
+          });
+          html.setAttribute('data-theme', themeId);
+        }
+
+        // Check localStorage first (faster than API)
+        const savedTheme = localStorage.getItem('athena-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        // If server says "default" or we have localStorage override
+        if (serverThemeId === 'default' || (savedTheme && savedTheme !== serverThemeId)) {
+          const themeToUse = savedTheme && savedTheme !== 'default' ? savedTheme : (prefersDark ? 'catppuccin-mocha' : 'rose-pine-dawn');
+
+          if (themeToUse === 'catppuccin-mocha') {
+            applyTheme(darkThemeVars, 'catppuccin-mocha');
+            localStorage.setItem('athena-theme', 'catppuccin-mocha');
+            html.setAttribute('data-auto-theme', 'true');
+          } else if (themeToUse === 'rose-pine-dawn') {
+            applyTheme(lightThemeVars, 'rose-pine-dawn');
+            localStorage.setItem('athena-theme', 'rose-pine-dawn');
+            html.setAttribute('data-auto-theme', 'true');
+          }
+        }
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href={`/manifest.webmanifest${iconQuery}`} />
     <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -527,13 +563,11 @@ const darkThemeVars = themeToCssVars(darkTheme);
     </div>
 
     <script is:inline define:vars={{ lightThemeVars, darkThemeVars }}>
-      // Auto-detect color scheme preference and apply default theme
+      // Listen for OS color scheme changes and update auto-detected themes
       (function() {
         const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
 
-        function applyThemeVars(themeVarsString, themeName) {
-          // Parse CSS variable string and apply to html element
+        function applyTheme(themeVarsString, themeId) {
           const pairs = themeVarsString.split(';').filter(Boolean);
           pairs.forEach(pair => {
             const [key, value] = pair.split(':').map(s => s.trim());
@@ -541,31 +575,18 @@ const darkThemeVars = themeToCssVars(darkTheme);
               html.style.setProperty(key, value);
             }
           });
-          html.setAttribute('data-theme', themeName);
-          html.setAttribute('data-auto-theme', 'true');
+          html.setAttribute('data-theme', themeId);
         }
 
-        // Only auto-detect if using 'default' theme
-        if (currentTheme === 'default') {
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          if (prefersDark) {
-            applyThemeVars(darkThemeVars, 'catppuccin-mocha');
-          } else {
-            applyThemeVars(lightThemeVars, 'rose-pine-dawn');
-          }
-        }
-
-        // Listen for color scheme changes
+        // Listen for color scheme changes (only for auto-detected themes)
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
           const isAutoTheme = html.getAttribute('data-auto-theme') === 'true';
 
-          // Only auto-switch if on an auto-detected theme
           if (isAutoTheme) {
-            if (e.matches) {
-              applyThemeVars(darkThemeVars, 'catppuccin-mocha');
-            } else {
-              applyThemeVars(lightThemeVars, 'rose-pine-dawn');
-            }
+            const newTheme = e.matches ? 'catppuccin-mocha' : 'rose-pine-dawn';
+            const newThemeVars = e.matches ? darkThemeVars : lightThemeVars;
+            applyTheme(newThemeVars, newTheme);
+            localStorage.setItem('athena-theme', newTheme);
           }
         });
       })();
