@@ -16,9 +16,26 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 | `scribe/` | Capture frontend | Astro, HTMX, Tailwind |
 | `athena/` | Knowledge base template | Markdown, Git |
 
-**Capture Interface:**
+## Screenshots
 
-![Scribe Capture UI](assets/scribe-capture-ui.png)
+<table>
+  <tr>
+    <th>Desktop</th>
+    <th>Mobile</th>
+  </tr>
+  <tr>
+    <td><strong>Capture</strong><br><img src="assets/capture-desktop.png" width="400"></td>
+    <td><img src="assets/capture-mobile.png" width="200"></td>
+  </tr>
+  <tr>
+    <td><strong>Browse</strong><br><img src="assets/browse-desktop.png" width="400"></td>
+    <td><img src="assets/browse-mobile.png" width="200"></td>
+  </tr>
+  <tr>
+    <td><strong>Archive</strong><br><img src="assets/archive-desktop.png" width="400"></td>
+    <td><img src="assets/archive-mobile.png" width="200"></td>
+  </tr>
+</table>
 
 ## Quick Start (All-in-one)
 
