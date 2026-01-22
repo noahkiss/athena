@@ -861,8 +861,8 @@ const darkThemeVars = themeToCssVars(darkTheme);
           });
         });
 
-        // Apply squircle to input fields
-        const inputs = document.querySelectorAll('.input-field');
+        // Apply squircle to input fields (exclude textareas to avoid border rendering issues)
+        const inputs = document.querySelectorAll('.input-field:not(textarea)');
         inputs.forEach(input => {
           ck.apply(input, {
             radius: 12, // 0.75rem = 12px

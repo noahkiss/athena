@@ -44,6 +44,26 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 
 **Features:** iOS-style design with squircle corners, system fonts, and proper spacing. 11 themes available including Dracula, Catppuccin, GitHub, Rose Pine, and Cobalt2 variants.
 
+<details>
+<summary><strong>📱 Mobile Screenshots</strong> (click to expand)</summary>
+
+<table>
+  <tr>
+    <td><strong>Capture</strong><br><img src="docs/mobile-capture.png" width="200"></td>
+    <td><strong>Dashboard</strong><br><img src="docs/mobile-dashboard.png" width="200"></td>
+    <td><strong>Browse</strong><br><img src="docs/mobile-browse.png" width="200"></td>
+  </tr>
+  <tr>
+    <td><strong>Timeline</strong><br><img src="docs/mobile-timeline.png" width="200"></td>
+    <td><strong>Settings</strong><br><img src="docs/mobile-settings.png" width="200"></td>
+    <td><strong>Archive</strong><br><img src="docs/mobile-archive.png" width="200"></td>
+  </tr>
+</table>
+
+Mobile-optimized with iOS-style bottom navigation, proper touch targets (44pt minimum), and adaptive spacing (16px mobile, 24px tablet).
+
+</details>
+
 ## Quick Start (All-in-one)
 
 **Prerequisites:** Docker, an OpenAI-compatible API key
