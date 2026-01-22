@@ -1,11 +1,11 @@
 ---
 # pkms-zr41
 title: 'Phase 2: Self-hosted font system with granular control'
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-22T22:00:54Z
-updated_at: 2026-01-22T23:15:16Z
+updated_at: 2026-01-22T23:35:31Z
 parent: pkms-70lf
 ---
 
