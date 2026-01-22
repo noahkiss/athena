@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (!question.trim()) {
       return new Response(
-        '<p class="text-gray-500">Enter a question to explore your notes.</p>',
+        '<p class="text-subtle">Enter a question to explore your notes.</p>',
         { status: 200, headers: { 'Content-Type': 'text/html' } }
       );
     }
@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Ask error:', error);
     return new Response(
-      '<p class="text-yellow-500">Could not explore your notes. Is Gardener running?</p>',
+      '<p class="text-warning">Could not explore your notes. Is Gardener running?</p>',
       { status: 200, headers: { 'Content-Type': 'text/html' } }
     );
   }

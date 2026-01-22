@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 
-/** Escape HTML special characters to prevent XSS. */
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -25,35 +24,34 @@ const authHeaders = AUTH_TOKEN
 export const POST: APIRoute = async ({ request }) => {
   try {
     const formData = await request.formData();
-    const content = formData.get('content')?.toString() || '';
+    const appName = formData.get('app_name');
+    const theme = formData.get('theme');
+    const payload: Record<string, string> = {};
 
-    if (!content.trim()) {
-      return new Response(
-        '<p class="text-warning">Please enter some content.</p>',
-        { status: 400, headers: { 'Content-Type': 'text/html' } }
-      );
-    }
+    if (appName !== null) payload.app_name = appName.toString();
+    if (theme !== null) payload.theme = theme.toString();
 
-    const response = await fetch(`${GARDENER_URL}/api/inbox`, {
+    const response = await fetch(`${GARDENER_URL}/api/branding`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      throw new Error(`Gardener responded with ${response.status}`);
+      const detail = await response.text();
+      throw new Error(detail || `Gardener responded with ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return new Response(
-      `<p class="text-success">Saved to inbox: ${escapeHtml(data.filename)}</p>`,
-      { status: 200, headers: { 'Content-Type': 'text/html' } }
-    );
+    const settings = await response.json();
+    const safeName = escapeHtml(settings.app_name || 'Scribe');
+    return new Response(`<p class="text-success">Saved branding for ${safeName}.</p>`, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
   } catch (error) {
-    console.error('Inbox submission error:', error);
+    console.error('Branding update error:', error);
     return new Response(
-      '<p class="text-danger">Failed to save note. Is Gardener running?</p>',
+      '<p class="text-danger">Failed to update branding. Is Gardener running?</p>',
       { status: 500, headers: { 'Content-Type': 'text/html' } }
     );
   }

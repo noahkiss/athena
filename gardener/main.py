@@ -9,12 +9,22 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 from api_usage import get_usage_stats
 from automation import get_automation_status, start_automation
+from branding import (
+    ICON_NAMES,
+    MAX_ICON_BYTES,
+    generate_icons,
+    get_icon_path,
+    has_custom_icon,
+    load_settings,
+    save_uploaded_icon,
+    update_settings,
+)
 from backends import get_backend, get_backend_config
 from config import (
     ARCHIVE_DIR,
@@ -301,6 +311,22 @@ class SnapshotResponse(BaseModel):
     files_changed: int | None = None
 
 
+class BrandingUpdateRequest(BaseModel):
+    """Request model for updating branding settings."""
+
+    app_name: str | None = None
+    theme: str | None = None
+
+
+class BrandingSettingsResponse(BaseModel):
+    """Response model for branding settings."""
+
+    app_name: str
+    theme: str
+    icon_version: str
+    has_icon: bool
+
+
 class ChangedFileInfo(BaseModel):
     """Info about a changed file."""
 
@@ -460,6 +486,103 @@ async def get_status() -> StatusResponse:
             is_near_daily_limit=usage_stats.is_near_daily_limit,
         ),
     )
+
+
+@app.get(
+    "/api/branding",
+    response_model=BrandingSettingsResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def get_branding_settings() -> BrandingSettingsResponse:
+    """Return branding settings for the UI."""
+    settings = load_settings()
+    return BrandingSettingsResponse(
+        app_name=settings.app_name,
+        theme=settings.theme,
+        icon_version=settings.icon_version,
+        has_icon=has_custom_icon(settings),
+    )
+
+
+@app.post(
+    "/api/branding",
+    response_model=BrandingSettingsResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def update_branding_settings(
+    payload: BrandingUpdateRequest,
+) -> BrandingSettingsResponse:
+    """Update branding settings (name/theme)."""
+    try:
+        settings = update_settings(
+            app_name=payload.app_name,
+            theme=payload.theme,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return BrandingSettingsResponse(
+        app_name=settings.app_name,
+        theme=settings.theme,
+        icon_version=settings.icon_version,
+        has_icon=has_custom_icon(settings),
+    )
+
+
+@app.post(
+    "/api/branding/icon",
+    response_model=BrandingSettingsResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def upload_branding_icon(file: UploadFile = File(...)) -> BrandingSettingsResponse:
+    """Upload a base icon and generate required sizes."""
+    allowed_types = {"image/png", "image/jpeg", "image/webp"}
+    if file.content_type and file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Unsupported image type")
+
+    try:
+        content = await file.read()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Failed to read upload") from exc
+
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty file upload")
+    if len(content) > MAX_ICON_BYTES:
+        raise HTTPException(status_code=413, detail="Icon file is too large")
+
+    try:
+        settings = save_uploaded_icon(content)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("Icon processing failed")
+        raise HTTPException(status_code=500, detail="Failed to process icon") from exc
+
+    return BrandingSettingsResponse(
+        app_name=settings.app_name,
+        theme=settings.theme,
+        icon_version=settings.icon_version,
+        has_icon=has_custom_icon(settings),
+    )
+
+
+@app.get(
+    "/api/branding/icon/{icon_name}",
+    response_class=FileResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def get_branding_icon(icon_name: str) -> FileResponse:
+    """Serve generated branding icons."""
+    if icon_name not in ICON_NAMES:
+        raise HTTPException(status_code=404, detail="Icon not found")
+
+    generate_icons()
+    icon_path = get_icon_path(icon_name)
+    if not icon_path.exists():
+        raise HTTPException(status_code=404, detail="Icon not found")
+
+    media_type = "image/x-icon" if icon_name.endswith(".ico") else "image/png"
+    return FileResponse(icon_path, media_type=media_type)
 
 
 @app.post(

@@ -1,28 +1,286 @@
 ---
+import { getTheme, themeToCssVars } from '../lib/themes';
+
 interface Props {
   title: string;
 }
 
-const { title} = Astro.props;
+const { title } = Astro.props;
+
+const GARDENER_URL =
+  process.env.GARDENER_URL ||
+  import.meta.env.GARDENER_URL ||
+  'http://localhost:8000';
+const AUTH_TOKEN =
+  process.env.ATHENA_AUTH_TOKEN ||
+  import.meta.env.ATHENA_AUTH_TOKEN ||
+  '';
+const authHeaders = AUTH_TOKEN
+  ? { Authorization: `Bearer ${AUTH_TOKEN}`, 'X-Auth-Token': AUTH_TOKEN }
+  : {};
+
+const defaultBranding = {
+  app_name: 'Athena Scribe',
+  icon_version: 'default',
+  theme: 'default',
+};
+
+let branding = { ...defaultBranding };
+try {
+  const response = await fetch(`${GARDENER_URL}/api/branding`, {
+    headers: authHeaders,
+  });
+  if (response.ok) {
+    branding = { ...branding, ...(await response.json()) };
+  }
+} catch (error) {
+  console.warn('Failed to load branding settings', error);
+}
+
+const appName = branding.app_name || defaultBranding.app_name;
+const iconVersion = branding.icon_version || defaultBranding.icon_version;
+const iconQuery = iconVersion ? `?v=${iconVersion}` : '';
+const theme = getTheme(branding.theme);
+const themeStyle = themeToCssVars(theme);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme={theme.id} style={themeStyle}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="manifest" href={`/manifest.webmanifest${iconQuery}`} />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/icon.svg" />
-    <meta name="theme-color" content="#030712" />
-    <meta name="application-name" content="Scribe" />
+    <link rel="icon" type="image/png" sizes="32x32" href={`/icons/favicon-32.png${iconQuery}`} />
+    <link rel="icon" type="image/png" sizes="16x16" href={`/icons/favicon-16.png${iconQuery}`} />
+    <link rel="apple-touch-icon" sizes="180x180" href={`/icons/apple-touch-icon-180.png${iconQuery}`} />
+    <link rel="apple-touch-icon" sizes="167x167" href={`/icons/apple-touch-icon-167.png${iconQuery}`} />
+    <link rel="apple-touch-icon" sizes="152x152" href={`/icons/apple-touch-icon-152.png${iconQuery}`} />
+    <link rel="apple-touch-icon" sizes="120x120" href={`/icons/apple-touch-icon-120.png${iconQuery}`} />
+    <meta name="theme-color" content={theme.themeColor} />
+    <meta name="application-name" content={appName} />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Scribe" />
+    <meta name="apple-mobile-web-app-title" content={appName} />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="mobile-web-app-capable" content="yes" />
     <title>{title}</title>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-    <style>
+    <style is:global>
+      :root {
+        --color-bg: #0b1120;
+        --color-surface: #111827;
+        --color-surface-alt: #1f2937;
+        --color-surface-muted: #0f172a;
+        --color-border: #1f2937;
+        --color-text: #f3f4f6;
+        --color-text-muted: #9ca3af;
+        --color-text-subtle: #6b7280;
+        --accent-rgb: 59 130 246;
+        --accent-hover: #2563eb;
+        --accent-contrast: #f8fafc;
+        --focus-rgb: 56 189 248;
+        --danger-rgb: 248 113 113;
+        --warning-rgb: 251 191 36;
+        --success-rgb: 52 211 153;
+        --category-1-rgb: 96 165 250;
+        --category-2-rgb: 167 139 250;
+        --category-3-rgb: 74 222 128;
+        --category-4-rgb: 34 211 238;
+        --category-5-rgb: 251 191 36;
+        --category-6-rgb: 244 114 182;
+        --category-7-rgb: 251 146 60;
+        --category-8-rgb: 94 234 212;
+        --accent: rgb(var(--accent-rgb) / 1);
+        --accent-soft: rgb(var(--accent-rgb) / 0.18);
+        --focus: rgb(var(--focus-rgb) / 1);
+        --danger: rgb(var(--danger-rgb) / 1);
+        --danger-soft: rgb(var(--danger-rgb) / 0.18);
+        --danger-border: rgb(var(--danger-rgb) / 0.35);
+        --success: rgb(var(--success-rgb) / 1);
+        --warning: rgb(var(--warning-rgb) / 1);
+      }
+
+      .bg-app {
+        background-color: var(--color-bg);
+      }
+
+      .bg-surface {
+        background-color: var(--color-surface);
+      }
+
+      .bg-surface-alt {
+        background-color: var(--color-surface-alt);
+      }
+
+      .bg-surface-muted {
+        background-color: var(--color-surface-muted);
+      }
+
+      .text-primary {
+        color: var(--color-text);
+      }
+
+      .text-muted {
+        color: var(--color-text-muted);
+      }
+
+      .text-subtle {
+        color: var(--color-text-subtle);
+      }
+
+      .border-default {
+        border-color: var(--color-border);
+      }
+
+      .link {
+        color: var(--accent);
+      }
+
+      .link:hover {
+        color: var(--accent-hover);
+      }
+
+      .btn-primary {
+        background-color: var(--accent);
+        color: var(--accent-contrast);
+      }
+
+      .btn-primary:hover {
+        background-color: var(--accent-hover);
+      }
+
+      .btn-secondary {
+        background-color: var(--color-surface-alt);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-muted);
+      }
+
+      .btn-secondary:hover {
+        background-color: var(--color-surface);
+        color: var(--color-text);
+      }
+
+      .panel {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 0.75rem;
+      }
+
+      .theme-option {
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 0.75rem;
+        cursor: pointer;
+        padding: 0.75rem 1rem;
+        transition: border-color var(--transition-fast) var(--ease-in-out),
+          box-shadow var(--transition-fast) var(--ease-in-out),
+          transform var(--transition-fast) var(--ease-in-out);
+      }
+
+      .theme-option:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .theme-option-selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.4);
+      }
+
+      .input-field {
+        background-color: var(--color-surface-muted);
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+        outline: none;
+      }
+
+      .input-field::placeholder {
+        color: var(--color-text-subtle);
+      }
+
+      .input-field:focus {
+        border-color: var(--focus);
+        box-shadow: 0 0 0 1px rgb(var(--focus-rgb) / 0.6);
+      }
+
+      .text-success {
+        color: var(--success);
+      }
+
+      .text-warning {
+        color: var(--warning);
+      }
+
+      .text-danger {
+        color: var(--danger);
+      }
+
+      .bg-danger-soft {
+        background-color: var(--danger-soft);
+      }
+
+      .border-danger {
+        border-color: var(--danger-border);
+      }
+
+      .category-1 { --category-rgb: var(--category-1-rgb); }
+      .category-2 { --category-rgb: var(--category-2-rgb); }
+      .category-3 { --category-rgb: var(--category-3-rgb); }
+      .category-4 { --category-rgb: var(--category-4-rgb); }
+      .category-5 { --category-rgb: var(--category-5-rgb); }
+      .category-6 { --category-rgb: var(--category-6-rgb); }
+      .category-7 { --category-rgb: var(--category-7-rgb); }
+      .category-8 { --category-rgb: var(--category-8-rgb); }
+
+      .category-chip {
+        border: 1px solid rgb(var(--category-rgb) / 0.35);
+        background-color: rgb(var(--category-rgb) / 0.18);
+        color: rgb(var(--category-rgb));
+      }
+
+      .category-chip:hover {
+        background-color: rgb(var(--category-rgb) / 0.28);
+      }
+
+      .category-text {
+        color: rgb(var(--category-rgb));
+      }
+
+      .prose-theme {
+        --tw-prose-body: var(--color-text-muted);
+        --tw-prose-headings: var(--color-text);
+        --tw-prose-links: var(--accent);
+        --tw-prose-bold: var(--color-text);
+        --tw-prose-counters: var(--color-text-subtle);
+        --tw-prose-bullets: var(--color-text-subtle);
+        --tw-prose-hr: var(--color-border);
+        --tw-prose-quotes: var(--color-text);
+        --tw-prose-quote-borders: var(--color-border);
+        --tw-prose-captions: var(--color-text-subtle);
+        --tw-prose-code: var(--accent);
+        --tw-prose-pre-code: var(--color-text);
+        --tw-prose-pre-bg: var(--color-surface-alt);
+        --tw-prose-th-borders: var(--color-border);
+        --tw-prose-td-borders: var(--color-border);
+      }
+
+      kbd {
+        background-color: var(--color-surface-alt);
+        border: 1px solid var(--color-border);
+        color: var(--color-text-muted);
+      }
+
+      input[type='file']::file-selector-button {
+        background-color: var(--color-surface-alt);
+        color: var(--color-text);
+        border: none;
+        transition: background-color var(--transition-fast) var(--ease-in-out);
+      }
+
+      input[type='file']::file-selector-button:hover {
+        background-color: var(--color-surface);
+      }
       /* Global animation variables */
       :root {
         --transition-fast: 150ms;
@@ -128,59 +386,59 @@ const { title} = Astro.props;
       .stagger-item:nth-child(10) { animation-delay: 450ms; }
     </style>
   </head>
-  <body class="min-h-screen bg-gray-950 text-gray-100">
+  <body class="min-h-screen bg-app text-primary">
     <slot />
 
     <!-- Keyboard Shortcuts Help Modal -->
     <div id="shortcuts-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-      <div class="bg-gray-900 border border-gray-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-auto animate-slideUp">
-        <div class="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between">
-          <h2 class="text-xl font-light text-gray-200">Keyboard Shortcuts</h2>
-          <button id="close-shortcuts" class="text-gray-400 hover:text-gray-200 text-2xl leading-none">&times;</button>
+      <div class="panel max-w-2xl w-full max-h-[80vh] overflow-auto animate-slideUp">
+        <div class="sticky top-0 bg-surface border-b border-default p-4 flex items-center justify-between">
+          <h2 class="text-xl font-light text-primary">Keyboard Shortcuts</h2>
+          <button id="close-shortcuts" class="text-muted hover:text-primary text-2xl leading-none">&times;</button>
         </div>
 
         <div class="p-6 space-y-6">
           <!-- Global Shortcuts -->
           <section>
-            <h3 class="text-sm font-semibold text-gray-400 uppercase mb-3">Global</h3>
+            <h3 class="text-sm font-semibold text-muted uppercase mb-3">Global</h3>
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Show this help</span>
-                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">?</kbd>
+                <span class="text-primary">Show this help</span>
+                <kbd class="px-2 py-1 rounded text-sm">?</kbd>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Close modal / Clear textarea</span>
-                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Esc</kbd>
+                <span class="text-primary">Close modal / Clear textarea</span>
+                <kbd class="px-2 py-1 rounded text-sm">Esc</kbd>
               </div>
             </div>
           </section>
 
           <!-- Navigation Shortcuts -->
           <section>
-            <h3 class="text-sm font-semibold text-gray-400 uppercase mb-3">Navigation</h3>
+            <h3 class="text-sm font-semibold text-muted uppercase mb-3">Navigation</h3>
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Go to Capture</span>
+                <span class="text-primary">Go to Capture</span>
                 <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">g</kbd>
-                  <span class="text-gray-600">then</span>
-                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">c</kbd>
+                  <kbd class="px-2 py-1 rounded text-sm">g</kbd>
+                  <span class="text-subtle">then</span>
+                  <kbd class="px-2 py-1 rounded text-sm">c</kbd>
                 </div>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Go to Browse</span>
+                <span class="text-primary">Go to Browse</span>
                 <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">g</kbd>
-                  <span class="text-gray-600">then</span>
-                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">b</kbd>
+                  <kbd class="px-2 py-1 rounded text-sm">g</kbd>
+                  <span class="text-subtle">then</span>
+                  <kbd class="px-2 py-1 rounded text-sm">b</kbd>
                 </div>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Go to Archive</span>
+                <span class="text-primary">Go to Archive</span>
                 <div class="flex gap-1">
-                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">g</kbd>
-                  <span class="text-gray-600">then</span>
-                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">a</kbd>
+                  <kbd class="px-2 py-1 rounded text-sm">g</kbd>
+                  <span class="text-subtle">then</span>
+                  <kbd class="px-2 py-1 rounded text-sm">a</kbd>
                 </div>
               </div>
             </div>
@@ -188,37 +446,37 @@ const { title} = Astro.props;
 
           <!-- Capture Page Shortcuts -->
           <section>
-            <h3 class="text-sm font-semibold text-gray-400 uppercase mb-3">Capture Page</h3>
+            <h3 class="text-sm font-semibold text-muted uppercase mb-3">Capture Page</h3>
             <div class="space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Submit note</span>
-                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Ctrl/Cmd + Enter</kbd>
+                <span class="text-primary">Submit note</span>
+                <kbd class="px-2 py-1 rounded text-sm">Ctrl/Cmd + Enter</kbd>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Refine note</span>
-                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Ctrl/Cmd + R</kbd>
+                <span class="text-primary">Refine note</span>
+                <kbd class="px-2 py-1 rounded text-sm">Ctrl/Cmd + R</kbd>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Explore / Ask</span>
-                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Ctrl/Cmd + E</kbd>
+                <span class="text-primary">Explore / Ask</span>
+                <kbd class="px-2 py-1 rounded text-sm">Ctrl/Cmd + E</kbd>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-gray-300">Clear textarea</span>
-                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Ctrl/Cmd + K</kbd>
+                <span class="text-primary">Clear textarea</span>
+                <kbd class="px-2 py-1 rounded text-sm">Ctrl/Cmd + K</kbd>
               </div>
             </div>
           </section>
         </div>
 
-        <div class="sticky bottom-0 bg-gray-900 border-t border-gray-800 p-4 text-center text-sm text-gray-500">
-          Press <kbd class="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-xs">Esc</kbd> to close
+        <div class="sticky bottom-0 bg-surface border-t border-default p-4 text-center text-sm text-muted">
+          Press <kbd class="px-1.5 py-0.5 rounded text-xs">Esc</kbd> to close
         </div>
       </div>
     </div>
 
     <!-- Footer hint -->
-    <div class="fixed bottom-4 right-4 text-xs text-gray-600">
-      Press <kbd class="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded">?</kbd> for shortcuts
+    <div class="fixed bottom-4 right-4 text-xs text-subtle">
+      Press <kbd class="px-1.5 py-0.5 rounded">?</kbd> for shortcuts
     </div>
 
     <script>

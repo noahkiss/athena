@@ -42,36 +42,40 @@ const breadcrumbs = pathParts.map((part, index) => ({
   path: pathParts.slice(0, index + 1).join('/'),
 }));
 
-// Color mapping for categories (hash-based for consistency)
-const categoryColors: Record<string, { bg: string; text: string; border: string; icon: string }> = {
-  projects: { bg: 'bg-blue-900/40', text: 'text-blue-400', border: 'border-blue-800', icon: '💼' },
-  people: { bg: 'bg-purple-900/40', text: 'text-purple-400', border: 'border-purple-800', icon: '👥' },
-  journal: { bg: 'bg-green-900/40', text: 'text-green-400', border: 'border-green-800', icon: '📓' },
-  tech: { bg: 'bg-cyan-900/40', text: 'text-cyan-400', border: 'border-cyan-800', icon: '⚙️' },
-  reading: { bg: 'bg-amber-900/40', text: 'text-amber-400', border: 'border-amber-800', icon: '📚' },
-  wellness: { bg: 'bg-pink-900/40', text: 'text-pink-400', border: 'border-pink-800', icon: '🧘' },
-  home: { bg: 'bg-orange-900/40', text: 'text-orange-400', border: 'border-orange-800', icon: '🏠' },
+const categoryStyles: Record<string, { className: string; icon: string }> = {
+  projects: { className: 'category-1', icon: '💼' },
+  people: { className: 'category-2', icon: '👥' },
+  journal: { className: 'category-3', icon: '📓' },
+  tech: { className: 'category-4', icon: '⚙️' },
+  reading: { className: 'category-5', icon: '📚' },
+  wellness: { className: 'category-6', icon: '🧘' },
+  home: { className: 'category-7', icon: '🏠' },
 };
 
-function getCategoryColor(name: string) {
+const categoryFallbacks = [
+  'category-1',
+  'category-2',
+  'category-3',
+  'category-4',
+  'category-5',
+  'category-6',
+  'category-7',
+  'category-8',
+];
+
+function getCategoryStyle(name: string) {
   const lowerName = name.toLowerCase();
 
   // Check if it's a known category
-  for (const [key, value] of Object.entries(categoryColors)) {
+  for (const [key, value] of Object.entries(categoryStyles)) {
     if (lowerName.includes(key)) {
       return value;
     }
   }
 
   // Hash-based color for unknown categories
-  const colors = [
-    { bg: 'bg-indigo-900/40', text: 'text-indigo-400', border: 'border-indigo-800', icon: '📁' },
-    { bg: 'bg-violet-900/40', text: 'text-violet-400', border: 'border-violet-800', icon: '📁' },
-    { bg: 'bg-fuchsia-900/40', text: 'text-fuchsia-400', border: 'border-fuchsia-800', icon: '📁' },
-    { bg: 'bg-rose-900/40', text: 'text-rose-400', border: 'border-rose-800', icon: '📁' },
-  ];
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return colors[hash % colors.length];
+  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: '📁' };
 }
 
 // Render markdown if it's a file, then sanitize to prevent XSS
@@ -87,13 +91,16 @@ if (data?.is_file && data?.content) {
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-light text-gray-400">Browse</h1>
+        <h1 class="text-2xl font-light text-muted">Browse</h1>
         <div class="flex items-center gap-3 text-sm">
-          <a href="/" class="text-blue-400 hover:text-blue-300">
+          <a href="/" class="link">
             &larr; Capture
           </a>
-          <a href="/archive" class="text-blue-400 hover:text-blue-300">
+          <a href="/archive" class="link">
             Archive
+          </a>
+          <a href="/settings" class="link">
+            Settings
           </a>
         </div>
       </div>
@@ -102,17 +109,17 @@ if (data?.is_file && data?.content) {
       <nav class="mb-6 text-sm">
         <ol class="flex flex-wrap items-center gap-2">
           <li>
-            <a href="/browse" class="text-blue-400 hover:text-blue-300">atlas</a>
+            <a href="/browse" class="link">atlas</a>
           </li>
           {breadcrumbs.map((crumb, i) => {
-            const colors = getCategoryColor(crumb.name);
+            const category = getCategoryStyle(crumb.name);
             return (
               <li class="flex items-center gap-2">
-                <span class="text-gray-600">/</span>
+                <span class="text-subtle">/</span>
                 {i === breadcrumbs.length - 1 ? (
-                  <span class={`${colors.text} font-medium`}>{crumb.name}</span>
+                  <span class={`${category.className} category-text font-medium`}>{crumb.name}</span>
                 ) : (
-                  <a href={`/browse/${crumb.path}`} class={`${colors.text} hover:brightness-110`}>
+                  <a href={`/browse/${crumb.path}`} class={`${category.className} category-text hover:brightness-110`}>
                     {crumb.name}
                   </a>
                 )}
@@ -123,15 +130,12 @@ if (data?.is_file && data?.content) {
       </nav>
 
       {error ? (
-        <div class="p-4 bg-red-900/30 border border-red-800 rounded-lg">
-          <p class="text-red-400">{error}</p>
+        <div class="p-4 bg-danger-soft border border-danger rounded-lg">
+          <p class="text-danger">{error}</p>
         </div>
       ) : data?.is_file ? (
         <!-- File content -->
-        <article class="prose prose-invert prose-sm max-w-none
-                       prose-headings:text-gray-200 prose-p:text-gray-300
-                       prose-a:text-blue-400 prose-code:text-green-400
-                       prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-800">
+        <article class="prose prose-sm max-w-none prose-theme">
           <div set:html={renderedContent} />
         </article>
       ) : (
@@ -140,15 +144,15 @@ if (data?.is_file && data?.content) {
           {data?.items?.length === 0 ? (
             <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
               <div class="text-6xl mb-4">📂</div>
-              <h2 class="text-xl font-light text-gray-300 mb-2">This folder is waiting for its first note</h2>
-              <p class="text-gray-500 mb-6 max-w-md">
+              <h2 class="text-xl font-light text-primary mb-2">This folder is waiting for its first note</h2>
+              <p class="text-subtle mb-6 max-w-md">
                 The Gardener will automatically file notes here based on their content.
                 Just capture your thoughts and let the AI organize them for you.
               </p>
               {currentPath.includes('projects') && (
-                <div class="mb-6 p-4 bg-gray-900 border border-gray-800 rounded-lg text-left max-w-md">
-                  <h3 class="text-sm font-semibold text-gray-400 mb-2">What goes in Projects?</h3>
-                  <ul class="text-sm text-gray-500 space-y-1">
+                <div class="mb-6 p-4 panel text-left max-w-md">
+                  <h3 class="text-sm font-semibold text-muted mb-2">What goes in Projects?</h3>
+                  <ul class="text-sm text-subtle space-y-1">
                     <li>• Work projects and deliverables</li>
                     <li>• Side projects and ideas</li>
                     <li>• Project plans and progress notes</li>
@@ -156,9 +160,9 @@ if (data?.is_file && data?.content) {
                 </div>
               )}
               {currentPath.includes('people') && (
-                <div class="mb-6 p-4 bg-gray-900 border border-gray-800 rounded-lg text-left max-w-md">
-                  <h3 class="text-sm font-semibold text-gray-400 mb-2">What goes in People?</h3>
-                  <ul class="text-sm text-gray-500 space-y-1">
+                <div class="mb-6 p-4 panel text-left max-w-md">
+                  <h3 class="text-sm font-semibold text-muted mb-2">What goes in People?</h3>
+                  <ul class="text-sm text-subtle space-y-1">
                     <li>• Contact notes and details</li>
                     <li>• Meeting summaries</li>
                     <li>• Relationship reminders</li>
@@ -166,9 +170,9 @@ if (data?.is_file && data?.content) {
                 </div>
               )}
               {currentPath.includes('journal') && (
-                <div class="mb-6 p-4 bg-gray-900 border border-gray-800 rounded-lg text-left max-w-md">
-                  <h3 class="text-sm font-semibold text-gray-400 mb-2">What goes in Journal?</h3>
-                  <ul class="text-sm text-gray-500 space-y-1">
+                <div class="mb-6 p-4 panel text-left max-w-md">
+                  <h3 class="text-sm font-semibold text-muted mb-2">What goes in Journal?</h3>
+                  <ul class="text-sm text-subtle space-y-1">
                     <li>• Daily reflections and thoughts</li>
                     <li>• Mood logs and gratitude</li>
                     <li>• Personal observations</li>
@@ -177,31 +181,31 @@ if (data?.is_file && data?.content) {
               )}
               <a
                 href="/"
-                class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg transition-colors font-medium btn-primary"
               >
                 Capture a note →
               </a>
             </div>
           ) : (
             data?.items?.map((item: any, index: number) => {
-              const colors = item.type === 'directory' ? getCategoryColor(item.name) : null;
+              const category = item.type === 'directory' ? getCategoryStyle(item.name) : null;
               return (
                 <a
                   href={`/browse/${item.path}`}
                   class={`flex items-center gap-3 p-3 rounded-lg transition-all group stagger-item ${
-                    colors
-                      ? `border ${colors.border} ${colors.bg} hover:${colors.bg.replace('/40', '/60')}`
-                      : 'hover:bg-gray-900'
+                    category
+                      ? `category-chip ${category.className}`
+                      : 'hover:bg-surface-muted'
                   }`}
                 >
                   <span class="text-xl">
-                    {item.type === 'directory' ? (colors?.icon || '📁') : '📄'}
+                    {item.type === 'directory' ? (category?.icon || '📁') : '📄'}
                   </span>
-                  <span class={`flex-1 ${colors ? colors.text : 'text-gray-300'} group-hover:brightness-110`}>
+                  <span class={`flex-1 ${category ? `category-text ${category.className}` : 'text-primary'} group-hover:brightness-110`}>
                     {item.name}
                   </span>
                   {item.type === 'directory' && (
-                    <span class={`text-xs ${colors ? colors.text : 'text-gray-500'} opacity-50`}>
+                    <span class={`text-xs ${category ? `category-text ${category.className}` : 'text-subtle'} opacity-50`}>
                       &rarr;
                     </span>
                   )}

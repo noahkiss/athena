@@ -55,13 +55,16 @@ if (data?.is_file && data?.content) {
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-light text-gray-400">Archive</h1>
+        <h1 class="text-2xl font-light text-muted">Archive</h1>
         <div class="flex items-center gap-3 text-sm">
-          <a href="/" class="text-blue-400 hover:text-blue-300">
+          <a href="/" class="link">
             &larr; Capture
           </a>
-          <a href="/browse" class="text-blue-400 hover:text-blue-300">
+          <a href="/browse" class="link">
             Browse
+          </a>
+          <a href="/settings" class="link">
+            Settings
           </a>
         </div>
       </div>
@@ -70,15 +73,15 @@ if (data?.is_file && data?.content) {
       <nav class="mb-6 text-sm">
         <ol class="flex flex-wrap items-center gap-2">
           <li>
-            <a href="/archive" class="text-blue-400 hover:text-blue-300">archive</a>
+            <a href="/archive" class="link">archive</a>
           </li>
           {breadcrumbs.map((crumb, i) => (
             <li class="flex items-center gap-2">
-              <span class="text-gray-600">/</span>
+              <span class="text-subtle">/</span>
               {i === breadcrumbs.length - 1 ? (
-                <span class="text-gray-300">{crumb.name}</span>
+                <span class="text-primary">{crumb.name}</span>
               ) : (
-                <a href={`/archive/${crumb.path}`} class="text-blue-400 hover:text-blue-300">
+                <a href={`/archive/${crumb.path}`} class="link">
                   {crumb.name}
                 </a>
               )}
@@ -88,15 +91,12 @@ if (data?.is_file && data?.content) {
       </nav>
 
       {error ? (
-        <div class="p-4 bg-red-900/30 border border-red-800 rounded-lg">
-          <p class="text-red-400">{error}</p>
+        <div class="p-4 bg-danger-soft border border-danger rounded-lg">
+          <p class="text-danger">{error}</p>
         </div>
       ) : data?.is_file ? (
         <!-- File content -->
-        <article class="prose prose-invert prose-sm max-w-none
-                       prose-headings:text-gray-200 prose-p:text-gray-300
-                       prose-a:text-blue-400 prose-code:text-green-400
-                       prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-800">
+        <article class="prose prose-sm max-w-none prose-theme">
           <div set:html={renderedContent} />
         </article>
       ) : (
@@ -105,14 +105,14 @@ if (data?.is_file && data?.content) {
           {data?.items?.length === 0 ? (
             <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
               <div class="text-6xl mb-4">📦</div>
-              <h2 class="text-xl font-light text-gray-300 mb-2">No archived notes yet</h2>
-              <p class="text-gray-500 mb-6 max-w-md">
+              <h2 class="text-xl font-light text-primary mb-2">No archived notes yet</h2>
+              <p class="text-subtle mb-6 max-w-md">
                 Submit your first note to get started! The Gardener will automatically organize it,
                 and archived notes will appear here.
               </p>
               <a
                 href="/"
-                class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg transition-colors font-medium btn-primary"
               >
                 Go to Capture →
               </a>
@@ -121,12 +121,12 @@ if (data?.is_file && data?.content) {
             data?.items?.map((item: any, index: number) => (
               <a
                 href={`/archive/${item.path}`}
-                class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-900 transition-all group stagger-item"
+                class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-muted transition-all group stagger-item"
               >
                 <span class="text-lg">
                   {item.type === 'directory' ? '📁' : '📄'}
                 </span>
-                <span class="text-gray-300 group-hover:text-white">
+                <span class="text-muted group-hover:text-primary">
                   {item.name}
                 </span>
               </a>

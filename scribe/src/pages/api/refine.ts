@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (!content.trim()) {
       return new Response(
-        '<p class="text-gray-500">Enter some content to get suggestions.</p>',
+        '<p class="text-subtle">Enter some content to get suggestions.</p>',
         { status: 200, headers: { 'Content-Type': 'text/html' } }
       );
     }
@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error('Refine error:', error);
     return new Response(
-      '<p class="text-yellow-500">Could not get suggestions. Is Gardener running?</p>',
+      '<p class="text-warning">Could not get suggestions. Is Gardener running?</p>',
       { status: 200, headers: { 'Content-Type': 'text/html' } }
     );
   }

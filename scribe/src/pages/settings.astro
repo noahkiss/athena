@@ -1,0 +1,164 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getTheme, themeList } from '../lib/themes';
+
+const GARDENER_URL =
+  process.env.GARDENER_URL ||
+  import.meta.env.GARDENER_URL ||
+  'http://localhost:8000';
+const AUTH_TOKEN =
+  process.env.ATHENA_AUTH_TOKEN ||
+  import.meta.env.ATHENA_AUTH_TOKEN ||
+  '';
+const authHeaders = AUTH_TOKEN
+  ? { Authorization: `Bearer ${AUTH_TOKEN}`, 'X-Auth-Token': AUTH_TOKEN }
+  : {};
+
+const defaultBranding = {
+  app_name: 'Athena Scribe',
+  icon_version: 'default',
+  theme: 'default',
+  has_icon: false,
+};
+
+let branding = { ...defaultBranding };
+try {
+  const response = await fetch(`${GARDENER_URL}/api/branding`, {
+    headers: authHeaders,
+  });
+  if (response.ok) {
+    branding = { ...branding, ...(await response.json()) };
+  }
+} catch (error) {
+  console.warn('Failed to load branding settings', error);
+}
+
+const iconQuery = branding.icon_version ? `?v=${branding.icon_version}` : '';
+const currentTheme = getTheme(branding.theme);
+---
+
+<Layout title="Athena - Settings">
+  <main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-3xl mx-auto space-y-8">
+      <header class="flex items-center justify-between">
+        <h1 class="text-2xl font-light text-muted">Settings</h1>
+        <div class="flex items-center gap-3 text-sm">
+          <a href="/" class="link">
+            Capture
+          </a>
+          <a href="/browse" class="link">
+            Browse
+          </a>
+          <a href="/archive" class="link">
+            Archive
+          </a>
+        </div>
+      </header>
+
+      <section class="p-6 panel space-y-6">
+        <div>
+          <h2 class="text-lg font-medium text-primary">App branding</h2>
+          <p class="text-sm text-subtle">
+            Update the app name shown in the home screen shortcut and install banner.
+          </p>
+        </div>
+
+        <form
+          hx-post="/api/branding"
+          hx-target="#branding-feedback"
+          hx-swap="innerHTML"
+          class="space-y-6"
+        >
+          <label class="block text-sm text-muted">
+            App name
+            <input
+              type="text"
+              name="app_name"
+              value={branding.app_name}
+              class="mt-2 w-full rounded-md px-3 py-2 input-field"
+            />
+          </label>
+
+          <fieldset class="space-y-3">
+            <legend class="text-sm text-muted">Theme</legend>
+            <div class="grid gap-3 sm:grid-cols-2">
+              {themeList.map((theme) => {
+                const selected = currentTheme.id === theme.id;
+                const swatches = [theme.colors.accentRgb, ...theme.categories.slice(0, 2)];
+                return (
+                  <label class={`theme-option ${selected ? 'theme-option-selected' : ''}`}>
+                    <input type="radio" name="theme" value={theme.id} checked={selected} class="sr-only" />
+                    <div class="flex items-center justify-between gap-3">
+                      <div>
+                        <p class="text-sm font-medium text-primary">{theme.label}</p>
+                        <p class="text-xs text-subtle">{theme.group}</p>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        {swatches.map((swatch) => (
+                          <span
+                            class="h-4 w-4 rounded-full border border-default"
+                            style={`background-color: rgb(${swatch});`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <button
+            type="submit"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors btn-primary"
+          >
+            Save branding
+          </button>
+        </form>
+        <div id="branding-feedback"></div>
+      </section>
+
+      <section class="p-6 panel space-y-4">
+        <div>
+          <h2 class="text-lg font-medium text-primary">App icon</h2>
+          <p class="text-sm text-subtle">
+            Upload a 512x512 PNG, JPG, or WebP. We generate all required favicon and iOS sizes.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="w-20 h-20 rounded-2xl bg-surface-muted border border-default flex items-center justify-center overflow-hidden">
+            <img src={`/icons/apple-touch-icon-180.png${iconQuery}`} alt="App icon preview" class="w-full h-full object-cover" />
+          </div>
+          <div class="text-sm text-muted">
+            <p>Current icon preview</p>
+            <p class="text-xs text-subtle">Reload after upload to refresh</p>
+          </div>
+        </div>
+
+        <form
+          hx-post="/api/branding-icon"
+          hx-target="#icon-feedback"
+          hx-swap="innerHTML"
+          hx-encoding="multipart/form-data"
+          class="space-y-4"
+        >
+          <input
+            type="file"
+            name="icon"
+            accept="image/png,image/jpeg,image/webp"
+            class="block w-full text-sm text-muted file:mr-4 file:py-2 file:px-4
+                   file:rounded-lg file:border-0"
+          />
+          <button
+            type="submit"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors btn-secondary"
+          >
+            Upload icon
+          </button>
+        </form>
+        <div id="icon-feedback"></div>
+      </section>
+    </div>
+  </main>
+</Layout>
