@@ -1206,3 +1206,31 @@ async def browse_archive(path: str = "") -> BrowseResponse:
     """Browse archived inbox notes."""
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
     return browse_directory(ARCHIVE_DIR, path)
+
+
+@app.get(
+    "/api/random",
+    dependencies=[Depends(verify_auth_token)],
+)
+async def get_random_note():
+    """Get a random note from the atlas for serendipitous discovery."""
+    import random
+    import secrets
+
+    # Get all markdown files from atlas
+    atlas_files = []
+    if ATLAS_DIR.exists():
+        for md_file in ATLAS_DIR.rglob("*.md"):
+            try:
+                rel_path = str(md_file.relative_to(ATLAS_DIR))
+                atlas_files.append(rel_path)
+            except (OSError, ValueError):
+                continue
+
+    if not atlas_files:
+        raise HTTPException(status_code=404, detail="No notes found in atlas")
+
+    # Use secrets for cryptographically secure randomness
+    random_note = secrets.choice(atlas_files)
+
+    return {"path": random_note}

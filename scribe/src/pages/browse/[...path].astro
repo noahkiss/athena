@@ -96,6 +96,13 @@ if (data?.is_file && data?.content) {
           <a href="/" class="link">
             &larr; Capture
           </a>
+          <button
+            id="random-note-btn"
+            class="link cursor-pointer"
+            title="Random note (Ctrl+Shift+R)"
+          >
+            🎲 Random
+          </button>
           <a href="/archive" class="link">
             Archive
           </a>
@@ -217,4 +224,42 @@ if (data?.is_file && data?.content) {
       )}
     </div>
   </main>
+
+  <script>
+    const GARDENER_URL = import.meta.env.PUBLIC_GARDENER_URL || 'http://localhost:8000';
+
+    async function goToRandomNote() {
+      const token = localStorage.getItem('authToken') || '';
+      const headers: HeadersInit = token
+        ? { 'Authorization': `Bearer ${token}`, 'X-Auth-Token': token }
+        : {};
+
+      try {
+        const response = await fetch(`${GARDENER_URL}/api/random`, { headers });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.path) {
+            window.location.href = `/browse/${data.path}`;
+          }
+        } else {
+          console.error('Failed to get random note:', response.status);
+          alert('Failed to get random note. Try again.');
+        }
+      } catch (error) {
+        console.error('Error fetching random note:', error);
+        alert('Could not connect to server.');
+      }
+    }
+
+    // Handle button click
+    document.getElementById('random-note-btn')?.addEventListener('click', goToRandomNote);
+
+    // Handle keyboard shortcut (Ctrl+Shift+R or Cmd+Shift+R)
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+        e.preventDefault();
+        goToRandomNote();
+      }
+    });
+  </script>
 </Layout>
