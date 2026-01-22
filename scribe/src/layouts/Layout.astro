@@ -11,6 +11,13 @@ const { title} = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="theme-color" content="#030712" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>{title}</title>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <style>
@@ -216,6 +223,7 @@ const { title} = Astro.props;
       // Keyboard shortcuts system
       let gPressed = false;
       let gPressedTimeout: number | null = null;
+      const isProd = import.meta.env.PROD;
 
       // Check if user is typing in an input/textarea
       function isTyping() {
@@ -347,6 +355,14 @@ const { title} = Astro.props;
           hideShortcutsModal();
         }
       });
+
+      if (isProd && 'serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((error) => {
+            console.warn('Service worker registration failed', error);
+          });
+        });
+      }
     </script>
   </body>
 </html>
