@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import Icon from '../../components/Icon.astro';
 import { marked } from 'marked';
 import DOMPurify from 'isomorphic-dompurify';
 
@@ -97,7 +98,9 @@ if (data?.is_file && data?.content) {
         <div class="space-y-1">
           {data?.items?.length === 0 ? (
             <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div class="text-6xl mb-4">📦</div>
+              <div class="mb-4 text-primary">
+                <Icon name="archive-down-minimlistic" size={64} aria-label="Empty archive" />
+              </div>
               <h2 class="text-xl font-light text-primary mb-2">No archived notes yet</h2>
               <p class="text-subtle mb-6 max-w-md">
                 Submit your first note to get started! The Gardener will automatically organize it,
@@ -116,9 +119,11 @@ if (data?.is_file && data?.content) {
                 href={`/archive/${item.path}`}
                 class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-muted transition-all group stagger-item"
               >
-                <span class="text-lg">
-                  {item.type === 'directory' ? '📁' : '📄'}
-                </span>
+                <Icon
+                  name={item.type === 'directory' ? 'folder' : 'document'}
+                  size={20}
+                  class="text-primary"
+                />
                 <span class="text-muted group-hover:text-primary">
                   {item.name}
                 </span>
