@@ -20,7 +20,7 @@ Install @iconify-json/solar and @iconify-json/material-symbols, create Icon comp
 - [x] Create iconMappings.ts with emoji→icon mappings
 
 ### Frontend Files (Replace Emoji)
-- [ ] dashboard.astro (16 emoji instances)
+- [x] dashboard.astro (16 emoji instances)
 - [ ] browse/[...path].astro (10 instances)
 - [ ] timeline.astro (8 instances)
 - [ ] archive/[...path].astro (4 instances)

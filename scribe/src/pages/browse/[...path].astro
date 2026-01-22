@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import Icon from '../../components/Icon.astro';
 import { marked } from 'marked';
 import DOMPurify from 'isomorphic-dompurify';
 
@@ -57,13 +58,13 @@ const breadcrumbs = pathParts.map((part, index) => ({
 }));
 
 const categoryStyles: Record<string, { className: string; icon: string }> = {
-  projects: { className: 'category-1', icon: '💼' },
-  people: { className: 'category-2', icon: '👥' },
-  journal: { className: 'category-3', icon: '📓' },
-  tech: { className: 'category-4', icon: '⚙️' },
-  reading: { className: 'category-5', icon: '📚' },
-  wellness: { className: 'category-6', icon: '🧘' },
-  home: { className: 'category-7', icon: '🏠' },
+  projects: { className: 'category-1', icon: 'case' },
+  people: { className: 'category-2', icon: 'users' },
+  journal: { className: 'category-3', icon: 'notebook' },
+  tech: { className: 'category-4', icon: 'settings' },
+  reading: { className: 'category-5', icon: 'book-2' },
+  wellness: { className: 'category-6', icon: 'health' },
+  home: { className: 'category-7', icon: 'home-2' },
 };
 
 const categoryFallbacks = [
@@ -89,7 +90,7 @@ function getCategoryStyle(name: string) {
 
   // Hash-based color for unknown categories
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: '📁' };
+  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: 'folder' };
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -123,10 +124,11 @@ if (data?.is_file && data?.content) {
           <a href="/timeline" class="nav-link">Timeline</a>
           <button
             id="random-note-btn"
-            class="nav-link cursor-pointer"
+            class="nav-link cursor-pointer flex items-center gap-1.5"
             title="Random note (Ctrl+Shift+R)"
           >
-            🎲 Random
+            <Icon name="shuffle" size={18} />
+            <span>Random</span>
           </button>
           <a href="/archive" class="nav-link">Archive</a>
           <a href="/settings" class="nav-link">Settings</a>
@@ -161,7 +163,10 @@ if (data?.is_file && data?.content) {
       {!currentPath && recentActivity.length > 0 && (
         <details class="mb-6 panel" open>
           <summary class="cursor-pointer p-4 font-medium text-primary hover:text-accent transition-colors flex items-center justify-between">
-            <span>📋 Recent Activity</span>
+            <span class="flex items-center gap-2">
+              <Icon name="bolt" size={20} class="text-primary" />
+              <span>Recent Activity</span>
+            </span>
             <span class="text-xs text-subtle">Last {recentActivity.length} notes</span>
           </summary>
           <div class="px-4 pb-4 space-y-2">
@@ -175,9 +180,7 @@ if (data?.is_file && data?.content) {
                   href={`/browse/${item.path}`}
                   class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-muted transition-colors group"
                 >
-                  <span class="text-lg">
-                    {category?.icon || '📄'}
-                  </span>
+                  <Icon name={category?.icon || 'document'} size={20} class="text-primary" />
                   <span class="flex-1 text-sm">
                     <span class={category ? `category-text ${category.className}` : 'text-primary'}>
                       {fileName}
@@ -210,7 +213,9 @@ if (data?.is_file && data?.content) {
         <div class="space-y-1">
           {data?.items?.length === 0 ? (
             <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div class="text-6xl mb-4">📂</div>
+              <div class="mb-4 text-primary">
+                <Icon name="folder-open" size={64} aria-label="Empty folder" />
+              </div>
               <h2 class="text-xl font-light text-primary mb-2">This folder is waiting for its first note</h2>
               <p class="text-subtle mb-6 max-w-md">
                 The Gardener will automatically file notes here based on their content.
@@ -265,9 +270,11 @@ if (data?.is_file && data?.content) {
                       : 'hover:bg-surface-muted'
                   }`}
                 >
-                  <span class="text-xl">
-                    {item.type === 'directory' ? (category?.icon || '📁') : '📄'}
-                  </span>
+                  <Icon
+                    name={item.type === 'directory' ? (category?.icon || 'folder') : 'document'}
+                    size={24}
+                    class="text-primary"
+                  />
                   <span class={`flex-1 ${category ? `category-text ${category.className}` : 'text-primary'} group-hover:brightness-110`}>
                     {item.name}
                   </span>
