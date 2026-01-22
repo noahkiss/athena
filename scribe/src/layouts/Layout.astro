@@ -145,48 +145,72 @@ const themeStyle = themeToCssVars(theme);
       .btn-primary {
         background-color: var(--accent);
         color: var(--accent-contrast);
+        border-radius: 0.875rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        transition: all var(--transition-fast) var(--ease-in-out);
       }
 
       .btn-primary:hover {
         background-color: var(--accent-hover);
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+        transform: translateY(-1px);
       }
 
       .btn-secondary {
         background-color: var(--color-surface-alt);
         border: 1px solid var(--color-border);
         color: var(--color-text-muted);
+        border-radius: 0.875rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        transition: all var(--transition-fast) var(--ease-in-out);
       }
 
       .btn-secondary:hover {
         background-color: var(--color-surface);
         color: var(--color-text);
+        box-shadow: 0 2px 4px 0 rgb(0 0 0 / 0.1);
+        transform: translateY(-1px);
       }
 
       .panel {
         background-color: var(--color-surface);
         border: 1px solid var(--color-border);
-        border-radius: 0.75rem;
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        transition: box-shadow var(--transition-fast) var(--ease-in-out),
+                    transform var(--transition-fast) var(--ease-in-out);
+      }
+
+      .panel:hover {
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.15), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+        transform: translateY(-1px);
       }
 
       .theme-option {
         background-color: var(--color-surface);
         border: 1px solid var(--color-border);
-        border-radius: 0.75rem;
+        border-radius: 1rem;
         cursor: pointer;
-        padding: 0.75rem 1rem;
+        padding: 0.875rem 1.25rem;
         transition: border-color var(--transition-fast) var(--ease-in-out),
           box-shadow var(--transition-fast) var(--ease-in-out),
           transform var(--transition-fast) var(--ease-in-out);
+        box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
       }
 
       .theme-option:hover {
         border-color: var(--accent);
         transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
       }
 
       .theme-option-selected {
         border-color: var(--accent);
-        box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.4);
+        box-shadow: 0 0 0 2px rgb(var(--accent-rgb) / 0.3), 0 1px 3px 0 rgb(0 0 0 / 0.1);
       }
 
       .input-field {
@@ -635,7 +659,7 @@ const themeStyle = themeToCssVars(theme);
     </script>
 
     <!-- Mobile Bottom Navigation (PWA) -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-default z-40 safe-area-bottom">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-t border-default z-40 safe-area-bottom ios-bottom-nav">
       <div class="flex items-center justify-around h-16">
         <a
           href="/"
@@ -681,6 +705,11 @@ const themeStyle = themeToCssVars(theme);
       /* iOS safe area support for bottom nav */
       .safe-area-bottom {
         padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      /* iOS-style bottom nav shadow */
+      .ios-bottom-nav {
+        box-shadow: 0 -2px 8px 0 rgb(0 0 0 / 0.08), 0 -1px 2px 0 rgb(0 0 0 / 0.04);
       }
     </style>
   </body>

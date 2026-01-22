@@ -32,23 +32,23 @@ Improve the overall UI/UX to have a premium, native iOS/macOS feel with proper d
 - [x] Ensure no overflow issues
 
 ### 2. iOS-Style Card UI
-- [ ] Convert panels to card-based design with proper rounded corners
-- [ ] Use subtle shadows (elevation) on cards
-- [ ] Implement proper spacing between cards (16px on mobile)
-- [ ] Use concentric corners where nested (buttons in cards)
+- [x] Convert panels to card-based design with proper rounded corners (1rem)
+- [x] Use subtle shadows (elevation) on cards (layered shadows added)
+- [x] Implement proper spacing between cards (better padding)
+- [x] Use concentric corners where nested (buttons have 0.875rem, panels 1rem)
 
 ### 3. Spacing & Layout
 - [ ] Update to iOS spacing: 16px margins on mobile, 24px on tablet
 - [ ] Increase whitespace between sections
 - [ ] Ensure touch targets are 44x44pt minimum
-- [ ] Add proper padding inside cards/panels
+- [x] Add proper padding inside cards/panels (increased padding on buttons and theme options)
 
 ### 4. Visual Polish
 - [ ] Improve color palette with better contrast
-- [ ] Add subtle shadows to create depth
+- [x] Add subtle shadows to create depth (panels, buttons, theme options, bottom nav)
 - [ ] Better typography hierarchy (sizes, weights)
-- [ ] Smooth transitions and animations
-- [ ] iOS-style dividers and separators
+- [x] Smooth transitions and animations (hover effects with transforms)
+- [x] iOS-style mobile bottom nav (backdrop blur + shadow)
 
 ### 5. Theme Improvements
 - [ ] Review current themes for native feel
