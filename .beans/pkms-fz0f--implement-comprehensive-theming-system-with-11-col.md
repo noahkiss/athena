@@ -35,11 +35,11 @@ Implement a comprehensive theming system with 11 curated color palettes and cont
 - [x] Add theme preview swatches (existing swatch system works for all themes)
 
 ### Remaining UI/UX Items
-- [ ] Implement iOS spacing: 16px mobile, 24px tablet margins
-- [ ] Increase whitespace between sections
-- [ ] Ensure all touch targets are 44x44pt minimum
-- [ ] Improve typography hierarchy (heading sizes, weights, line-heights)
-- [ ] Better font stack (system fonts)
+- [x] Implement iOS spacing: 16px mobile, 24px tablet margins
+- [x] Increase whitespace between sections
+- [x] Ensure all touch targets are 44x44pt minimum
+- [x] Improve typography hierarchy (heading sizes, weights, line-heights)
+- [x] Better font stack (system fonts)
 
 ### Advanced Polish
 - [x] Research continuous corner radius (squircle) CSS implementation
