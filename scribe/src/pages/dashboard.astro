@@ -1,5 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import { getCategoryIcon } from '../lib/iconMappings';
 
 const GARDENER_URL =
   process.env.GARDENER_URL ||
@@ -42,13 +44,13 @@ try {
 }
 
 const categoryStyles: Record<string, { className: string; icon: string }> = {
-  projects: { className: 'category-1', icon: '💼' },
-  people: { className: 'category-2', icon: '👥' },
-  journal: { className: 'category-3', icon: '📓' },
-  tech: { className: 'category-4', icon: '⚙️' },
-  reading: { className: 'category-5', icon: '📚' },
-  wellness: { className: 'category-6', icon: '🧘' },
-  home: { className: 'category-7', icon: '🏠' },
+  projects: { className: 'category-1', icon: 'case' },
+  people: { className: 'category-2', icon: 'users' },
+  journal: { className: 'category-3', icon: 'notebook' },
+  tech: { className: 'category-4', icon: 'settings' },
+  reading: { className: 'category-5', icon: 'book-2' },
+  wellness: { className: 'category-6', icon: 'health' },
+  home: { className: 'category-7', icon: 'home-2' },
 };
 
 const categoryFallbacks = [
@@ -70,7 +72,7 @@ function getCategoryStyle(name: string) {
     }
   }
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: '📁' };
+  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: 'folder' };
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -114,7 +116,7 @@ const sortedCategories = Object.entries(stats.categories || {})
             <!-- Total Notes -->
             <div class="panel p-6 hover:bg-surface-muted transition-colors stagger-item">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-3xl">📚</span>
+                <Icon name="library" size={32} class="text-primary" aria-label="Total notes" />
                 <span class="text-3xl font-light text-primary">{stats.total_notes}</span>
               </div>
               <p class="text-sm text-muted">Total Notes</p>
@@ -123,7 +125,7 @@ const sortedCategories = Object.entries(stats.categories || {})
             <!-- Today -->
             <div class="panel p-6 hover:bg-surface-muted transition-colors stagger-item">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-3xl">📝</span>
+                <Icon name="document-add" size={32} class="text-primary" aria-label="Notes today" />
                 <span class="text-3xl font-light text-primary">{stats.notes_today}</span>
               </div>
               <p class="text-sm text-muted">Today</p>
@@ -132,7 +134,7 @@ const sortedCategories = Object.entries(stats.categories || {})
             <!-- This Week -->
             <div class="panel p-6 hover:bg-surface-muted transition-colors stagger-item">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-3xl">📅</span>
+                <Icon name="calendar" size={32} class="text-primary" aria-label="Notes this week" />
                 <span class="text-3xl font-light text-primary">{stats.notes_this_week}</span>
               </div>
               <p class="text-sm text-muted">This Week</p>
@@ -141,7 +143,7 @@ const sortedCategories = Object.entries(stats.categories || {})
             <!-- This Month -->
             <div class="panel p-6 hover:bg-surface-muted transition-colors stagger-item">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-3xl">🗓️</span>
+                <Icon name="calendar-month" size={32} class="text-primary" aria-label="Notes this month" />
                 <span class="text-3xl font-light text-primary">{stats.notes_this_month}</span>
               </div>
               <p class="text-sm text-muted">This Month</p>
@@ -153,7 +155,7 @@ const sortedCategories = Object.entries(stats.categories || {})
             <!-- Categories Breakdown -->
             <div class="panel p-6">
               <h2 class="text-lg font-medium text-primary mb-4 flex items-center gap-2">
-                <span>🏷️</span>
+                <Icon name="tag" size={24} class="text-primary" />
                 <span>Categories</span>
               </h2>
               {sortedCategories.length > 0 ? (
@@ -165,7 +167,7 @@ const sortedCategories = Object.entries(stats.categories || {})
                       <div class="space-y-1">
                         <div class="flex items-center justify-between text-sm">
                           <span class="flex items-center gap-2">
-                            <span>{style.icon}</span>
+                            <Icon name={style.icon} size={20} class="text-primary" />
                             <span class={`category-text ${style.className}`}>{category}</span>
                           </span>
                           <span class="text-muted">{count} ({percentage}%)</span>
@@ -188,7 +190,7 @@ const sortedCategories = Object.entries(stats.categories || {})
             <!-- Recent Activity -->
             <div class="panel p-6">
               <h2 class="text-lg font-medium text-primary mb-4 flex items-center gap-2">
-                <span>⚡</span>
+                <Icon name="bolt" size={24} class="text-primary" />
                 <span>Recent Activity</span>
               </h2>
               {recentActivity.length > 0 ? (
@@ -203,9 +205,7 @@ const sortedCategories = Object.entries(stats.categories || {})
                         href={`/browse/${item.path}`}
                         class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-muted transition-colors group"
                       >
-                        <span class="text-lg">
-                          {category?.icon || '📄'}
-                        </span>
+                        <Icon name={category?.icon || 'document'} size={20} class="text-primary" />
                         <span class="flex-1 text-sm">
                           <span class={category ? `category-text ${category.className}` : 'text-primary'}>
                             {fileName}
@@ -235,18 +235,21 @@ const sortedCategories = Object.entries(stats.categories || {})
           <!-- Quick Actions -->
           <div class="panel p-6">
             <h2 class="text-lg font-medium text-primary mb-4 flex items-center gap-2">
-              <span>🚀</span>
+              <Icon name="rocket" size={24} class="text-primary" />
               <span>Quick Actions</span>
             </h2>
             <div class="flex flex-wrap gap-3">
-              <a href="/" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
-                ✍️ Capture Note
+              <a href="/" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                <Icon name="pen-new-square" size={18} />
+                <span>Capture Note</span>
               </a>
-              <a href="/browse" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
-                📁 Browse Atlas
+              <a href="/browse" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                <Icon name="folder" size={18} />
+                <span>Browse Atlas</span>
               </a>
-              <a href="/archive" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
-                📦 View Archive
+              <a href="/archive" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                <Icon name="archive-down-minimlistic" size={18} />
+                <span>View Archive</span>
               </a>
             </div>
           </div>
