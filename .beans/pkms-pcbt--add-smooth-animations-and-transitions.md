@@ -1,11 +1,11 @@
 ---
 # pkms-pcbt
 title: Add smooth animations and transitions
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-22T02:45:35Z
-updated_at: 2026-01-22T04:15:22Z
+updated_at: 2026-01-22T04:20:30Z
 ---
 
 Polish the UI with smooth animations and micro-interactions for better feel.
