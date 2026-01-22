@@ -103,7 +103,50 @@ if (data?.is_file && data?.content) {
         <!-- Directory listing -->
         <div class="space-y-1">
           {data?.items?.length === 0 ? (
-            <p class="text-gray-500 py-8 text-center">This directory is empty</p>
+            <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
+              <div class="text-6xl mb-4">📂</div>
+              <h2 class="text-xl font-light text-gray-300 mb-2">This folder is waiting for its first note</h2>
+              <p class="text-gray-500 mb-6 max-w-md">
+                The Gardener will automatically file notes here based on their content.
+                Just capture your thoughts and let the AI organize them for you.
+              </p>
+              {currentPath.includes('projects') && (
+                <div class="mb-6 p-4 bg-gray-900 border border-gray-800 rounded-lg text-left max-w-md">
+                  <h3 class="text-sm font-semibold text-gray-400 mb-2">What goes in Projects?</h3>
+                  <ul class="text-sm text-gray-500 space-y-1">
+                    <li>• Work projects and deliverables</li>
+                    <li>• Side projects and ideas</li>
+                    <li>• Project plans and progress notes</li>
+                  </ul>
+                </div>
+              )}
+              {currentPath.includes('people') && (
+                <div class="mb-6 p-4 bg-gray-900 border border-gray-800 rounded-lg text-left max-w-md">
+                  <h3 class="text-sm font-semibold text-gray-400 mb-2">What goes in People?</h3>
+                  <ul class="text-sm text-gray-500 space-y-1">
+                    <li>• Contact notes and details</li>
+                    <li>• Meeting summaries</li>
+                    <li>• Relationship reminders</li>
+                  </ul>
+                </div>
+              )}
+              {currentPath.includes('journal') && (
+                <div class="mb-6 p-4 bg-gray-900 border border-gray-800 rounded-lg text-left max-w-md">
+                  <h3 class="text-sm font-semibold text-gray-400 mb-2">What goes in Journal?</h3>
+                  <ul class="text-sm text-gray-500 space-y-1">
+                    <li>• Daily reflections and thoughts</li>
+                    <li>• Mood logs and gratitude</li>
+                    <li>• Personal observations</li>
+                  </ul>
+                </div>
+              )}
+              <a
+                href="/"
+                class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+              >
+                Capture a note →
+              </a>
+            </div>
           ) : (
             data?.items?.map((item: any) => (
               <a

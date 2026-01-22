@@ -1,10 +1,11 @@
 ---
 # pkms-hmbp
 title: Improve empty states with helpful messaging
-status: draft
+status: in-progress
 type: feature
+priority: normal
 created_at: 2026-01-22T02:44:54Z
-updated_at: 2026-01-22T02:44:54Z
+updated_at: 2026-01-22T03:41:23Z
 ---
 
 Replace generic empty states with contextual, helpful messages and calls to action.
@@ -49,13 +50,13 @@ Replace generic empty states with contextual, helpful messages and calls to acti
 - Subtle illustration or icon (optional)
 
 ## Checklist
-- [ ] Update Archive empty state
-- [ ] Add Browse empty folder messages
-- [ ] Add category-specific hints for empty folders
-- [ ] Add Timeline empty state
-- [ ] Add Dashboard empty state
-- [ ] Add Search no results state
-- [ ] Design empty state component
-- [ ] Add contextual CTAs
-- [ ] Test all empty states
-- [ ] Consider adding subtle illustrations
+- [x] Update Archive empty state
+- [x] Add Browse empty folder messages
+- [x] Add category-specific hints for empty folders (projects, people, journal)
+- [ ] Add Timeline empty state (page not yet implemented)
+- [ ] Add Dashboard empty state (page not yet implemented)
+- [ ] Add Search no results state (search not yet implemented)
+- [x] Design empty state component (friendly, consistent pattern)
+- [x] Add contextual CTAs (capture buttons with clear messaging)
+- [ ] Test all empty states (needs local testing)
+- [x] Consider adding subtle illustrations (emojis used: 📦, 📂)
