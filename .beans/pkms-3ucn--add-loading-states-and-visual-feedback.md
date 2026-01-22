@@ -1,11 +1,11 @@
 ---
 # pkms-3ucn
 title: Add loading states and visual feedback
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-22T02:44:11Z
-updated_at: 2026-01-22T03:32:51Z
+updated_at: 2026-01-22T03:37:19Z
 ---
 
 Improve perceived responsiveness with loading indicators and success feedback.
