@@ -23,7 +23,7 @@ Install @iconify-json/solar and @iconify-json/material-symbols, create Icon comp
 - [x] dashboard.astro (16 emoji instances)
 - [x] browse/[...path].astro (10 instances)
 - [x] timeline.astro (8 instances)
-- [ ] archive/[...path].astro (4 instances)
+- [x] archive/[...path].astro (3 instances)
 - [ ] settings.astro (3 instances)
 
 ### Backend Files (Replace Emoji)
