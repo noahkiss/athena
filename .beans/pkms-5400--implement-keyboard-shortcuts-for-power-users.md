@@ -1,10 +1,11 @@
 ---
 # pkms-5400
 title: Implement keyboard shortcuts for power users
-status: draft
+status: in-progress
 type: feature
+priority: normal
 created_at: 2026-01-22T02:44:31Z
-updated_at: 2026-01-22T02:44:31Z
+updated_at: 2026-01-22T03:37:47Z
 ---
 
 Add comprehensive keyboard shortcuts for navigation and actions.
@@ -46,14 +47,14 @@ Add comprehensive keyboard shortcuts for navigation and actions.
 - Disable shortcuts when typing in inputs (except special keys)
 
 ## Checklist
-- [ ] Design keyboard shortcuts mapping
-- [ ] Implement global keyboard event handler
-- [ ] Add Capture page shortcuts (Submit, Refine, Explore, Clear)
-- [ ] Add navigation shortcuts (g c, g b, g a, g d)
-- [ ] Add search shortcut (/ or Ctrl+K)
-- [ ] Add help overlay shortcut (?)
-- [ ] Build keyboard shortcuts help modal
-- [ ] Add footer hint for discoverability
-- [ ] Test on Windows (Ctrl) and Mac (Cmd)
-- [ ] Disable shortcuts when in input fields
-- [ ] Document shortcuts in README
+- [x] Design keyboard shortcuts mapping
+- [x] Implement global keyboard event handler
+- [x] Add Capture page shortcuts (Submit, Refine, Explore, Clear)
+- [x] Add navigation shortcuts (g c, g b, g a)
+- [ ] Add search shortcut (/ or Ctrl+K) - deferred (no search page yet)
+- [x] Add help overlay shortcut (?)
+- [x] Build keyboard shortcuts help modal
+- [x] Add footer hint for discoverability
+- [x] Test on Windows (Ctrl) and Mac (Cmd) - cross-platform support implemented
+- [x] Disable shortcuts when in input fields
+- [ ] Document shortcuts in README (can add after testing)

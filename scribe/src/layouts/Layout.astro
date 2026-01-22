@@ -3,7 +3,7 @@ interface Props {
   title: string;
 }
 
-const { title } = Astro.props;
+const { title} = Astro.props;
 ---
 
 <!doctype html>
@@ -16,5 +16,232 @@ const { title } = Astro.props;
   </head>
   <body class="min-h-screen bg-gray-950 text-gray-100">
     <slot />
+
+    <!-- Keyboard Shortcuts Help Modal -->
+    <div id="shortcuts-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-gray-900 border border-gray-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-auto">
+        <div class="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between">
+          <h2 class="text-xl font-light text-gray-200">Keyboard Shortcuts</h2>
+          <button id="close-shortcuts" class="text-gray-400 hover:text-gray-200 text-2xl leading-none">&times;</button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Global Shortcuts -->
+          <section>
+            <h3 class="text-sm font-semibold text-gray-400 uppercase mb-3">Global</h3>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Show this help</span>
+                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">?</kbd>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Close modal / Clear textarea</span>
+                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Esc</kbd>
+              </div>
+            </div>
+          </section>
+
+          <!-- Navigation Shortcuts -->
+          <section>
+            <h3 class="text-sm font-semibold text-gray-400 uppercase mb-3">Navigation</h3>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Go to Capture</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">g</kbd>
+                  <span class="text-gray-600">then</span>
+                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">c</kbd>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Go to Browse</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">g</kbd>
+                  <span class="text-gray-600">then</span>
+                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">b</kbd>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Go to Archive</span>
+                <div class="flex gap-1">
+                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">g</kbd>
+                  <span class="text-gray-600">then</span>
+                  <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">a</kbd>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Capture Page Shortcuts -->
+          <section>
+            <h3 class="text-sm font-semibold text-gray-400 uppercase mb-3">Capture Page</h3>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Submit note</span>
+                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Ctrl/Cmd + Enter</kbd>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Refine note</span>
+                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Ctrl/Cmd + R</kbd>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Explore / Ask</span>
+                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Ctrl/Cmd + E</kbd>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-300">Clear textarea</span>
+                <kbd class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm">Ctrl/Cmd + K</kbd>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="sticky bottom-0 bg-gray-900 border-t border-gray-800 p-4 text-center text-sm text-gray-500">
+          Press <kbd class="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded text-xs">Esc</kbd> to close
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer hint -->
+    <div class="fixed bottom-4 right-4 text-xs text-gray-600">
+      Press <kbd class="px-1.5 py-0.5 bg-gray-800 border border-gray-700 rounded">?</kbd> for shortcuts
+    </div>
+
+    <script>
+      // Keyboard shortcuts system
+      let gPressed = false;
+      let gPressedTimeout: number | null = null;
+
+      // Check if user is typing in an input/textarea
+      function isTyping() {
+        const activeElement = document.activeElement;
+        return (
+          activeElement instanceof HTMLInputElement ||
+          activeElement instanceof HTMLTextAreaElement ||
+          activeElement instanceof HTMLElement && activeElement.isContentEditable
+        );
+      }
+
+      // Show/hide shortcuts modal
+      function toggleShortcutsModal() {
+        const modal = document.getElementById('shortcuts-modal');
+        if (modal) {
+          modal.classList.toggle('hidden');
+        }
+      }
+
+      function hideShortcutsModal() {
+        const modal = document.getElementById('shortcuts-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+        }
+      }
+
+      // Global keyboard handler
+      document.addEventListener('keydown', (e) => {
+        // Handle Escape key
+        if (e.key === 'Escape') {
+          // Close modal if open
+          const modal = document.getElementById('shortcuts-modal');
+          if (modal && !modal.classList.contains('hidden')) {
+            hideShortcutsModal();
+            return;
+          }
+
+          // Clear textarea if on capture page
+          const textarea = document.getElementById('note-input') as HTMLTextAreaElement;
+          if (textarea && document.activeElement === textarea) {
+            textarea.value = '';
+            e.preventDefault();
+          }
+          return;
+        }
+
+        // Show shortcuts modal on ?
+        if (e.key === '?' && !isTyping()) {
+          toggleShortcutsModal();
+          e.preventDefault();
+          return;
+        }
+
+        // "g" sequence navigation (Gmail-style)
+        if (e.key === 'g' && !isTyping() && !e.ctrlKey && !e.metaKey) {
+          gPressed = true;
+          if (gPressedTimeout) clearTimeout(gPressedTimeout);
+          gPressedTimeout = setTimeout(() => {
+            gPressed = false;
+          }, 1000);
+          return;
+        }
+
+        if (gPressed && !isTyping()) {
+          let targetUrl = '';
+          if (e.key === 'c') targetUrl = '/';
+          else if (e.key === 'b') targetUrl = '/browse';
+          else if (e.key === 'a') targetUrl = '/archive';
+
+          if (targetUrl) {
+            window.location.href = targetUrl;
+            gPressed = false;
+            e.preventDefault();
+            return;
+          }
+        }
+
+        // Capture page shortcuts (Ctrl/Cmd + key)
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+          // Submit note: Ctrl/Cmd + Enter
+          if (e.key === 'Enter') {
+            const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+            if (submitBtn) {
+              submitBtn.click();
+              e.preventDefault();
+            }
+            return;
+          }
+
+          // Refine: Ctrl/Cmd + R
+          if (e.key === 'r') {
+            const refineBtn = document.getElementById('refine-btn') as HTMLButtonElement;
+            if (refineBtn) {
+              refineBtn.click();
+              e.preventDefault();
+            }
+            return;
+          }
+
+          // Explore/Ask: Ctrl/Cmd + E
+          if (e.key === 'e') {
+            const askBtn = document.getElementById('ask-btn') as HTMLButtonElement;
+            if (askBtn) {
+              askBtn.click();
+              e.preventDefault();
+            }
+            return;
+          }
+
+          // Clear textarea: Ctrl/Cmd + K
+          if (e.key === 'k') {
+            const textarea = document.getElementById('note-input') as HTMLTextAreaElement;
+            if (textarea) {
+              textarea.value = '';
+              textarea.focus();
+              e.preventDefault();
+            }
+            return;
+          }
+        }
+      });
+
+      // Close modal on button click
+      document.getElementById('close-shortcuts')?.addEventListener('click', hideShortcutsModal);
+
+      // Close modal on outside click
+      document.getElementById('shortcuts-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          hideShortcutsModal();
+        }
+      });
+    </script>
   </body>
 </html>
