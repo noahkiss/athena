@@ -16,7 +16,22 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 | `scribe/` | Capture frontend | Astro, HTMX, Tailwind |
 | `athena/` | Knowledge base template | Markdown, Git |
 
+## Features
+
+- **Quick Capture** - Drop thoughts fast with AI refinement and exploration
+- **Smart Organization** - AI classifies and files notes automatically
+- **Dashboard** - View stats, category breakdown, and recent activity
+- **Browse & Search** - Navigate your atlas with category-aware styling
+- **Random Discovery** - Rediscover old notes with random note button (🎲 or `Ctrl+Shift+R`)
+- **PWA Support** - Install as app on iOS/Android with custom branding
+- **Theming** - 6 preset themes (Dracula, Catppuccin variants, default)
+- **Mobile-First** - Bottom navigation and touch-optimized UI
+- **Recent Activity** - See what you've captured lately
+- **Keyboard Shortcuts** - Navigate efficiently (press `?` to see shortcuts)
+
 ## Screenshots
+
+> **Note:** Screenshots are being updated to reflect recent features. See [pkms-y4fc](/.beans/pkms-y4fc--update-readme-screenshots-for-new-features.md) for details.
 
 <table>
   <tr>
