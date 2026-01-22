@@ -24,7 +24,7 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 - **Browse & Search** - Navigate your atlas with category-aware styling
 - **Random Discovery** - Rediscover old notes with random note button (🎲 or `Ctrl+Shift+R`)
 - **PWA Support** - Install as app on iOS/Android with custom branding
-- **Theming** - 6 preset themes (Dracula, Catppuccin variants, default)
+- **Theming** - 11 curated color palettes with auto light/dark detection
 - **Mobile-First** - Bottom navigation and touch-optimized UI
 - **Recent Activity** - See what you've captured lately
 - **Keyboard Shortcuts** - Navigate efficiently (press `?` to see shortcuts)
@@ -33,34 +33,16 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 
 <table>
   <tr>
-    <th>Desktop</th>
-    <th>Mobile</th>
+    <th>Light Mode (Rosé Pine Dawn)</th>
+    <th>Dark Mode (Catppuccin Mocha)</th>
   </tr>
   <tr>
-    <td><strong>Capture</strong><br><img src="assets/capture-desktop.png" width="400"></td>
-    <td><img src="assets/capture-mobile.png" width="200"></td>
-  </tr>
-  <tr>
-    <td><strong>Dashboard</strong><br><img src="assets/dashboard-desktop.png" width="400"></td>
-    <td><img src="assets/dashboard-mobile.png" width="200"></td>
-  </tr>
-  <tr>
-    <td><strong>Browse</strong><br><img src="assets/browse-desktop.png" width="400"></td>
-    <td><img src="assets/browse-mobile.png" width="200"></td>
-  </tr>
-  <tr>
-    <td><strong>Timeline</strong><br><img src="assets/timeline-desktop.png" width="400"></td>
-    <td><img src="assets/timeline-mobile.png" width="200"></td>
-  </tr>
-  <tr>
-    <td><strong>Settings</strong><br><img src="assets/settings-desktop.png" width="400"></td>
-    <td><img src="assets/settings-mobile.png" width="200"></td>
-  </tr>
-  <tr>
-    <td><strong>Archive</strong><br><img src="assets/archive-desktop.png" width="400"></td>
-    <td><img src="assets/archive-mobile.png" width="200"></td>
+    <td><img src="docs/screenshot-light.png" width="500"></td>
+    <td><img src="docs/screenshot-dark.png" width="500"></td>
   </tr>
 </table>
+
+**Features:** iOS-style design with squircle corners, system fonts, and proper spacing. 11 themes available including Dracula, Catppuccin, GitHub, Rose Pine, and Cobalt2 variants.
 
 ## Quick Start (All-in-one)
 
