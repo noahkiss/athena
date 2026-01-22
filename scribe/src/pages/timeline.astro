@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
 
 const GARDENER_URL =
   process.env.GARDENER_URL ||
@@ -29,13 +30,13 @@ try {
 }
 
 const categoryStyles: Record<string, { className: string; icon: string }> = {
-  projects: { className: 'category-1', icon: '💼' },
-  people: { className: 'category-2', icon: '👥' },
-  journal: { className: 'category-3', icon: '📓' },
-  tech: { className: 'category-4', icon: '⚙️' },
-  reading: { className: 'category-5', icon: '📚' },
-  wellness: { className: 'category-6', icon: '🧘' },
-  home: { className: 'category-7', icon: '🏠' },
+  projects: { className: 'category-1', icon: 'case' },
+  people: { className: 'category-2', icon: 'users' },
+  journal: { className: 'category-3', icon: 'notebook' },
+  tech: { className: 'category-4', icon: 'settings' },
+  reading: { className: 'category-5', icon: 'book-2' },
+  wellness: { className: 'category-6', icon: 'health' },
+  home: { className: 'category-7', icon: 'home-2' },
 };
 
 const categoryFallbacks = [
@@ -57,7 +58,7 @@ function getCategoryStyle(name: string) {
     }
   }
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: '📁' };
+  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: 'folder' };
 }
 
 function formatDate(timestamp: number): string {
@@ -125,13 +126,16 @@ for (const item of timelineData) {
         </div>
       ) : timelineData.length === 0 ? (
         <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
-          <div class="text-6xl mb-4">📅</div>
+          <div class="mb-4 text-primary">
+            <Icon name="calendar" size={64} aria-label="Empty timeline" />
+          </div>
           <h2 class="text-xl font-light text-primary mb-2">No timeline entries yet</h2>
           <p class="text-subtle mb-6 max-w-md">
             Start capturing notes and they'll appear here in chronological order.
           </p>
-          <a href="/" class="btn-primary px-6 py-3 rounded-lg font-medium">
-            ✍️ Capture Your First Note
+          <a href="/" class="btn-primary px-6 py-3 rounded-lg font-medium flex items-center gap-2 mx-auto">
+            <Icon name="pen-new-square" size={20} />
+            <span>Capture Your First Note</span>
           </a>
         </div>
       ) : (
@@ -164,9 +168,7 @@ for (const item of timelineData) {
                         class="block p-4 panel hover:bg-surface-muted transition-all group"
                       >
                         <div class="flex items-start gap-3">
-                          <span class="text-2xl flex-shrink-0">
-                            {category?.icon || '📄'}
-                          </span>
+                          <Icon name={category?.icon || 'document'} size={28} class="text-primary flex-shrink-0" />
                           <div class="flex-1 min-w-0">
                             <h3 class={`text-base font-medium mb-1 truncate ${category ? `category-text ${category.className}` : 'text-primary'}`}>
                               {fileName}
