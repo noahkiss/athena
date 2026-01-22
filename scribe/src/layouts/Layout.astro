@@ -823,6 +823,51 @@ const darkThemeVars = themeToCssVars(darkTheme);
 
     </script>
 
+    <script>
+      // iOS squircle corners implementation
+      import CornerKit from '@cornerkit/core';
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const ck = new CornerKit();
+
+        // Apply squircle to panels (iOS uses smoothing value of 0.6)
+        const panels = document.querySelectorAll('.panel');
+        panels.forEach(panel => {
+          ck.apply(panel, {
+            radius: 16, // 1rem = 16px
+            smoothing: 0.6
+          });
+        });
+
+        // Apply squircle to buttons with slightly tighter radius
+        const buttons = document.querySelectorAll('.btn-primary, .btn-secondary');
+        buttons.forEach(button => {
+          ck.apply(button, {
+            radius: 14, // 0.875rem = 14px
+            smoothing: 0.6
+          });
+        });
+
+        // Apply squircle to theme options
+        const themeOptions = document.querySelectorAll('.theme-option');
+        themeOptions.forEach(option => {
+          ck.apply(option, {
+            radius: 16,
+            smoothing: 0.6
+          });
+        });
+
+        // Apply squircle to input fields
+        const inputs = document.querySelectorAll('.input-field');
+        inputs.forEach(input => {
+          ck.apply(input, {
+            radius: 12, // 0.75rem = 12px
+            smoothing: 0.6
+          });
+        });
+      });
+    </script>
+
     <!-- Mobile Bottom Navigation (PWA) -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-md border-t border-default z-40 safe-area-bottom ios-bottom-nav">
       <div class="flex items-center justify-around" style="min-height: var(--touch-target-min);">

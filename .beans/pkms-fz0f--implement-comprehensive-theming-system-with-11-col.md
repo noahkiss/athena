@@ -42,8 +42,8 @@ Implement a comprehensive theming system with 11 curated color palettes and cont
 - [ ] Better font stack (system fonts)
 
 ### Advanced Polish
-- [ ] Research continuous corner radius (squircle) CSS implementation
-- [ ] Implement squircle corners if feasible
+- [x] Research continuous corner radius (squircle) CSS implementation
+- [x] Implement squircle corners with CornerKit (iOS smoothing 0.6)
 - [ ] Test all themes for readability
 - [ ] Verify themes work in light and dark modes
 

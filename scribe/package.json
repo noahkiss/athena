@@ -10,6 +10,7 @@
   "dependencies": {
     "@astrojs/node": "^9.0.0",
     "@astrojs/tailwind": "^6.0.0",
+    "@cornerkit/core": "^1.2.0",
     "@tailwindcss/typography": "^0.5.19",
     "astro": "^5.0.0",
     "isomorphic-dompurify": "^2.35.0",
