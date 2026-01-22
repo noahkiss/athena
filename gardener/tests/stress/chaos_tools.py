@@ -9,8 +9,13 @@ import sqlite3
 import subprocess
 from pathlib import Path
 
-
-_ALLOWED_TABLES = {"processed_commits", "repo_state", "file_state", "reconcile_runs", "edit_provenance"}
+_ALLOWED_TABLES = {
+    "processed_commits",
+    "repo_state",
+    "file_state",
+    "reconcile_runs",
+    "edit_provenance",
+}
 
 
 def kill_process(pid: int) -> None:
@@ -18,7 +23,9 @@ def kill_process(pid: int) -> None:
     os.kill(pid, signal.SIGKILL)
 
 
-def corrupt_state_db(db_path: Path, *, table: str = "file_state", limit: int = 10) -> int:
+def corrupt_state_db(
+    db_path: Path, *, table: str = "file_state", limit: int = 10
+) -> int:
     """Delete rows from a table to simulate data loss."""
     if table not in _ALLOWED_TABLES:
         raise ValueError(f"Unsupported table: {table}")

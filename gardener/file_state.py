@@ -11,8 +11,8 @@ from db import get_db_connection, init_db
 from git_state import (
     check_repo_identity,
     get_current_head,
-    get_repo_state,
     get_dirty_files,
+    get_repo_state,
     update_repo_root_hash,
 )
 

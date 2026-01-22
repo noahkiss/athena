@@ -89,7 +89,9 @@ def save_settings(settings: BrandingSettings) -> None:
     )
 
 
-def update_settings(app_name: str | None = None, theme: str | None = None) -> BrandingSettings:
+def update_settings(
+    app_name: str | None = None, theme: str | None = None
+) -> BrandingSettings:
     settings = load_settings()
     next_app_name = settings.app_name
     next_theme = settings.theme

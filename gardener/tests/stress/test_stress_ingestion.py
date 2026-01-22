@@ -13,11 +13,12 @@ import pytest
 
 from tests.stress.utils import IntegrityChecker, RequestSpec, concurrent_executor
 
-
 pytestmark = pytest.mark.stress
 
 if os.environ.get("RUN_STRESS_TESTS") != "1":
-    pytest.skip("RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True)
+    pytest.skip(
+        "RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True
+    )
 
 
 def _chunk_notes(note_paths: list[Path], buckets: int) -> list[list[Path]]:
@@ -42,7 +43,9 @@ def test_high_volume_ingestion(
 ):
     concurrency = int(os.environ.get("STRESS_CONCURRENCY", "50"))
     notes_per_client = int(os.environ.get("STRESS_NOTES_PER_CLIENT", "20"))
-    total_notes = int(os.environ.get("STRESS_NOTE_COUNT", str(concurrency * notes_per_client)))
+    total_notes = int(
+        os.environ.get("STRESS_NOTE_COUNT", str(concurrency * notes_per_client))
+    )
     min_kb = int(os.environ.get("STRESS_MIN_KB", "1"))
     max_kb = int(os.environ.get("STRESS_MAX_KB", "50"))
     stagger_max = float(os.environ.get("STRESS_STAGGER_MAX", "10"))
@@ -79,13 +82,18 @@ def test_high_volume_ingestion(
             category = note_categories.get(path)
             if expect_classification and category:
                 content = f"Expected-Category: {category}\\n{content}"
-            spec = RequestSpec(method="POST", path="/api/inbox", json_body={"content": content})
+            spec = RequestSpec(
+                method="POST", path="/api/inbox", json_body={"content": content}
+            )
             results.append(stress_client.request(spec))
         return results
 
     start = time.perf_counter()
     with concurrent_executor(concurrency) as executor:
-        futures = [executor.submit(_worker, chunk, delay) for chunk, delay in zip(chunks, delays)]
+        futures = [
+            executor.submit(_worker, chunk, delay)
+            for chunk, delay in zip(chunks, delays)
+        ]
         for future in futures:
             metrics_collector.extend(future.result())
     elapsed_s = time.perf_counter() - start

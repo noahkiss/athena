@@ -9,12 +9,21 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import BackgroundTasks, Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    File,
+    Header,
+    HTTPException,
+    UploadFile,
+)
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 from api_usage import get_usage_stats
 from automation import get_automation_status, start_automation
+from backends import get_backend, get_backend_config
 from branding import (
     ICON_NAMES,
     MAX_ICON_BYTES,
@@ -25,7 +34,6 @@ from branding import (
     save_uploaded_icon,
     update_settings,
 )
-from backends import get_backend, get_backend_config
 from config import (
     ARCHIVE_DIR,
     ATLAS_DIR,
@@ -534,7 +542,9 @@ async def update_branding_settings(
     response_model=BrandingSettingsResponse,
     dependencies=[Depends(verify_auth_token)],
 )
-async def upload_branding_icon(file: UploadFile = File(...)) -> BrandingSettingsResponse:
+async def upload_branding_icon(
+    file: UploadFile = File(...),
+) -> BrandingSettingsResponse:
     """Upload a base icon and generate required sizes."""
     allowed_types = {"image/png", "image/jpeg", "image/webp"}
     if file.content_type and file.content_type not in allowed_types:
@@ -927,7 +937,7 @@ def search_atlas(keywords: list[str], max_files: int = 5) -> list[dict]:
         return []
 
     matches = []
-    keywords_lower = [kw.lower() for kw in keywords]
+    keywords_lower = [kw.lower() for kw in keywords if kw]
     for md_file in ATLAS_DIR.rglob("*.md"):
         try:
             # Try cache first, fall back to disk read
@@ -937,12 +947,16 @@ def search_atlas(keywords: list[str], max_files: int = 5) -> list[dict]:
                 _atlas_content_cache.put(md_file, content)
 
             content_lower = content.lower()
-            score = sum(1 for kw in keywords_lower if kw in content_lower)
-            if score > 0:
+            content_score = sum(1 for kw in keywords_lower if kw in content_lower)
+            if content_score > 0:
+                rel_path = str(md_file.relative_to(ATLAS_DIR))
+                path_lower = rel_path.lower()
+                filename_score = sum(1 for kw in keywords_lower if kw in path_lower)
+                score = content_score * 10 + filename_score
                 preview = content[:200].replace("\n", " ")
                 matches.append(
                     {
-                        "path": str(md_file.relative_to(ATLAS_DIR)),
+                        "path": rel_path,
                         "score": score,
                         "preview": preview,
                     }
@@ -951,7 +965,7 @@ def search_atlas(keywords: list[str], max_files: int = 5) -> list[dict]:
             logger.debug(f"Could not read {md_file}: {e}")
             continue
 
-    matches.sort(key=lambda x: x["score"], reverse=True)
+    matches.sort(key=lambda x: (-x["score"], x["path"]))
     return matches[:max_files]
 
 

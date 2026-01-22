@@ -19,18 +19,27 @@ from tests.stress.utils import (
     read_rss_kb,
 )
 
-
 pytestmark = pytest.mark.stress
 
 if os.environ.get("RUN_STRESS_TESTS") != "1":
-    pytest.skip("RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True)
+    pytest.skip(
+        "RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True
+    )
 
 
 def _ensure_structure(data_dir: Path) -> None:
     (data_dir / "inbox" / "archive").mkdir(parents=True, exist_ok=True)
     (data_dir / "atlas").mkdir(parents=True, exist_ok=True)
     (data_dir / "meta").mkdir(parents=True, exist_ok=True)
-    for category in ["home", "journal", "people", "projects", "reading", "tech", "wellness"]:
+    for category in [
+        "home",
+        "journal",
+        "people",
+        "projects",
+        "reading",
+        "tech",
+        "wellness",
+    ]:
         (data_dir / "atlas" / category).mkdir(parents=True, exist_ok=True)
     (data_dir / "AGENTS.md").write_text("# Stress Test Data\n", encoding="utf-8")
     (data_dir / "GARDENER.md").write_text("# Stress Test Guidance\n", encoding="utf-8")
@@ -40,8 +49,12 @@ def _ensure_git_repo(data_dir: Path) -> None:
     if (data_dir / ".git").exists():
         return
     subprocess.check_call(["git", "-C", str(data_dir), "init"])
-    subprocess.check_call(["git", "-C", str(data_dir), "config", "user.email", "stress@example.com"])
-    subprocess.check_call(["git", "-C", str(data_dir), "config", "user.name", "Stress Test"])
+    subprocess.check_call(
+        ["git", "-C", str(data_dir), "config", "user.email", "stress@example.com"]
+    )
+    subprocess.check_call(
+        ["git", "-C", str(data_dir), "config", "user.name", "Stress Test"]
+    )
 
 
 def _commit_all(data_dir: Path, message: str, *, allow_empty: bool = False) -> None:
@@ -53,7 +66,9 @@ def _commit_all(data_dir: Path, message: str, *, allow_empty: bool = False) -> N
     subprocess.check_call(args)
 
 
-def _seed_atlas(data_dir: Path, note_generator, tmp_path: Path, file_count: int) -> None:
+def _seed_atlas(
+    data_dir: Path, note_generator, tmp_path: Path, file_count: int
+) -> None:
     notes_dir = tmp_path / "large-repo-notes"
     manifest = note_generator(
         count=file_count,
@@ -160,7 +175,11 @@ def test_large_repository_stress(tmp_path: Path, note_generator, stress_client):
 
     metrics.record(
         stress_client.request(
-            RequestSpec("POST", "/api/inbox", json_body={"content": "Stress test note for large repo."})
+            RequestSpec(
+                "POST",
+                "/api/inbox",
+                json_body={"content": "Stress test note for large repo."},
+            )
         )
     )
     metrics.record(stress_client.request(RequestSpec("POST", "/api/trigger-gardener")))

@@ -5,14 +5,13 @@ Tracks all AI backend API calls to prevent runaway usage and enforce quotas.
 
 import logging
 import os
-import sqlite3
-import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Callable, TypeVar
 
 import config
+from db import get_db_connection
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +19,7 @@ logger = logging.getLogger(__name__)
 MAX_CALLS_PER_HOUR = int(os.environ.get("MAX_API_CALLS_PER_HOUR", "100"))
 MAX_CALLS_PER_DAY = int(os.environ.get("MAX_API_CALLS_PER_DAY", "500"))
 WARN_THRESHOLD_PERCENT = int(os.environ.get("API_WARN_THRESHOLD_PERCENT", "80"))
+_API_USAGE_DB_PATH: str | None = None
 
 # Database schema for API usage tracking
 API_USAGE_SCHEMA = """
@@ -55,12 +55,20 @@ class UsageStats:
     @property
     def hourly_usage_percent(self) -> float:
         """Calculate percentage of hourly quota used."""
-        return (self.calls_last_hour / self.hourly_limit * 100) if self.hourly_limit > 0 else 0
+        return (
+            (self.calls_last_hour / self.hourly_limit * 100)
+            if self.hourly_limit > 0
+            else 0
+        )
 
     @property
     def daily_usage_percent(self) -> float:
         """Calculate percentage of daily quota used."""
-        return (self.calls_last_day / self.daily_limit * 100) if self.daily_limit > 0 else 0
+        return (
+            (self.calls_last_day / self.daily_limit * 100)
+            if self.daily_limit > 0
+            else 0
+        )
 
     @property
     def is_near_hourly_limit(self) -> bool:
@@ -85,7 +93,7 @@ class UsageStats:
 
 def init_api_usage_db() -> None:
     """Initialize API usage tracking tables."""
-    conn = config.get_db_connection()
+    conn = get_db_connection()
     try:
         conn.executescript(API_USAGE_SCHEMA)
         conn.commit()
@@ -94,7 +102,18 @@ def init_api_usage_db() -> None:
         conn.close()
 
 
-def record_api_call(backend: str, operation: str, success: bool = True, error: str | None = None) -> None:
+def _ensure_api_usage_db() -> None:
+    global _API_USAGE_DB_PATH
+    current_path = str(config.STATE_DB)
+    if _API_USAGE_DB_PATH == current_path:
+        return
+    init_api_usage_db()
+    _API_USAGE_DB_PATH = current_path
+
+
+def record_api_call(
+    backend: str, operation: str, success: bool = True, error: str | None = None
+) -> None:
     """Record an API call to the database.
 
     Args:
@@ -103,7 +122,8 @@ def record_api_call(backend: str, operation: str, success: bool = True, error: s
         success: Whether the call succeeded
         error: Error message if call failed
     """
-    conn = config.get_db_connection()
+    _ensure_api_usage_db()
+    conn = get_db_connection()
     try:
         conn.execute(
             "INSERT INTO api_calls (backend, operation, success, error) VALUES (?, ?, ?, ?)",
@@ -121,10 +141,13 @@ def get_usage_stats() -> UsageStats:
     Returns:
         UsageStats with current usage counts and limits
     """
-    conn = config.get_db_connection()
+    _ensure_api_usage_db()
+    conn = get_db_connection()
     try:
         # Total calls
-        total = conn.execute("SELECT COUNT(*) FROM api_calls WHERE success = 1").fetchone()[0]
+        total = conn.execute(
+            "SELECT COUNT(*) FROM api_calls WHERE success = 1"
+        ).fetchone()[0]
 
         # Calls in last hour
         hour_ago = (datetime.now() - timedelta(hours=1)).isoformat()
@@ -146,7 +169,9 @@ def get_usage_stats() -> UsageStats:
             calls_last_day=daily,
             hourly_limit=MAX_CALLS_PER_HOUR,
             daily_limit=MAX_CALLS_PER_DAY,
-            warn_threshold_hourly=int(MAX_CALLS_PER_HOUR * WARN_THRESHOLD_PERCENT / 100),
+            warn_threshold_hourly=int(
+                MAX_CALLS_PER_HOUR * WARN_THRESHOLD_PERCENT / 100
+            ),
             warn_threshold_daily=int(MAX_CALLS_PER_DAY * WARN_THRESHOLD_PERCENT / 100),
         )
     finally:
@@ -159,15 +184,22 @@ def check_rate_limit() -> tuple[bool, str | None]:
     Returns:
         Tuple of (allowed, reason). If not allowed, reason explains why.
     """
+    _ensure_api_usage_db()
     stats = get_usage_stats()
 
     # Check daily limit first (more restrictive)
     if stats.is_over_daily_limit:
-        return False, f"Daily API limit reached ({stats.calls_last_day}/{stats.daily_limit} calls)"
+        return (
+            False,
+            f"Daily API limit reached ({stats.calls_last_day}/{stats.daily_limit} calls)",
+        )
 
     # Check hourly limit
     if stats.is_over_hourly_limit:
-        return False, f"Hourly API limit reached ({stats.calls_last_hour}/{stats.hourly_limit} calls)"
+        return (
+            False,
+            f"Hourly API limit reached ({stats.calls_last_hour}/{stats.hourly_limit} calls)",
+        )
 
     # Log warnings if approaching limits
     if stats.is_near_daily_limit and not stats.is_over_daily_limit:
@@ -230,7 +262,9 @@ def track_api_call(backend: str, operation: str, enforce_limit: bool = True):
 T = TypeVar("T")
 
 
-def with_api_tracking(backend: str, operation: str, enforce_limit: bool = True) -> Callable[[Callable[..., T]], Callable[..., T]]:
+def with_api_tracking(
+    backend: str, operation: str, enforce_limit: bool = True
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Decorator to track API calls.
 
     Args:
@@ -243,9 +277,12 @@ def with_api_tracking(backend: str, operation: str, enforce_limit: bool = True) 
         def classify(self, content: str) -> str:
             return self.client.classify(content)
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         def wrapper(*args, **kwargs) -> T:
             with track_api_call(backend, operation, enforce_limit):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator

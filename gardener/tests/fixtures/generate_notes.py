@@ -15,7 +15,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
 
-
 CATEGORIES = ["home", "journal", "people", "projects", "reading", "tech", "wellness"]
 
 COMMON_WORDS = [
@@ -42,7 +41,14 @@ CATEGORY_WORDS: dict[str, list[str]] = {
     "home": ["kitchen", "garden", "repairs", "utilities", "budget", "cleaning"],
     "journal": ["mood", "reflection", "day", "gratitude", "lesson", "moment"],
     "people": ["call", "meeting", "follow-up", "contact", "relationship", "intro"],
-    "projects": ["milestone", "deliverable", "scope", "dependency", "timeline", "backlog"],
+    "projects": [
+        "milestone",
+        "deliverable",
+        "scope",
+        "dependency",
+        "timeline",
+        "backlog",
+    ],
     "reading": ["chapter", "excerpt", "thesis", "author", "citation", "summary"],
     "tech": ["service", "latency", "api", "database", "deployment", "monitoring"],
     "wellness": ["sleep", "routine", "nutrition", "exercise", "habit", "recovery"],
@@ -75,13 +81,27 @@ class TemplateError(RuntimeError):
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate synthetic markdown notes for stress tests.")
-    parser.add_argument("--count", type=int, default=1000, help="Number of notes to generate.")
-    parser.add_argument("--out-dir", type=Path, default=Path("gardener/tests/fixtures/generated"))
-    parser.add_argument("--templates-dir", type=Path, default=Path("gardener/tests/fixtures/templates"))
-    parser.add_argument("--min-kb", type=int, default=1, help="Minimum note size in KB.")
-    parser.add_argument("--max-kb", type=int, default=100, help="Maximum note size in KB.")
-    parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility.")
+    parser = argparse.ArgumentParser(
+        description="Generate synthetic markdown notes for stress tests."
+    )
+    parser.add_argument(
+        "--count", type=int, default=1000, help="Number of notes to generate."
+    )
+    parser.add_argument(
+        "--out-dir", type=Path, default=Path("gardener/tests/fixtures/generated")
+    )
+    parser.add_argument(
+        "--templates-dir", type=Path, default=Path("gardener/tests/fixtures/templates")
+    )
+    parser.add_argument(
+        "--min-kb", type=int, default=1, help="Minimum note size in KB."
+    )
+    parser.add_argument(
+        "--max-kb", type=int, default=100, help="Maximum note size in KB."
+    )
+    parser.add_argument(
+        "--seed", type=int, default=None, help="Random seed for reproducibility."
+    )
     parser.add_argument(
         "--ambiguous-rate",
         type=float,
@@ -123,7 +143,9 @@ def slugify(value: str) -> str:
 
 def random_date(rng: random.Random) -> str:
     days_ago = rng.randint(0, 365)
-    date = datetime.now(timezone.utc) - timedelta(days=days_ago, hours=rng.randint(0, 23))
+    date = datetime.now(timezone.utc) - timedelta(
+        days=days_ago, hours=rng.randint(0, 23)
+    )
     return date.strftime("%Y-%m-%d")
 
 
@@ -140,8 +162,12 @@ def random_sentence(words: Iterable[str], rng: random.Random, length: int) -> st
     return " ".join(tokens) + "."
 
 
-def random_paragraph(words: Iterable[str], rng: random.Random, sentences: int = 4) -> str:
-    return " ".join(random_sentence(words, rng, rng.randint(6, 12)) for _ in range(sentences))
+def random_paragraph(
+    words: Iterable[str], rng: random.Random, sentences: int = 4
+) -> str:
+    return " ".join(
+        random_sentence(words, rng, rng.randint(6, 12)) for _ in range(sentences)
+    )
 
 
 def build_bullets(words: Iterable[str], rng: random.Random, count: int = 4) -> str:
@@ -163,7 +189,13 @@ def build_links(category: str, rng: random.Random, count: int = 3) -> str:
 def build_code_block(category: str, rng: random.Random) -> str:
     if rng.random() > 0.3:
         return ""
-    code = ["```", f"# {category} automation snippet", "status = 'ok'", "print(status)", "```"]
+    code = [
+        "```",
+        f"# {category} automation snippet",
+        "status = 'ok'",
+        "print(status)",
+        "```",
+    ]
     return "\n".join(code)
 
 
@@ -195,7 +227,9 @@ def build_title(category: str, rng: random.Random) -> str:
 
 def note_body(category: str, rng: random.Random) -> str:
     words = CATEGORY_WORDS[category] + COMMON_WORDS
-    return "\n\n".join(random_paragraph(words, rng, sentences=rng.randint(3, 6)) for _ in range(2))
+    return "\n\n".join(
+        random_paragraph(words, rng, sentences=rng.randint(3, 6)) for _ in range(2)
+    )
 
 
 def pad_to_size(content: str, target_bytes: int, rng: random.Random) -> str:

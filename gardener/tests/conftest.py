@@ -3,9 +3,14 @@
 import os
 import random
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
+
+# Ensure tests use a writable data dir by default.
+if "DATA_DIR" not in os.environ:
+    os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="gardener-tests-")
 
 # Add the gardener directory to the path so we can import from it
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -17,7 +22,15 @@ def stress_data_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
     (base / "inbox" / "archive").mkdir(parents=True, exist_ok=True)
     (base / "atlas").mkdir(parents=True, exist_ok=True)
     (base / "meta").mkdir(parents=True, exist_ok=True)
-    for category in ["home", "journal", "people", "projects", "reading", "tech", "wellness"]:
+    for category in [
+        "home",
+        "journal",
+        "people",
+        "projects",
+        "reading",
+        "tech",
+        "wellness",
+    ]:
         (base / "atlas" / category).mkdir(parents=True, exist_ok=True)
     (base / "AGENTS.md").write_text("# Stress Test Data\n", encoding="utf-8")
     (base / "GARDENER.md").write_text("# Stress Test Guidance\n", encoding="utf-8")

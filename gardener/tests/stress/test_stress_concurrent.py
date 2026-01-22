@@ -6,20 +6,21 @@ import json
 import math
 import os
 import random
-from functools import partial
 import threading
 import time
+from functools import partial
 from pathlib import Path
 
 import pytest
 
 from tests.stress.utils import IntegrityChecker, RequestSpec, concurrent_executor
 
-
 pytestmark = pytest.mark.stress
 
 if os.environ.get("RUN_STRESS_TESTS") != "1":
-    pytest.skip("RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True)
+    pytest.skip(
+        "RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True
+    )
 
 
 def test_sustained_concurrent_operations(
@@ -74,7 +75,9 @@ def test_sustained_concurrent_operations(
         if ask_threads > 0:
             expected_ask = int((math.ceil(duration_s / ask_interval) + 1) * ask_threads)
         if refine_threads > 0:
-            expected_refine = int((math.ceil(duration_s / refine_interval) + 1) * refine_threads)
+            expected_refine = int(
+                (math.ceil(duration_s / refine_interval) + 1) * refine_threads
+            )
         expected_total = expected_ask + expected_refine
         if expected_total > 0:
             ai_call_cap = int(math.ceil(expected_total * ai_call_multiplier))
@@ -104,6 +107,7 @@ def test_sustained_concurrent_operations(
             else:
                 refine_count += 1
         return True
+
     def _record(result):
         with lock:
             metrics_collector.record(result)
@@ -116,7 +120,9 @@ def test_sustained_concurrent_operations(
         while time.time() < stop_time and not stop_event.is_set():
             path = rng.choice(note_paths)
             content = path.read_text(encoding="utf-8")
-            spec = RequestSpec(method="POST", path="/api/inbox", json_body={"content": content})
+            spec = RequestSpec(
+                method="POST", path="/api/inbox", json_body={"content": content}
+            )
             _record(stress_client.request(spec))
             if submit_interval:
                 time.sleep(submit_interval)
@@ -134,7 +140,11 @@ def test_sustained_concurrent_operations(
         while time.time() < stop_time and not stop_event.is_set():
             if not _reserve_ai_call("ask"):
                 break
-            spec = RequestSpec(method="POST", path="/api/ask", json_body={"question": rng.choice(questions)})
+            spec = RequestSpec(
+                method="POST",
+                path="/api/ask",
+                json_body={"question": rng.choice(questions)},
+            )
             _record(stress_client.request(spec))
             time.sleep(ask_interval)
 
@@ -143,15 +153,23 @@ def test_sustained_concurrent_operations(
         while time.time() < stop_time and not stop_event.is_set():
             if not _reserve_ai_call("refine"):
                 break
-            spec = RequestSpec(method="POST", path="/api/refine", json_body={"content": rng.choice(refine_snippets)})
+            spec = RequestSpec(
+                method="POST",
+                path="/api/refine",
+                json_body={"content": rng.choice(refine_snippets)},
+            )
             _record(stress_client.request(spec))
             time.sleep(refine_interval)
 
     workers = []
     workers.extend(partial(_submit_worker, seed) for seed in range(submit_threads))
-    workers.extend(partial(_browse_worker, seed + 1000) for seed in range(browse_threads))
+    workers.extend(
+        partial(_browse_worker, seed + 1000) for seed in range(browse_threads)
+    )
     workers.extend(partial(_ask_worker, seed + 2000) for seed in range(ask_threads))
-    workers.extend(partial(_refine_worker, seed + 3000) for seed in range(refine_threads))
+    workers.extend(
+        partial(_refine_worker, seed + 3000) for seed in range(refine_threads)
+    )
 
     start = time.perf_counter()
     with concurrent_executor(len(workers)) as executor:
@@ -177,9 +195,13 @@ def test_sustained_concurrent_operations(
     summary["ai_call_cap_triggered"] = cap_triggered
     if cap_triggered:
         summary["ai_call_cap_reason"] = cap_reason
-    submitted_total = sum(1 for result in metrics_collector.results if result.path == "/api/inbox")
+    submitted_total = sum(
+        1 for result in metrics_collector.results if result.path == "/api/inbox"
+    )
     submitted_ok = sum(
-        1 for result in metrics_collector.results if result.path == "/api/inbox" and result.ok
+        1
+        for result in metrics_collector.results
+        if result.path == "/api/inbox" and result.ok
     )
     summary["submitted_total"] = submitted_total
     summary["submitted_ok"] = submitted_ok

@@ -164,7 +164,11 @@ Let me know if you need anything else."""
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "choices": [
-                {"message": {"content": "Based on your notes, you have 3 active projects."}}
+                {
+                    "message": {
+                        "content": "Based on your notes, you have 3 active projects."
+                    }
+                }
             ]
         }
 
@@ -280,7 +284,9 @@ class TestAnthropicBackend:
         """Should return refinement suggestions."""
         mock_message = MagicMock()
         mock_message.content = [
-            MagicMock(text="TAGS: homelab, docker\nCATEGORY: tech\nRELATED: None\nMISSING: None")
+            MagicMock(
+                text="TAGS: homelab, docker\nCATEGORY: tech\nRELATED: None\nMISSING: None"
+            )
         ]
 
         with patch("anthropic.Anthropic") as mock_anthropic:

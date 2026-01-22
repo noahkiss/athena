@@ -17,11 +17,12 @@ from tests.stress.chaos_tools import (
 )
 from tests.stress.utils import IntegrityChecker, RequestSpec
 
-
 pytestmark = pytest.mark.stress
 
 if os.environ.get("RUN_STRESS_TESTS") != "1":
-    pytest.skip("RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True)
+    pytest.skip(
+        "RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True
+    )
 
 if os.environ.get("STRESS_CHAOS") != "1":
     pytest.skip("STRESS_CHAOS=1 is required for chaos tests.", allow_module_level=True)
@@ -81,7 +82,9 @@ def test_manual_chaos_scenarios(stress_client):
                 continue
             table = os.environ.get("STRESS_CHAOS_DB_TABLE", "file_state")
             limit = int(os.environ.get("STRESS_CHAOS_DB_DELETE", "10"))
-            deleted = corrupt_state_db(data_dir / ".gardener" / "state.db", table=table, limit=limit)
+            deleted = corrupt_state_db(
+                data_dir / ".gardener" / "state.db", table=table, limit=limit
+            )
             _record(action, "ok", table=table, deleted=deleted)
             performed += 1
         elif action == "delete-inbox":
@@ -91,8 +94,15 @@ def test_manual_chaos_scenarios(stress_client):
             limit = int(os.environ.get("STRESS_CHAOS_INBOX_DELETE", "5"))
             backup = os.environ.get("STRESS_CHAOS_INBOX_BACKUP", "1") == "1"
             backup_dir = data_dir / "inbox" / "chaos-backup" if backup else None
-            deleted = delete_inbox_files(data_dir / "inbox", limit=limit, backup_dir=backup_dir)
-            _record(action, "ok", deleted=deleted, backup=str(backup_dir) if backup_dir else None)
+            deleted = delete_inbox_files(
+                data_dir / "inbox", limit=limit, backup_dir=backup_dir
+            )
+            _record(
+                action,
+                "ok",
+                deleted=deleted,
+                backup=str(backup_dir) if backup_dir else None,
+            )
             performed += 1
         elif action == "rewrite-git":
             if os.environ.get("STRESS_CHAOS_CONFIRM_GIT") != "1":

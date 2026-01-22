@@ -126,7 +126,11 @@ class TestRepoStateOperations:
 
     def test_record_processed_commit(self, temp_state):
         """record_processed_commit should create commit record and update state."""
-        from git_state import get_processed_commits, get_repo_state, record_processed_commit
+        from git_state import (
+            get_processed_commits,
+            get_repo_state,
+            record_processed_commit,
+        )
 
         record_processed_commit("sha123", "main", "Test commit")
 

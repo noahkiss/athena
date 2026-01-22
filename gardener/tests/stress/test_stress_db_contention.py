@@ -37,11 +37,12 @@ from tests.stress.utils import (
     concurrent_executor,
 )
 
-
 pytestmark = pytest.mark.stress
 
 if os.environ.get("RUN_STRESS_TESTS") != "1":
-    pytest.skip("RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True)
+    pytest.skip(
+        "RUN_STRESS_TESTS=1 is required for stress tests.", allow_module_level=True
+    )
 
 
 def _is_lock_error(exc: Exception) -> bool:
@@ -124,7 +125,8 @@ def test_database_contention(
         seed=911,
     )
     note_contents = [
-        (note_pool_dir / entry.filename).read_text(encoding="utf-8") for entry in manifest
+        (note_pool_dir / entry.filename).read_text(encoding="utf-8")
+        for entry in manifest
     ]
 
     op_counts = {"inbox": 0, "trigger": 0, "snapshot": 0, "db_write": 0}
@@ -207,7 +209,9 @@ def test_database_contention(
     def _inbox_action(rng: random.Random) -> None:
         content = rng.choice(note_contents)
         _record_http(
-            RequestSpec(method="POST", path="/api/inbox", json_body={"content": content})
+            RequestSpec(
+                method="POST", path="/api/inbox", json_body={"content": content}
+            )
         )
 
     def _trigger_action() -> None:

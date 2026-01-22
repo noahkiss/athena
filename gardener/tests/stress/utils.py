@@ -217,7 +217,8 @@ class IntegrityChecker:
             "archive_count": len(archive_files),
             "archive_empty": [str(path) for path in archive_empty],
             "archive_duplicates": {
-                digest: [str(path) for path in paths] for digest, paths in duplicates.items()
+                digest: [str(path) for path in paths]
+                for digest, paths in duplicates.items()
             },
         }
 
@@ -276,7 +277,9 @@ def timed_command(command: list[str]) -> tuple[float | None, str | None]:
 
 
 def measure_git_ops(repo_dir: Path) -> dict:
-    timings: dict[str, float | str | None] = {"commit_count": git_commit_count(repo_dir)}
+    timings: dict[str, float | str | None] = {
+        "commit_count": git_commit_count(repo_dir)
+    }
     for label, cmd in (
         ("git_status_ms", ["git", "-C", str(repo_dir), "status", "--porcelain"]),
         ("git_diff_ms", ["git", "-C", str(repo_dir), "diff", "--stat"]),

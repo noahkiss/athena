@@ -1,6 +1,5 @@
 """Tests for MCP tools (read_notes, add_note)."""
 
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -179,7 +178,7 @@ class TestAddNote:
         ):
             from mcp_tools import add_note
 
-            result = add_note(content="Test note")
+            add_note(content="Test note")
 
             files = list(temp_inbox.glob("*.md"))
             filename = files[0].name
@@ -292,13 +291,13 @@ class TestMCPToolRegistration:
 
     def test_read_notes_is_registered(self):
         """read_notes should be registered as MCP tool."""
-        from mcp_tools import mcp, read_notes
+        from mcp_tools import read_notes
 
         # The tool decorator registers the function
         assert callable(read_notes)
 
     def test_add_note_is_registered(self):
         """add_note should be registered as MCP tool."""
-        from mcp_tools import add_note, mcp
+        from mcp_tools import add_note
 
         assert callable(add_note)
