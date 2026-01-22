@@ -204,6 +204,15 @@ const themeStyle = themeToCssVars(theme);
         box-shadow: 0 0 0 1px rgb(var(--focus-rgb) / 0.6);
       }
 
+      /* Prevent iOS Safari auto-zoom on input focus by ensuring 16px minimum */
+      @media (max-width: 768px) {
+        input,
+        textarea,
+        select {
+          font-size: 16px;
+        }
+      }
+
       .text-success {
         color: var(--success);
       }

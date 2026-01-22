@@ -1,10 +1,11 @@
 ---
 # pkms-ikm1
 title: Fix mobile input zoom by setting 16pt font size
-status: todo
+status: completed
 type: bug
+priority: normal
 created_at: 2026-01-22T02:45:58Z
-updated_at: 2026-01-22T02:45:58Z
+updated_at: 2026-01-22T13:53:41Z
 ---
 
 Prevent iOS Safari from auto-zooming when focusing on input fields by setting font-size to 16pt minimum.
