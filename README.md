@@ -31,8 +31,6 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 
 ## Screenshots
 
-> **Note:** Screenshots are being updated to reflect recent features. See [pkms-y4fc](/.beans/pkms-y4fc--update-readme-screenshots-for-new-features.md) for details.
-
 <table>
   <tr>
     <th>Desktop</th>
@@ -43,8 +41,20 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
     <td><img src="assets/capture-mobile.png" width="200"></td>
   </tr>
   <tr>
+    <td><strong>Dashboard</strong><br><img src="assets/dashboard-desktop.png" width="400"></td>
+    <td><img src="assets/dashboard-mobile.png" width="200"></td>
+  </tr>
+  <tr>
     <td><strong>Browse</strong><br><img src="assets/browse-desktop.png" width="400"></td>
     <td><img src="assets/browse-mobile.png" width="200"></td>
+  </tr>
+  <tr>
+    <td><strong>Timeline</strong><br><img src="assets/timeline-desktop.png" width="400"></td>
+    <td><img src="assets/timeline-mobile.png" width="200"></td>
+  </tr>
+  <tr>
+    <td><strong>Settings</strong><br><img src="assets/settings-desktop.png" width="400"></td>
+    <td><img src="assets/settings-mobile.png" width="200"></td>
   </tr>
   <tr>
     <td><strong>Archive</strong><br><img src="assets/archive-desktop.png" width="400"></td>

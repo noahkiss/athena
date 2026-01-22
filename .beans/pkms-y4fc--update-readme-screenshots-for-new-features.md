@@ -1,10 +1,11 @@
 ---
 # pkms-y4fc
 title: Update README screenshots for new features
-status: in-progress
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-22T16:33:22Z
-updated_at: 2026-01-22T16:33:22Z
+updated_at: 2026-01-22T16:59:06Z
 ---
 
 Update screenshots to reflect new features added:
@@ -36,9 +37,9 @@ Update screenshots to reflect new features added:
 5. Update README.md to reference new screenshots
 
 ## Checklist:
-- [ ] Take new dashboard screenshots (desktop + mobile)
-- [ ] Take new settings screenshots (desktop + mobile)
-- [ ] Update browse screenshots (desktop + mobile)
-- [ ] Take mobile bottom nav screenshot
-- [ ] Update README screenshots section
-- [ ] Verify all images display correctly in README
+- [x] Take new dashboard screenshots (desktop + mobile)
+- [x] Take new settings screenshots (desktop + mobile)
+- [x] Update browse screenshots (desktop + mobile)
+- [x] Take mobile bottom nav screenshot (visible in all mobile screenshots)
+- [x] Update README screenshots section
+- [x] Verify all images display correctly in README
