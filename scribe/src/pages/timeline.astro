@@ -1,0 +1,212 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const GARDENER_URL =
+  process.env.GARDENER_URL ||
+  import.meta.env.GARDENER_URL ||
+  'http://localhost:8000';
+const AUTH_TOKEN =
+  process.env.ATHENA_AUTH_TOKEN ||
+  import.meta.env.ATHENA_AUTH_TOKEN ||
+  '';
+const authHeaders = AUTH_TOKEN
+  ? { Authorization: `Bearer ${AUTH_TOKEN}`, 'X-Auth-Token': AUTH_TOKEN }
+  : {};
+
+let timelineData: any[] = [];
+let error: string | null = null;
+
+try {
+  const response = await fetch(`${GARDENER_URL}/api/recent?limit=100`, { headers: authHeaders });
+  if (response.ok) {
+    const data = await response.json();
+    timelineData = data.recent || [];
+  } else {
+    error = `Failed to load timeline: ${response.status}`;
+  }
+} catch (e) {
+  error = 'Could not connect to Gardener. Is it running?';
+}
+
+const categoryStyles: Record<string, { className: string; icon: string }> = {
+  projects: { className: 'category-1', icon: '💼' },
+  people: { className: 'category-2', icon: '👥' },
+  journal: { className: 'category-3', icon: '📓' },
+  tech: { className: 'category-4', icon: '⚙️' },
+  reading: { className: 'category-5', icon: '📚' },
+  wellness: { className: 'category-6', icon: '🧘' },
+  home: { className: 'category-7', icon: '🏠' },
+};
+
+const categoryFallbacks = [
+  'category-1',
+  'category-2',
+  'category-3',
+  'category-4',
+  'category-5',
+  'category-6',
+  'category-7',
+  'category-8',
+];
+
+function getCategoryStyle(name: string) {
+  const lowerName = name.toLowerCase();
+  for (const [key, value] of Object.entries(categoryStyles)) {
+    if (lowerName.includes(key)) {
+      return value;
+    }
+  }
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: '📁' };
+}
+
+function formatDate(timestamp: number): string {
+  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function formatTime(timestamp: number): string {
+  return new Date(timestamp * 1000).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function getRelativeDate(timestamp: number): string {
+  const now = Date.now() / 1000;
+  const diff = now - timestamp;
+  const daysDiff = Math.floor(diff / 86400);
+
+  if (daysDiff === 0) return 'Today';
+  if (daysDiff === 1) return 'Yesterday';
+  if (daysDiff < 7) return `${daysDiff} days ago`;
+  if (daysDiff < 30) return `${Math.floor(daysDiff / 7)} weeks ago`;
+  return formatDate(timestamp);
+}
+
+// Group by date
+const groupedTimeline: { date: string; items: any[] }[] = [];
+let currentDate = '';
+
+for (const item of timelineData) {
+  const itemDate = formatDate(item.timestamp);
+  if (itemDate !== currentDate) {
+    currentDate = itemDate;
+    groupedTimeline.push({ date: itemDate, items: [item] });
+  } else {
+    groupedTimeline[groupedTimeline.length - 1].items.push(item);
+  }
+}
+---
+
+<Layout title="Timeline">
+  <main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-light text-muted">Timeline</h1>
+        <div class="flex items-center gap-3 text-sm">
+          <a href="/" class="link">
+            Capture
+          </a>
+          <a href="/dashboard" class="link">
+            Dashboard
+          </a>
+          <a href="/browse" class="link">
+            Browse
+          </a>
+          <a href="/settings" class="link">
+            Settings
+          </a>
+        </div>
+      </div>
+
+      <p class="text-sm text-subtle mb-6">
+        Chronological view of all notes in your atlas (last 100 entries)
+      </p>
+
+      {error ? (
+        <div class="p-4 bg-danger-soft border border-danger rounded-lg">
+          <p class="text-danger">{error}</p>
+        </div>
+      ) : timelineData.length === 0 ? (
+        <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div class="text-6xl mb-4">📅</div>
+          <h2 class="text-xl font-light text-primary mb-2">No timeline entries yet</h2>
+          <p class="text-subtle mb-6 max-w-md">
+            Start capturing notes and they'll appear here in chronological order.
+          </p>
+          <a href="/" class="btn-primary px-6 py-3 rounded-lg font-medium">
+            ✍️ Capture Your First Note
+          </a>
+        </div>
+      ) : (
+        <div class="space-y-8">
+          {groupedTimeline.map((group, groupIndex) => {
+            const firstItem = group.items[0];
+            const relativeDate = getRelativeDate(firstItem.timestamp);
+
+            return (
+              <div class="stagger-item" style={`animation-delay: ${groupIndex * 50}ms`}>
+                <!-- Date Header -->
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="flex-shrink-0 w-2 h-2 rounded-full bg-accent"></div>
+                  <h2 class="text-sm font-medium text-muted">
+                    {relativeDate === group.date ? group.date : `${relativeDate} • ${group.date}`}
+                  </h2>
+                  <div class="flex-1 h-px bg-border"></div>
+                </div>
+
+                <!-- Timeline Items -->
+                <div class="ml-6 border-l-2 border-border pl-6 space-y-4">
+                  {group.items.map((item: any) => {
+                    const category = item.category ? getCategoryStyle(item.category) : null;
+                    const fileName = item.path.split('/').pop()?.replace('.md', '') || item.path;
+                    const time = formatTime(item.timestamp);
+
+                    return (
+                      <a
+                        href={`/browse/${item.path}`}
+                        class="block p-4 panel hover:bg-surface-muted transition-all group"
+                      >
+                        <div class="flex items-start gap-3">
+                          <span class="text-2xl flex-shrink-0">
+                            {category?.icon || '📄'}
+                          </span>
+                          <div class="flex-1 min-w-0">
+                            <h3 class={`text-base font-medium mb-1 truncate ${category ? `category-text ${category.className}` : 'text-primary'}`}>
+                              {fileName}
+                            </h3>
+                            <div class="flex items-center gap-2 text-xs text-subtle">
+                              <span>{time}</span>
+                              {item.category && (
+                                <>
+                                  <span>•</span>
+                                  <span class={category ? `category-text ${category.className}` : ''}>
+                                    {item.category}
+                                  </span>
+                                </>
+                              )}
+                              <span>•</span>
+                              <span class="truncate">{item.path}</span>
+                            </div>
+                          </div>
+                          <svg class="w-5 h-5 text-subtle opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>

@@ -1,10 +1,11 @@
 ---
 # pkms-tp2d
 title: Implement timeline/chronological view
-status: draft
+status: completed
 type: feature
+priority: normal
 created_at: 2026-01-22T02:41:42Z
-updated_at: 2026-01-22T02:41:42Z
+updated_at: 2026-01-22T16:38:38Z
 ---
 
 Add chronological view of all notes with filtering by date range and category.
@@ -31,15 +32,27 @@ Add chronological view of all notes with filtering by date range and category.
 - Consider using git log with --since/--until for date filtering
 
 ## Checklist
-- [ ] Design timeline layout and note card
-- [ ] Add /timeline route to Scribe
-- [ ] Implement API endpoint for timeline data
-- [ ] Add date grouping logic
-- [ ] Build timeline view component
-- [ ] Add date range filter
-- [ ] Add category filter
-- [ ] Implement pagination or infinite scroll
-- [ ] Add note preview modal
-- [ ] Add to main navigation
-- [ ] Make mobile-friendly
-- [ ] Test with large note counts
+- [x] Design timeline layout and note card (vertical timeline with date separators)
+- [x] Add /timeline route to Scribe
+- [x] Implement API endpoint for timeline data (reuses /api/recent with limit=100)
+- [x] Add date grouping logic (groups by date with relative labels)
+- [x] Build timeline view component (card-based with category icons)
+- [x] Add to main navigation (Dashboard, Browse pages)
+- [x] Make mobile-friendly (responsive layout with stagger animations)
+
+## Implementation Notes
+- Shows last 100 notes chronologically
+- Date grouping with relative labels (Today, Yesterday, X days ago)
+- Each item shows: icon, title, time, category, path
+- Click to navigate to full note in Browse
+- Vertical timeline with connecting border line
+- Category-aware styling and icons
+- Hover effects and animations
+- Linked from Dashboard's Recent Activity section
+
+## Future Enhancements (Deferred)
+- Add date range filter (picker to select custom range)
+- Add category filter (dropdown to filter by category)
+- Implement pagination or infinite scroll (currently limited to 100)
+- Add note preview modal (hover or click to preview without navigation)
+- Test with large note counts (performance optimization)

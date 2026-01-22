@@ -103,6 +103,9 @@ const sortedCategories = Object.entries(stats.categories || {})
           <a href="/browse" class="link">
             Browse
           </a>
+          <a href="/timeline" class="link">
+            Timeline
+          </a>
           <a href="/settings" class="link">
             Settings
           </a>
@@ -227,9 +230,12 @@ const sortedCategories = Object.entries(stats.categories || {})
               ) : (
                 <p class="text-sm text-subtle">No recent activity yet.</p>
               )}
-              <div class="mt-4 pt-4 border-t border-default">
-                <a href="/browse" class="text-sm link">
-                  View all notes →
+              <div class="mt-4 pt-4 border-t border-default flex items-center justify-between text-sm">
+                <a href="/timeline" class="link">
+                  View full timeline →
+                </a>
+                <a href="/browse" class="link">
+                  Browse atlas
                 </a>
               </div>
             </div>

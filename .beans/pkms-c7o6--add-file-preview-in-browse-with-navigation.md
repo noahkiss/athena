@@ -1,11 +1,11 @@
 ---
 # pkms-c7o6
 title: Add file preview in Browse with navigation
-status: in-progress
+status: todo
 type: feature
 priority: normal
 created_at: 2026-01-22T02:45:15Z
-updated_at: 2026-01-22T16:24:55Z
+updated_at: 2026-01-22T16:34:48Z
 ---
 
 Show rendered markdown preview when clicking files in Browse instead of raw markdown.
