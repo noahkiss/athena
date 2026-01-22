@@ -118,10 +118,10 @@ if (data?.is_file && data?.content) {
               </a>
             </div>
           ) : (
-            data?.items?.map((item: any) => (
+            data?.items?.map((item: any, index: number) => (
               <a
                 href={`/archive/${item.path}`}
-                class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-900 transition-colors group"
+                class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-900 transition-all group stagger-item"
               >
                 <span class="text-lg">
                   {item.type === 'directory' ? '📁' : '📄'}

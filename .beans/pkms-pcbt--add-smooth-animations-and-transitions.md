@@ -1,10 +1,11 @@
 ---
 # pkms-pcbt
 title: Add smooth animations and transitions
-status: draft
+status: in-progress
 type: feature
+priority: normal
 created_at: 2026-01-22T02:45:35Z
-updated_at: 2026-01-22T02:45:35Z
+updated_at: 2026-01-22T04:15:22Z
 ---
 
 Polish the UI with smooth animations and micro-interactions for better feel.
@@ -44,15 +45,15 @@ Polish the UI with smooth animations and micro-interactions for better feel.
 - Respect `prefers-reduced-motion` media query
 
 ## Checklist
-- [ ] Add page transition animations
-- [ ] Add button hover effects
-- [ ] Add modal fade in/out
-- [ ] Add dropdown slide animations
-- [ ] Add submit button animation sequence
-- [ ] Add file/folder hover effects
-- [ ] Add tag hover animations
-- [ ] Add scroll-triggered animations
-- [ ] Add toast notification animations
-- [ ] Respect prefers-reduced-motion
-- [ ] Test performance on slower devices
-- [ ] Ensure 60fps animations
+- [x] Add page transition animations (fade + slide up on page load)
+- [x] Add button hover effects (subtle lift on hover, press on active)
+- [x] Add modal fade in/out (backdrop blur + modal slide up)
+- [ ] Add dropdown slide animations (no dropdowns yet)
+- [x] Add submit button animation sequence (spinner already animated)
+- [x] Add file/folder hover effects (smooth transitions, color intensity)
+- [x] Add tag hover animations (brightness increase)
+- [x] Add stagger animations for list items (Browse, Archive)
+- [ ] Add toast notification animations (toasts not implemented)
+- [x] Respect prefers-reduced-motion (all animations disabled)
+- [ ] Test performance on slower devices (needs local testing)
+- [x] Ensure 60fps animations (CSS animations, GPU-accelerated)

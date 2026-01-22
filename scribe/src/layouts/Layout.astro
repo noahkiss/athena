@@ -13,13 +13,118 @@ const { title} = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+      /* Global animation variables */
+      :root {
+        --transition-fast: 150ms;
+        --transition-base: 200ms;
+        --transition-slow: 300ms;
+        --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+        --ease-out: cubic-bezier(0, 0, 0.2, 1);
+        --ease-in: cubic-bezier(0.4, 0, 1, 1);
+      }
+
+      /* Respect prefers-reduced-motion */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* Page fade-in animation */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      body {
+        animation: fadeIn var(--transition-slow) var(--ease-out);
+      }
+
+      /* Smooth hover effects for interactive elements */
+      a, button {
+        transition: all var(--transition-fast) var(--ease-in-out);
+      }
+
+      /* Enhanced button hover with subtle scale */
+      button:not(:disabled):hover {
+        transform: translateY(-1px);
+      }
+
+      button:not(:disabled):active {
+        transform: translateY(0);
+      }
+
+      /* Modal animations */
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn var(--transition-base) var(--ease-out);
+      }
+
+      .animate-slideUp {
+        animation: slideUp var(--transition-slow) var(--ease-out);
+      }
+
+      /* Stagger animation for lists */
+      @keyframes staggerFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Apply stagger to list items */
+      .stagger-item {
+        animation: staggerFadeIn var(--transition-base) var(--ease-out);
+      }
+
+      .stagger-item:nth-child(1) { animation-delay: 0ms; }
+      .stagger-item:nth-child(2) { animation-delay: 50ms; }
+      .stagger-item:nth-child(3) { animation-delay: 100ms; }
+      .stagger-item:nth-child(4) { animation-delay: 150ms; }
+      .stagger-item:nth-child(5) { animation-delay: 200ms; }
+      .stagger-item:nth-child(6) { animation-delay: 250ms; }
+      .stagger-item:nth-child(7) { animation-delay: 300ms; }
+      .stagger-item:nth-child(8) { animation-delay: 350ms; }
+      .stagger-item:nth-child(9) { animation-delay: 400ms; }
+      .stagger-item:nth-child(10) { animation-delay: 450ms; }
+    </style>
   </head>
   <body class="min-h-screen bg-gray-950 text-gray-100">
     <slot />
 
     <!-- Keyboard Shortcuts Help Modal -->
-    <div id="shortcuts-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-gray-900 border border-gray-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-auto">
+    <div id="shortcuts-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+      <div class="bg-gray-900 border border-gray-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-auto animate-slideUp">
         <div class="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between">
           <h2 class="text-xl font-light text-gray-200">Keyboard Shortcuts</h2>
           <button id="close-shortcuts" class="text-gray-400 hover:text-gray-200 text-2xl leading-none">&times;</button>
