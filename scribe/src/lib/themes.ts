@@ -1,10 +1,16 @@
 export type ThemeId =
   | 'default'
+  | 'cobalt2'
   | 'dracula'
   | 'catppuccin-latte'
   | 'catppuccin-frappe'
   | 'catppuccin-macchiato'
-  | 'catppuccin-mocha';
+  | 'catppuccin-mocha'
+  | 'github-dark-high-contrast'
+  | 'github-dark-dimmed'
+  | 'github-light'
+  | 'rose-pine-moon'
+  | 'rose-pine-dawn';
 
 export type ThemeDefinition = {
   id: ThemeId;
@@ -230,14 +236,218 @@ export const themes: Record<ThemeId, ThemeDefinition> = {
       '116 199 236',
     ],
   },
+  cobalt2: {
+    id: 'cobalt2',
+    label: 'Cobalt2',
+    group: 'Cobalt2',
+    themeColor: '#122738',
+    colors: {
+      bg: '#122738',
+      surface: '#193549',
+      surfaceAlt: '#234a5f',
+      surfaceMuted: '#0d1f2d',
+      border: '#0050a4',
+      text: '#ffffff',
+      textMuted: '#80fcff',
+      textSubtle: '#0088ff',
+      accentRgb: '255 198 0',
+      accentHover: '#ffa500',
+      accentContrast: '#122738',
+      focusRgb: '128 252 255',
+      dangerRgb: '255 98 140',
+      warningRgb: '255 198 0',
+      successRgb: '58 217 0',
+    },
+    categories: [
+      '255 198 0',
+      '251 148 255',
+      '58 217 0',
+      '128 252 255',
+      '0 136 255',
+      '255 98 140',
+      '0 80 164',
+      '255 255 255',
+    ],
+  },
+  'github-dark-high-contrast': {
+    id: 'github-dark-high-contrast',
+    label: 'Dark High Contrast',
+    group: 'GitHub',
+    themeColor: '#010409',
+    colors: {
+      bg: '#010409',
+      surface: '#0d1117',
+      surfaceAlt: '#161b22',
+      surfaceMuted: '#06090c',
+      border: '#30363d',
+      text: '#f0f3f6',
+      textMuted: '#d9dee3',
+      textSubtle: '#9ea7b3',
+      accentRgb: '113 183 255',
+      accentHover: '#539bf5',
+      accentContrast: '#010409',
+      focusRgb: '57 197 207',
+      dangerRgb: '255 148 146',
+      warningRgb: '240 183 47',
+      successRgb: '38 205 77',
+    },
+    categories: [
+      '113 183 255',
+      '203 158 255',
+      '38 205 77',
+      '57 197 207',
+      '240 183 47',
+      '255 148 146',
+      '145 203 255',
+      '255 177 175',
+    ],
+  },
+  'github-dark-dimmed': {
+    id: 'github-dark-dimmed',
+    label: 'Dark Dimmed',
+    group: 'GitHub',
+    themeColor: '#1c2128',
+    colors: {
+      bg: '#1c2128',
+      surface: '#2d333b',
+      surfaceAlt: '#373e47',
+      surfaceMuted: '#161a1f',
+      border: '#444c56',
+      text: '#adbac7',
+      textMuted: '#909dab',
+      textSubtle: '#636e7b',
+      accentRgb: '83 155 245',
+      accentHover: '#4184e4',
+      accentContrast: '#1c2128',
+      focusRgb: '57 197 207',
+      dangerRgb: '244 112 103',
+      warningRgb: '198 144 38',
+      successRgb: '87 171 90',
+    },
+    categories: [
+      '83 155 245',
+      '176 131 240',
+      '87 171 90',
+      '57 197 207',
+      '218 170 63',
+      '220 189 251',
+      '108 182 255',
+      '255 147 138',
+    ],
+  },
+  'github-light': {
+    id: 'github-light',
+    label: 'Light Legacy',
+    group: 'GitHub',
+    themeColor: '#f6f8fa',
+    colors: {
+      bg: '#f6f8fa',
+      surface: '#ffffff',
+      surfaceAlt: '#f3f4f6',
+      surfaceMuted: '#e5e7ea',
+      border: '#d0d7de',
+      text: '#586069',
+      textMuted: '#6a737d',
+      textSubtle: '#959da5',
+      accentRgb: '3 102 214',
+      accentHover: '#005cc5',
+      accentContrast: '#ffffff',
+      focusRgb: '27 124 131',
+      dangerRgb: '215 58 73',
+      warningRgb: '219 171 9',
+      successRgb: '40 167 69',
+    },
+    categories: [
+      '3 102 214',
+      '90 50 163',
+      '40 167 69',
+      '27 124 131',
+      '219 171 9',
+      '203 36 49',
+      '49 146 170',
+      '176 0 32',
+    ],
+  },
+  'rose-pine-moon': {
+    id: 'rose-pine-moon',
+    label: 'Moon',
+    group: 'Rosé Pine',
+    themeColor: '#2a273f',
+    colors: {
+      bg: '#2a273f',
+      surface: '#393552',
+      surfaceAlt: '#37344d',
+      surfaceMuted: '#232136',
+      border: '#44415a',
+      text: '#e0def4',
+      textMuted: '#908caa',
+      textSubtle: '#6e6a86',
+      accentRgb: '156 207 216',
+      accentHover: '#7ab8c2',
+      accentContrast: '#2a273f',
+      focusRgb: '234 154 151',
+      dangerRgb: '235 111 146',
+      warningRgb: '246 193 119',
+      successRgb: '62 143 176',
+    },
+    categories: [
+      '156 207 216',
+      '196 167 231',
+      '62 143 176',
+      '234 154 151',
+      '246 193 119',
+      '235 111 146',
+      '144 140 170',
+      '224 222 244',
+    ],
+  },
+  'rose-pine-dawn': {
+    id: 'rose-pine-dawn',
+    label: 'Dawn',
+    group: 'Rosé Pine',
+    themeColor: '#fffaf3',
+    colors: {
+      bg: '#fffaf3',
+      surface: '#f2e9e1',
+      surfaceAlt: '#f3eeea',
+      surfaceMuted: '#faf4ed',
+      border: '#dfdad9',
+      text: '#575279',
+      textMuted: '#797593',
+      textSubtle: '#9893a5',
+      accentRgb: '86 148 159',
+      accentHover: '#56949f',
+      accentContrast: '#fffaf3',
+      focusRgb: '215 130 126',
+      dangerRgb: '180 99 122',
+      warningRgb: '234 157 52',
+      successRgb: '40 105 131',
+    },
+    categories: [
+      '86 148 159',
+      '144 122 169',
+      '40 105 131',
+      '215 130 126',
+      '234 157 52',
+      '180 99 122',
+      '121 117 147',
+      '87 82 121',
+    ],
+  },
 };
 
 export const themeList = Object.values(themes);
 export const DEFAULT_THEME_ID: ThemeId = 'default';
+export const DEFAULT_LIGHT_THEME_ID: ThemeId = 'rose-pine-dawn';
+export const DEFAULT_DARK_THEME_ID: ThemeId = 'catppuccin-mocha';
 
 export function getTheme(themeId: string | null | undefined): ThemeDefinition {
   if (!themeId) return themes.default;
   return themes[themeId as ThemeId] ?? themes.default;
+}
+
+export function getDefaultThemeForColorScheme(prefersDark: boolean): ThemeDefinition {
+  return prefersDark ? themes[DEFAULT_DARK_THEME_ID] : themes[DEFAULT_LIGHT_THEME_ID];
 }
 
 export function themeToCssVars(theme: ThemeDefinition): string {

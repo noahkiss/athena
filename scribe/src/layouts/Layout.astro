@@ -1,5 +1,5 @@
 ---
-import { getTheme, themeToCssVars } from '../lib/themes';
+import { getTheme, themeToCssVars, themes } from '../lib/themes';
 
 interface Props {
   title: string;
@@ -43,6 +43,12 @@ const iconVersion = branding.icon_version || defaultBranding.icon_version;
 const iconQuery = iconVersion ? `?v=${iconVersion}` : '';
 const theme = getTheme(branding.theme);
 const themeStyle = themeToCssVars(theme);
+
+// Prepare theme data for client-side color scheme detection
+const lightTheme = themes['rose-pine-dawn'];
+const darkTheme = themes['catppuccin-mocha'];
+const lightThemeVars = themeToCssVars(lightTheme);
+const darkThemeVars = themeToCssVars(darkTheme);
 ---
 
 <!doctype html>
@@ -519,6 +525,51 @@ const themeStyle = themeToCssVars(theme);
     <div class="fixed bottom-4 right-4 text-xs text-subtle">
       Press <kbd class="px-1.5 py-0.5 rounded">?</kbd> for shortcuts
     </div>
+
+    <script is:inline define:vars={{ lightThemeVars, darkThemeVars }}>
+      // Auto-detect color scheme preference and apply default theme
+      (function() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+
+        function applyThemeVars(themeVarsString, themeName) {
+          // Parse CSS variable string and apply to html element
+          const pairs = themeVarsString.split(';').filter(Boolean);
+          pairs.forEach(pair => {
+            const [key, value] = pair.split(':').map(s => s.trim());
+            if (key && value) {
+              html.style.setProperty(key, value);
+            }
+          });
+          html.setAttribute('data-theme', themeName);
+          html.setAttribute('data-auto-theme', 'true');
+        }
+
+        // Only auto-detect if using 'default' theme
+        if (currentTheme === 'default') {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (prefersDark) {
+            applyThemeVars(darkThemeVars, 'catppuccin-mocha');
+          } else {
+            applyThemeVars(lightThemeVars, 'rose-pine-dawn');
+          }
+        }
+
+        // Listen for color scheme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+          const isAutoTheme = html.getAttribute('data-auto-theme') === 'true';
+
+          // Only auto-switch if on an auto-detected theme
+          if (isAutoTheme) {
+            if (e.matches) {
+              applyThemeVars(darkThemeVars, 'catppuccin-mocha');
+            } else {
+              applyThemeVars(lightThemeVars, 'rose-pine-dawn');
+            }
+          }
+        });
+      })();
+    </script>
 
     <script>
       // Keyboard shortcuts system
