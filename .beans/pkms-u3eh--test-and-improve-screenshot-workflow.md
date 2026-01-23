@@ -1,10 +1,11 @@
 ---
 # pkms-u3eh
 title: Test and improve screenshot workflow
-status: in-progress
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-23T04:32:40Z
-updated_at: 2026-01-23T04:32:40Z
+updated_at: 2026-01-23T04:38:39Z
 ---
 
 1. Trigger the screenshot workflow to test it
