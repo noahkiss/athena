@@ -1,90 +1,102 @@
-# Screenshot Standards
+# Screenshots
 
-This document defines the standard set of screenshots to capture after major UI/UX changes. These screenshots are used in the README and documentation.
+Visual overview of Athena's interface. These screenshots are automatically generated using the [screenshot workflow](../.github/workflows/screenshots.yml).
 
-## Screenshot Set
+## Capture Page
 
-### Primary Screenshots (README hero section)
+The main interface for quickly capturing thoughts.
 
-| Filename | Description | Size | Theme |
-|----------|-------------|------|-------|
-| `screenshot-light.png` | Capture page | 1280x800 | Rose Pine Dawn |
-| `screenshot-dark.png` | Capture page | 1280x800 | Catppuccin Mocha |
+<table>
+  <tr>
+    <th>Light Mode (Rosé Pine Dawn)</th>
+    <th>Dark Mode (Catppuccin Mocha)</th>
+  </tr>
+  <tr>
+    <td><img src="screenshot-light.png" width="500" alt="Capture page in light mode"></td>
+    <td><img src="screenshot-dark.png" width="500" alt="Capture page in dark mode"></td>
+  </tr>
+</table>
 
-### Desktop Screenshots (expandable sections)
+## Desktop Views
 
-| Filename | Description | Size | Theme |
-|----------|-------------|------|-------|
-| `screenshot-dashboard.png` | Dashboard with stats | 1280x900 | Default |
-| `screenshot-browse.png` | Browse page with categories | 1280x800 | Default |
-| `screenshot-settings-fonts.png` | Settings page (fonts visible) | 1280x900 | Default |
-| `screenshot-settings-fonts-scrolled.png` | Settings scrolled to fonts | 1280x900 | Default |
-| `screenshot-styleguide.png` | Style guide page | 1280x1200 | Default |
-| `screenshot-timeline.png` | Timeline page | 1280x800 | Default |
+### Dashboard
+Clean stats overview with category breakdown and recent activity.
 
-### Mobile Screenshots (390x844 - iPhone 14 Pro viewport)
+![Dashboard](screenshot-dashboard.png)
 
-| Filename | Description |
-|----------|-------------|
-| `mobile-capture.png` | Capture page |
-| `mobile-dashboard.png` | Dashboard |
-| `mobile-browse.png` | Browse page |
-| `mobile-timeline.png` | Timeline |
-| `mobile-settings.png` | Settings |
-| `mobile-archive.png` | Archive |
+### Browse
+Navigate your atlas with category-aware styling and breadcrumb navigation.
 
-## Capture Guidelines
+![Browse](screenshot-browse.png)
 
-1. **Viewport sizes:**
-   - Desktop: 1280x800 (or taller as needed)
-   - Mobile: 390x844 (iPhone 14 Pro)
+### Timeline
+Chronological view of all your notes, grouped by date.
 
-2. **Theme settings:**
-   - Light screenshots: Rose Pine Dawn
-   - Dark screenshots: Catppuccin Mocha (or default dark)
+![Timeline](screenshot-timeline.png)
 
-3. **Content:**
-   - Use realistic sample data when possible
-   - Ensure stats show non-zero values
-   - Show category variety in browse screenshots
+### Settings
+Theme selection and font customization.
 
-4. **Timing:**
-   - Wait for all animations to complete
-   - Ensure skeleton loaders have finished
-   - Let hover states settle
+| Settings Overview | Font Selection |
+|-------------------|----------------|
+| ![Settings](screenshot-settings-fonts.png) | ![Fonts](screenshot-settings-fonts-scrolled.png) |
 
-## Manual Capture Process
+### Style Guide
+Interactive component documentation at `/styleguide`.
 
-Using Playwright MCP:
+![Style Guide](screenshot-styleguide.png)
+
+## Mobile Views (390×844)
+
+Optimized for touch with iOS-style bottom navigation.
+
+| Capture | Dashboard | Browse |
+|---------|-----------|--------|
+| <img src="mobile-capture.png" width="200" alt="Mobile capture"> | <img src="mobile-dashboard.png" width="200" alt="Mobile dashboard"> | <img src="mobile-browse.png" width="200" alt="Mobile browse"> |
+
+| Timeline | Settings | Archive |
+|----------|----------|---------|
+| <img src="mobile-timeline.png" width="200" alt="Mobile timeline"> | <img src="mobile-settings.png" width="200" alt="Mobile settings"> | <img src="mobile-archive.png" width="200" alt="Mobile archive"> |
+
+---
+
+## Updating Screenshots
+
+Screenshots are updated automatically via GitHub Actions:
+
+1. Go to **Actions** → **Update Screenshots**
+2. Click **Run workflow**
+3. Optionally enter a reason for the update
+4. Review and merge the generated PR
+
+The workflow uses sample data from `.screenshot-data/athena/` to ensure consistent, realistic screenshots.
+
+### Manual Update
+
+To capture screenshots locally:
 
 ```bash
-# Desktop - Light mode
-1. Navigate to page
-2. Set theme to rose-pine-dawn via localStorage
-3. Resize to 1280x800
-4. Take screenshot
+# Start services with sample data
+docker compose -f docker compose.screenshots.yml up -d --build
 
-# Desktop - Dark mode
-1. Navigate to page
-2. Set theme to catppuccin-mocha via localStorage
-3. Resize to 1280x800
-4. Take screenshot
+# Wait for services
+sleep 30
 
-# Mobile
-1. Navigate to page
-2. Resize to 390x844
-3. Take screenshot
+# Run Playwright tests
+cd .github/screenshots
+npm install
+npx playwright install chromium
+npx playwright test
+
+# Stop services
+docker compose -f docker compose.screenshots.yml down
 ```
 
-## Automation Considerations
+### Screenshot Specifications
 
-A GitHub Actions workflow could:
-1. Start the app in Docker
-2. Use Playwright to navigate and capture
-3. Upload screenshots as artifacts
-4. Optionally open a PR with updated screenshots
-
-This would require:
-- `playwright` in CI
-- A seeded database with sample data
-- Theme switching via localStorage injection
+| Category | Viewport | Theme |
+|----------|----------|-------|
+| Desktop hero (light) | 1280×800 | Rose Pine Dawn |
+| Desktop hero (dark) | 1280×800 | Catppuccin Mocha |
+| Desktop pages | 1280×800-1200 | Rose Pine Dawn |
+| Mobile | 390×844 | Catppuccin Mocha |

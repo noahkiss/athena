@@ -47,37 +47,7 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 
 **Design:** iOS-inspired with squircle corners, micro-interactions, icon animations, and refined typography. 13 themes and 18 fonts (6 header, 6 body, 6 mono) available. See `/styleguide` for interactive component documentation.
 
-<details>
-<summary><strong>🎨 Dashboard & Font Selection</strong> (click to expand)</summary>
-
-<table>
-  <tr>
-    <td><strong>Dashboard</strong><br><img src="docs/screenshot-dashboard.png" width="450"><br>Clean stats overview with polished card design and consistent navigation</td>
-    <td><strong>Font Selection</strong><br><img src="docs/screenshot-settings-fonts-scrolled.png" width="450"><br>18 self-hosted fonts across 3 categories: headers, body, and monospace</td>
-  </tr>
-</table>
-
-</details>
-
-<details>
-<summary><strong>📱 Mobile Screenshots</strong> (click to expand)</summary>
-
-<table>
-  <tr>
-    <td><strong>Capture</strong><br><img src="docs/mobile-capture.png" width="200"></td>
-    <td><strong>Dashboard</strong><br><img src="docs/mobile-dashboard.png" width="200"></td>
-    <td><strong>Browse</strong><br><img src="docs/mobile-browse.png" width="200"></td>
-  </tr>
-  <tr>
-    <td><strong>Timeline</strong><br><img src="docs/mobile-timeline.png" width="200"></td>
-    <td><strong>Settings</strong><br><img src="docs/mobile-settings.png" width="200"></td>
-    <td><strong>Archive</strong><br><img src="docs/mobile-archive.png" width="200"></td>
-  </tr>
-</table>
-
-Mobile-optimized with iOS-style bottom navigation, proper touch targets (44pt minimum), and adaptive spacing (16px mobile, 24px tablet).
-
-</details>
+**[View all screenshots →](docs/SCREENSHOTS.md)** (dashboard, browse, timeline, settings, mobile views)
 
 ## Quick Start (All-in-one)
 

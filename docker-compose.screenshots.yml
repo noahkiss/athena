@@ -1,0 +1,22 @@
+# Docker Compose configuration for screenshot generation
+# Uses sample data instead of real athena directory
+
+services:
+  athena:
+    build: .
+    ports:
+      - "3000:3000"
+      - "8000:8000"
+    volumes:
+      - ./.screenshot-data/athena:/data  # Sample data for screenshots
+    environment:
+      - GARDENER_AUTO=false
+      - LOG_LEVEL=WARNING
+      - GARDENER_URL=http://127.0.0.1:8000
+      - GARDENER_BACKEND=openai
+      - AI_API_KEY=not-needed-for-screenshots
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
