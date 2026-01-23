@@ -14,6 +14,8 @@ fi
 git init
 git config user.email "sample@example.com"
 git config user.name "Sample User"
+# Allow any user to access this repo (needed for Docker volume mounts)
+git config core.sharedRepository world
 
 # Base files from a month ago
 GIT_AUTHOR_DATE="2025-12-23T10:00:00" GIT_COMMITTER_DATE="2025-12-23T10:00:00" \

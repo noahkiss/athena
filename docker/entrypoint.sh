@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Mark /data as safe for git operations (handles ownership differences in containers)
+git config --global --add safe.directory /data 2>/dev/null || true
+
 GARDENER_HOST=${GARDENER_HOST:-0.0.0.0}
 GARDENER_PORT=${GARDENER_PORT:-8000}
 SCRIBE_HOST=${SCRIBE_HOST:-0.0.0.0}

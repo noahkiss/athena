@@ -19,6 +19,7 @@ RUN apt-get update \
         bash \
         ca-certificates \
         curl \
+        git \
         gnupg \
         tini \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
