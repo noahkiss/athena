@@ -5,57 +5,57 @@
 
 export const iconMap = {
   // Stats & Metrics
-  'total-notes': 'library',
-  'today-notes': 'document-add',
-  'week-notes': 'calendar',
-  'month-notes': 'calendar-month',
+  'total-notes': 'library-linear',
+  'today-notes': 'document-add-linear',
+  'week-notes': 'calendar-linear',
+  'month-notes': 'calendar-minimalistic-linear',
 
   // Sections
-  'categories': 'tag',
-  'recent-activity': 'bolt',
-  'quick-actions': 'rocket',
+  'categories': 'tag-linear',
+  'recent-activity': 'bolt-linear',
+  'quick-actions': 'rocket-linear',
 
   // Category Icons
-  'category-projects': 'case',
-  'category-people': 'users',
-  'category-journal': 'notebook',
-  'category-tech': 'settings',
-  'category-reading': 'book-2',
-  'category-wellness': 'health',
-  'category-home': 'home-2',
+  'category-projects': 'case-linear',
+  'category-people': 'users-group-rounded-linear',
+  'category-journal': 'notebook-linear',
+  'category-tech': 'settings-linear',
+  'category-reading': 'book-2-linear',
+  'category-wellness': 'health-linear',
+  'category-home': 'home-2-linear',
 
   // File System
-  'folder': 'folder',
-  'folder-open': 'folder-open',
-  'file': 'document',
-  'file-text': 'file-text',
+  'folder': 'folder-linear',
+  'folder-open': 'folder-open-linear',
+  'file': 'document-linear',
+  'file-text': 'file-text-linear',
 
   // Actions
-  'random': 'shuffle',
-  'capture': 'pen-new-square',
-  'browse': 'folder',
-  'archive': 'archive-down-minimlistic',
+  'random': 'shuffle-linear',
+  'capture': 'pen-new-square-linear',
+  'browse': 'folder-linear',
+  'archive': 'archive-down-minimlistic-linear',
 
   // Empty States
-  'empty-folder': 'folder-open',
-  'empty-timeline': 'calendar',
-  'empty-archive': 'archive-down-minimlistic',
+  'empty-folder': 'folder-open-linear',
+  'empty-timeline': 'calendar-linear',
+  'empty-archive': 'archive-down-minimlistic-linear',
 
   // Settings
-  'mobile-install': 'smartphone',
-  'ios-share': 'upload',
+  'mobile-install': 'smartphone-linear',
+  'ios-share': 'upload-linear',
   'android-menu': 'menu-dots-bold',
 
   // Navigation & UI
-  'help': 'question-circle',
-  'check': 'check-circle',
-  'close': 'close-circle',
-  'add': 'add-circle',
-  'arrow-right': 'alt-arrow-right',
-  'arrow-left': 'alt-arrow-left',
+  'help': 'question-circle-linear',
+  'check': 'check-circle-linear',
+  'close': 'close-circle-linear',
+  'add': 'add-circle-linear',
+  'arrow-right': 'alt-arrow-right-linear',
+  'arrow-left': 'alt-arrow-left-linear',
 
   // Fallback
-  'default': 'document',
+  'default': 'document-linear',
 } as const;
 
 export type IconName = keyof typeof iconMap;
@@ -71,13 +71,13 @@ export function getIcon(name: IconName | string): string {
  * Category emoji to icon mapping
  */
 export const categoryIcons: Record<string, string> = {
-  projects: 'case',
-  people: 'users',
-  journal: 'notebook',
-  tech: 'settings',
-  reading: 'book-2',
-  wellness: 'health',
-  home: 'home-2',
+  projects: 'case-linear',
+  people: 'users-group-rounded-linear',
+  journal: 'notebook-linear',
+  tech: 'settings-linear',
+  reading: 'book-2-linear',
+  wellness: 'health-linear',
+  home: 'home-2-linear',
 };
 
 /**

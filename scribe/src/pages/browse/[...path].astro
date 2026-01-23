@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Icon from '../../components/Icon.astro';
+import EmptyState from '../../components/EmptyState.astro';
 import { marked } from 'marked';
 import DOMPurify from 'isomorphic-dompurify';
 
@@ -58,13 +59,13 @@ const breadcrumbs = pathParts.map((part, index) => ({
 }));
 
 const categoryStyles: Record<string, { className: string; icon: string }> = {
-  projects: { className: 'category-1', icon: 'case' },
-  people: { className: 'category-2', icon: 'users' },
-  journal: { className: 'category-3', icon: 'notebook' },
-  tech: { className: 'category-4', icon: 'settings' },
-  reading: { className: 'category-5', icon: 'book-2' },
-  wellness: { className: 'category-6', icon: 'health' },
-  home: { className: 'category-7', icon: 'home-2' },
+  projects: { className: 'category-1', icon: 'case-linear' },
+  people: { className: 'category-2', icon: 'users-group-rounded-linear' },
+  journal: { className: 'category-3', icon: 'notebook-linear' },
+  tech: { className: 'category-4', icon: 'settings-linear' },
+  reading: { className: 'category-5', icon: 'book-2-linear' },
+  wellness: { className: 'category-6', icon: 'health-linear' },
+  home: { className: 'category-7', icon: 'home-2-linear' },
 };
 
 const categoryFallbacks = [
@@ -90,7 +91,7 @@ function getCategoryStyle(name: string) {
 
   // Hash-based color for unknown categories
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: 'folder' };
+  return { className: categoryFallbacks[hash % categoryFallbacks.length], icon: 'folder-linear' };
 }
 
 function formatRelativeTime(timestamp: number): string {
@@ -127,7 +128,7 @@ if (data?.is_file && data?.content) {
             class="nav-link cursor-pointer flex items-center gap-1.5"
             title="Random note (Ctrl+Shift+R)"
           >
-            <Icon name="shuffle" size={18} />
+            <Icon name="shuffle-linear" size={18} />
             <span>Random</span>
           </button>
           <a href="/archive" class="nav-link">Archive</a>
@@ -136,21 +137,29 @@ if (data?.is_file && data?.content) {
       </header>
 
       <!-- Breadcrumb -->
-      <nav class="mb-6 text-sm">
-        <ol class="flex flex-wrap items-center gap-2">
+      <nav class="mb-6 text-sm" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap items-center gap-1">
           <li>
-            <a href="/browse" class="link">atlas</a>
+            <a href="/browse" class="breadcrumb-item flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-surface-muted transition-all">
+              <Icon name="library-linear" size={16} class="text-muted" />
+              <span class="text-muted hover:text-primary">atlas</span>
+            </a>
           </li>
           {breadcrumbs.map((crumb, i) => {
             const category = getCategoryStyle(crumb.name);
+            const isLast = i === breadcrumbs.length - 1;
             return (
-              <li class="flex items-center gap-2">
-                <span class="text-subtle">/</span>
-                {i === breadcrumbs.length - 1 ? (
-                  <span class={`${category.className} category-text font-medium`}>{crumb.name}</span>
+              <li class="flex items-center">
+                <Icon name="alt-arrow-right-linear" size={14} class="text-subtle mx-1" />
+                {isLast ? (
+                  <span class={`breadcrumb-item flex items-center gap-1.5 px-2 py-1 rounded-md ${category.className} category-chip`}>
+                    <Icon name={category.icon} size={16} class="breadcrumb-icon" />
+                    <span class="font-medium">{crumb.name}</span>
+                  </span>
                 ) : (
-                  <a href={`/browse/${crumb.path}`} class={`${category.className} category-text hover:brightness-110`}>
-                    {crumb.name}
+                  <a href={`/browse/${crumb.path}`} class={`breadcrumb-item flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-surface-muted transition-all`}>
+                    <Icon name={category.icon} size={16} class={`breadcrumb-icon ${category.className} category-text`} />
+                    <span class={`${category.className} category-text`}>{crumb.name}</span>
                   </a>
                 )}
               </li>
@@ -164,7 +173,7 @@ if (data?.is_file && data?.content) {
         <details class="mb-6 panel" open>
           <summary class="cursor-pointer p-4 font-medium text-primary hover:text-accent transition-colors flex items-center justify-between">
             <span class="flex items-center gap-2">
-              <Icon name="bolt" size={20} class="text-primary" />
+              <Icon name="bolt-linear" size={20} class="text-primary" />
               <span>Recent Activity</span>
             </span>
             <span class="text-xs text-subtle">Last {recentActivity.length} notes</span>
@@ -180,7 +189,7 @@ if (data?.is_file && data?.content) {
                   href={`/browse/${item.path}`}
                   class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-muted transition-colors group"
                 >
-                  <Icon name={category?.icon || 'document'} size={20} class="text-primary" />
+                  <Icon name={category?.icon || 'document-linear'} size={20} class="text-primary" />
                   <span class="flex-1 text-sm">
                     <span class={category ? `category-text ${category.className}` : 'text-primary'}>
                       {fileName}
@@ -212,15 +221,13 @@ if (data?.is_file && data?.content) {
         <!-- Directory listing -->
         <div class="space-y-1">
           {data?.items?.length === 0 ? (
-            <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div class="mb-4 text-primary">
-                <Icon name="folder-open" size={64} aria-label="Empty folder" />
-              </div>
-              <h2 class="text-xl font-light text-primary mb-2">This folder is waiting for its first note</h2>
-              <p class="text-subtle mb-6 max-w-md">
-                The Gardener will automatically file notes here based on their content.
-                Just capture your thoughts and let the AI organize them for you.
-              </p>
+            <EmptyState
+              icon="folder-open-linear"
+              title="This folder is waiting for its first note"
+              description="The Gardener will automatically file notes here based on their content. Just capture your thoughts and let the AI organize them for you."
+              actionText="Capture a note →"
+              actionHref="/"
+            >
               {currentPath.includes('projects') && (
                 <div class="mb-6 p-4 panel text-left max-w-md">
                   <h3 class="text-sm font-semibold text-muted mb-2">What goes in Projects?</h3>
@@ -251,36 +258,39 @@ if (data?.is_file && data?.content) {
                   </ul>
                 </div>
               )}
-              <a
-                href="/"
-                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg transition-colors font-medium btn-primary"
-              >
-                Capture a note →
-              </a>
-            </div>
+            </EmptyState>
           ) : (
             data?.items?.map((item: any, index: number) => {
               const category = item.type === 'directory' ? getCategoryStyle(item.name) : null;
+              const isDirectory = item.type === 'directory';
               return (
                 <a
                   href={`/browse/${item.path}`}
-                  class={`flex items-center gap-3 p-3 rounded-lg transition-all group stagger-item ${
+                  class={`browse-item flex items-center gap-3 p-3 rounded-lg transition-all group stagger-item ${
                     category
                       ? `category-chip ${category.className}`
                       : 'hover:bg-surface-muted'
                   }`}
                 >
-                  <Icon
-                    name={item.type === 'directory' ? (category?.icon || 'folder') : 'document'}
-                    size={24}
-                    class="text-primary"
-                  />
-                  <span class={`flex-1 ${category ? `category-text ${category.className}` : 'text-primary'} group-hover:brightness-110`}>
-                    {item.name}
+                  <span class={`browse-item-icon flex-shrink-0 ${isDirectory ? 'folder-icon' : 'file-icon'}`}>
+                    <Icon
+                      name={isDirectory ? (category?.icon || 'folder-linear') : 'document-linear'}
+                      size={24}
+                      class={isDirectory && category ? `category-text ${category.className}` : 'text-primary'}
+                    />
                   </span>
-                  {item.type === 'directory' && (
-                    <span class={`text-xs ${category ? `category-text ${category.className}` : 'text-subtle'} opacity-50`}>
-                      &rarr;
+                  <span class={`flex-1 truncate ${category ? `category-text ${category.className}` : 'text-primary'}`}>
+                    {item.name.replace('.md', '')}
+                  </span>
+                  {isDirectory ? (
+                    <Icon
+                      name="alt-arrow-right-linear"
+                      size={18}
+                      class={`browse-item-arrow opacity-40 group-hover:opacity-100 transition-all ${category ? `category-text ${category.className}` : 'text-subtle'}`}
+                    />
+                  ) : (
+                    <span class="text-xs text-subtle opacity-0 group-hover:opacity-60 transition-opacity">
+                      .md
                     </span>
                   )}
                 </a>
@@ -291,6 +301,75 @@ if (data?.is_file && data?.content) {
       )}
     </div>
   </main>
+
+  <style>
+    /* Browse item hover effects */
+    .browse-item {
+      border: 1px solid transparent;
+    }
+
+    .browse-item:hover {
+      transform: translateX(4px);
+    }
+
+    .browse-item:active {
+      transform: translateX(2px);
+    }
+
+    /* Icon animations */
+    .browse-item-icon {
+      transition: transform var(--transition-fast) var(--ease-out);
+    }
+
+    .browse-item:hover .folder-icon {
+      transform: scale(1.1) rotate(-3deg);
+    }
+
+    .browse-item:hover .file-icon {
+      transform: scale(1.05);
+    }
+
+    .browse-item-arrow {
+      transition: transform var(--transition-fast) var(--ease-out),
+                  opacity var(--transition-fast) var(--ease-in-out);
+    }
+
+    .browse-item:hover .browse-item-arrow {
+      transform: translateX(4px);
+    }
+
+    /* Breadcrumb animations */
+    .breadcrumb-item {
+      transition: all var(--transition-fast) var(--ease-in-out);
+    }
+
+    .breadcrumb-item:hover .breadcrumb-icon {
+      transform: scale(1.15) rotate(-5deg);
+    }
+
+    .breadcrumb-icon {
+      transition: transform var(--transition-fast) var(--ease-out);
+    }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .browse-item,
+      .browse-item-icon,
+      .browse-item-arrow,
+      .breadcrumb-item,
+      .breadcrumb-icon {
+        transition: none;
+      }
+
+      .browse-item:hover,
+      .browse-item:hover .folder-icon,
+      .browse-item:hover .file-icon,
+      .browse-item:hover .browse-item-arrow,
+      .breadcrumb-item:hover .breadcrumb-icon {
+        transform: none;
+      }
+    }
+  </style>
 
   <script>
     const GARDENER_URL = import.meta.env.PUBLIC_GARDENER_URL || 'http://localhost:8000';

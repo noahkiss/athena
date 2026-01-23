@@ -441,15 +441,50 @@ const darkThemeVars = themeToCssVars(darkTheme);
         border: 1px solid var(--color-border);
         color: var(--color-text);
         outline: none;
+        transition: border-color var(--transition-fast) var(--ease-in-out),
+                    box-shadow var(--transition-fast) var(--ease-in-out),
+                    background-color var(--transition-fast) var(--ease-in-out);
       }
 
       .input-field::placeholder {
         color: var(--color-text-subtle);
+        transition: color var(--transition-fast) var(--ease-in-out);
       }
 
       .input-field:focus {
         border-color: var(--focus);
-        box-shadow: 0 0 0 1px rgb(var(--focus-rgb) / 0.6);
+        box-shadow: 0 0 0 3px rgb(var(--focus-rgb) / 0.2), 0 0 16px rgb(var(--focus-rgb) / 0.15);
+        background-color: var(--color-surface);
+      }
+
+      .input-field:focus::placeholder {
+        color: var(--color-text-muted);
+      }
+
+      /* Auto-grow textarea support */
+      .textarea-autogrow {
+        resize: none;
+        overflow: hidden;
+        min-height: 120px;
+        max-height: 60vh;
+        transition: height var(--transition-fast) var(--ease-out),
+                    border-color var(--transition-fast) var(--ease-in-out),
+                    box-shadow var(--transition-fast) var(--ease-in-out);
+      }
+
+      /* Character counter */
+      .char-counter {
+        font-size: var(--font-size-xs);
+        color: var(--color-text-subtle);
+        transition: color var(--transition-fast) var(--ease-in-out);
+      }
+
+      .char-counter.warning {
+        color: var(--warning);
+      }
+
+      .char-counter.danger {
+        color: var(--danger);
       }
 
       /* Prevent iOS Safari auto-zoom on input focus by ensuring 16px minimum */
@@ -656,7 +691,81 @@ const darkThemeVars = themeToCssVars(darkTheme);
       }
 
       button:not(:disabled):active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      /* Ripple effect for buttons */
+      .btn-ripple {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-ripple::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        background-image: radial-gradient(circle, rgb(255 255 255 / 0.25) 10%, transparent 10.01%);
+        background-repeat: no-repeat;
+        background-position: 50%;
+        transform: scale(10, 10);
+        opacity: 0;
+        transition: transform 0.4s, opacity 0.8s;
+      }
+
+      .btn-ripple:active::after {
+        transform: scale(0, 0);
+        opacity: 0.3;
+        transition: 0s;
+      }
+
+      /* Enhanced focus ring for all interactive elements */
+      .focus-ring:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px rgb(var(--focus-rgb) / 0.6);
+      }
+
+      /* Link hover underline animation */
+      .link-animated {
+        position: relative;
+        text-decoration: none;
+      }
+
+      .link-animated::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 1px;
+        bottom: -2px;
+        left: 0;
+        background-color: currentColor;
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform var(--transition-fast) var(--ease-out);
+      }
+
+      .link-animated:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+
+      /* Card hover lift effect */
+      .card-interactive {
+        transition: transform var(--transition-fast) var(--ease-out),
+                    box-shadow var(--transition-fast) var(--ease-out);
+      }
+
+      .card-interactive:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.2), 0 4px 8px -4px rgb(0 0 0 / 0.1);
+      }
+
+      .card-interactive:active {
         transform: translateY(0);
+        box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
       }
 
       /* Modal animations */

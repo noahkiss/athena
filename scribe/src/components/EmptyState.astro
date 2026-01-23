@@ -1,0 +1,97 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  icon: string;
+  title: string;
+  description: string;
+  actionText?: string;
+  actionHref?: string;
+  actionIcon?: string;
+  variant?: 'default' | 'compact';
+}
+
+const {
+  icon,
+  title,
+  description,
+  actionText,
+  actionHref = '/',
+  actionIcon,
+  variant = 'default'
+} = Astro.props;
+
+const isCompact = variant === 'compact';
+const containerClasses = isCompact
+  ? 'flex flex-col items-center justify-center py-8 px-4 text-center'
+  : 'flex flex-col items-center justify-center py-16 px-4 text-center';
+const iconSize = isCompact ? 48 : 64;
+---
+
+<div class={containerClasses}>
+  <div class="empty-state-icon mb-4 text-primary">
+    <Icon name={icon} size={iconSize} aria-label={title} />
+  </div>
+
+  <h2 class:list={[
+    "font-light text-primary mb-2",
+    isCompact ? "text-lg" : "text-xl"
+  ]}>
+    {title}
+  </h2>
+
+  <p class:list={[
+    "text-subtle mb-6",
+    isCompact ? "max-w-sm" : "max-w-md"
+  ]}>
+    {description}
+  </p>
+
+  {/* Slot for contextual content like help panels */}
+  <slot />
+
+  {actionText && (
+    <a
+      href={actionHref}
+      class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg transition-colors font-medium btn-primary empty-state-action"
+    >
+      {actionIcon && <Icon name={actionIcon} size={20} />}
+      <span>{actionText}</span>
+    </a>
+  )}
+</div>
+
+<style>
+  .empty-state-icon {
+    transition: transform var(--transition-base) var(--ease-in-out);
+  }
+
+  .empty-state-icon:hover {
+    transform: scale(1.1) rotate(-3deg);
+  }
+
+  .empty-state-action {
+    transition: transform var(--transition-fast) var(--ease-in-out),
+                box-shadow var(--transition-fast) var(--ease-in-out);
+  }
+
+  .empty-state-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .empty-state-icon,
+    .empty-state-action {
+      transition: none;
+    }
+
+    .empty-state-icon:hover {
+      transform: none;
+    }
+
+    .empty-state-action:hover {
+      transform: none;
+    }
+  }
+</style>

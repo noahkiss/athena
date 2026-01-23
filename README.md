@@ -24,9 +24,10 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 - **Browse & Search** - Navigate your atlas with category-aware styling
 - **Random Discovery** - Rediscover old notes with random note button (🎲 or `Ctrl+Shift+R`)
 - **PWA Support** - Install as app on iOS/Android with custom branding
-- **Theming** - 11 curated color palettes with auto light/dark detection
-- **Font Selection** - Choose from 4 curated fonts (System, Serif, Mono, Humanist)
-- **Polished Design** - Consistent headers, refined navigation, improved typography hierarchy
+- **Theming** - 13 curated color palettes with auto light/dark detection
+- **Font Selection** - 18 fonts across 3 categories (headers, body, monospace)
+- **Polished Design** - iOS-inspired with squircle corners, micro-interactions, and refined typography
+- **Design System** - Comprehensive style guide with reusable components
 - **Mobile-First** - Bottom navigation and touch-optimized UI
 - **Recent Activity** - See what you've captured lately
 - **Keyboard Shortcuts** - Navigate efficiently (press `?` to see shortcuts)
@@ -44,7 +45,7 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
   </tr>
 </table>
 
-**Design:** iOS-inspired with squircle corners, consistent headers, polished navigation, and refined typography. 11 themes and 4 font options available.
+**Design:** iOS-inspired with squircle corners, micro-interactions, icon animations, and refined typography. 13 themes and 18 fonts (6 header, 6 body, 6 mono) available. See `/styleguide` for interactive component documentation.
 
 <details>
 <summary><strong>🎨 Dashboard & Font Selection</strong> (click to expand)</summary>
@@ -52,7 +53,7 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 <table>
   <tr>
     <td><strong>Dashboard</strong><br><img src="docs/screenshot-dashboard.png" width="450"><br>Clean stats overview with polished card design and consistent navigation</td>
-    <td><strong>Font Selection</strong><br><img src="docs/screenshot-settings-fonts-scrolled.png" width="450"><br>Choose from 4 curated fonts: System, Serif, Mono, or Humanist</td>
+    <td><strong>Font Selection</strong><br><img src="docs/screenshot-settings-fonts-scrolled.png" width="450"><br>18 self-hosted fonts across 3 categories: headers, body, and monospace</td>
   </tr>
 </table>
 

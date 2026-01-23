@@ -23,14 +23,21 @@ import Layout from '../layouts/Layout.astro';
         hx-indicator="#submit-spinner"
         style="display: flex; flex-direction: column; gap: var(--spacing-element);"
       >
-        <textarea
-          name="content"
-          id="note-input"
-          placeholder="What's on your mind?"
-          class="w-full h-64 rounded-lg input-field resize-none transition-colors"
-          style="padding: var(--spacing-card); font-size: var(--font-size-base);"
-          autofocus
-        ></textarea>
+        <div class="relative">
+          <textarea
+            name="content"
+            id="note-input"
+            placeholder="What's on your mind?"
+            class="w-full rounded-lg input-field textarea-autogrow focus-ring"
+            style="padding: var(--spacing-card); font-size: var(--font-size-base); min-height: 16rem;"
+            autofocus
+            maxlength="50000"
+          ></textarea>
+          <div class="flex justify-between items-center mt-2 px-1">
+            <span id="char-counter" class="char-counter">0 characters</span>
+            <span class="text-xs text-subtle">Tip: Ctrl+Enter to submit</span>
+          </div>
+        </div>
 
         <div class="flex flex-col gap-3 sm:flex-row" style="gap: var(--spacing-element);">
           <button
@@ -41,7 +48,7 @@ import Layout from '../layouts/Layout.astro';
             hx-swap="innerHTML"
             hx-include="#note-input"
             hx-indicator="#refine-spinner"
-            class="relative flex-1 py-3 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed btn-secondary"
+            class="relative flex-1 py-3 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed btn-secondary btn-ripple focus-ring"
           >
             <span class="btn-text">Refine</span>
             <span id="refine-spinner" class="htmx-indicator absolute inset-0 flex items-center justify-center">
@@ -59,7 +66,7 @@ import Layout from '../layouts/Layout.astro';
             hx-swap="innerHTML"
             hx-include="#note-input"
             hx-indicator="#ask-spinner"
-            class="relative flex-1 py-3 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed btn-secondary"
+            class="relative flex-1 py-3 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed btn-secondary btn-ripple focus-ring"
           >
             <span class="btn-text">Explore</span>
             <span id="ask-spinner" class="htmx-indicator absolute inset-0 flex items-center justify-center">
@@ -72,7 +79,7 @@ import Layout from '../layouts/Layout.astro';
           <button
             type="submit"
             id="submit-btn"
-            class="relative flex-1 py-3 px-4 rounded-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed btn-primary"
+            class="relative flex-1 py-3 px-4 rounded-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed btn-primary btn-ripple focus-ring"
           >
             <span class="btn-text">Submit</span>
             <span id="submit-spinner" class="htmx-indicator absolute inset-0 flex items-center justify-center">
@@ -134,14 +141,56 @@ import Layout from '../layouts/Layout.astro';
 </style>
 
 <script>
+  const textarea = document.getElementById('note-input') as HTMLTextAreaElement;
+  const charCounter = document.getElementById('char-counter');
+  const MAX_CHARS = 50000;
+  const WARN_THRESHOLD = 40000;
+  const DANGER_THRESHOLD = 48000;
+
+  // Auto-grow textarea
+  function autoGrow() {
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, window.innerHeight * 0.6) + 'px';
+  }
+
+  // Update character counter
+  function updateCharCount() {
+    if (!textarea || !charCounter) return;
+    const count = textarea.value.length;
+    const plural = count === 1 ? '' : 's';
+    charCounter.textContent = `${count.toLocaleString()} character${plural}`;
+
+    // Update counter color based on thresholds
+    charCounter.classList.remove('warning', 'danger');
+    if (count >= DANGER_THRESHOLD) {
+      charCounter.classList.add('danger');
+    } else if (count >= WARN_THRESHOLD) {
+      charCounter.classList.add('warning');
+    }
+  }
+
+  // Initialize and add event listeners
+  if (textarea) {
+    textarea.addEventListener('input', () => {
+      autoGrow();
+      updateCharCount();
+    });
+
+    // Initial setup
+    autoGrow();
+    updateCharCount();
+  }
+
   // Clear textarea on successful submit
   document.body.addEventListener('htmx:afterRequest', (event) => {
     const target = event.detail.elt;
 
     if (event.detail.successful && target?.id === 'submit-btn') {
-      const textarea = document.getElementById('note-input') as HTMLTextAreaElement;
       if (textarea) {
         textarea.value = '';
+        autoGrow();
+        updateCharCount();
         // Add success animation to feedback
         const feedback = document.getElementById('feedback');
         if (feedback) {

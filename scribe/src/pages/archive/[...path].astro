@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Icon from '../../components/Icon.astro';
+import EmptyState from '../../components/EmptyState.astro';
 import { marked } from 'marked';
 import DOMPurify from 'isomorphic-dompurify';
 
@@ -97,22 +98,13 @@ if (data?.is_file && data?.content) {
         <!-- Directory listing -->
         <div class="space-y-1">
           {data?.items?.length === 0 ? (
-            <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div class="mb-4 text-primary">
-                <Icon name="archive-down-minimlistic" size={64} aria-label="Empty archive" />
-              </div>
-              <h2 class="text-xl font-light text-primary mb-2">No archived notes yet</h2>
-              <p class="text-subtle mb-6 max-w-md">
-                Submit your first note to get started! The Gardener will automatically organize it,
-                and archived notes will appear here.
-              </p>
-              <a
-                href="/"
-                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg transition-colors font-medium btn-primary"
-              >
-                Go to Capture →
-              </a>
-            </div>
+            <EmptyState
+              icon="archive-down-minimlistic-linear"
+              title="No archived notes yet"
+              description="Submit your first note to get started! The Gardener will automatically organize it, and archived notes will appear here."
+              actionText="Go to Capture →"
+              actionHref="/"
+            />
           ) : (
             data?.items?.map((item: any, index: number) => (
               <a
@@ -120,7 +112,7 @@ if (data?.is_file && data?.content) {
                 class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-muted transition-all group stagger-item"
               >
                 <Icon
-                  name={item.type === 'directory' ? 'folder' : 'document'}
+                  name={item.type === 'directory' ? 'folder-linear' : 'document-linear'}
                   size={20}
                   class="text-primary"
                 />

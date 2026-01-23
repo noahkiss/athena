@@ -1,0 +1,119 @@
+---
+interface Props {
+  type?: 'card' | 'list' | 'stat' | 'text';
+  count?: number;
+  class?: string;
+}
+
+const { type = 'card', count = 1, class: className } = Astro.props;
+const items = Array.from({ length: count }, (_, i) => i);
+---
+
+{type === 'card' && (
+  <div class:list={["space-y-4", className]}>
+    {items.map((i) => (
+      <div
+        class="skeleton-card panel p-4 stagger-item"
+        style={`animation-delay: ${i * 100}ms`}
+      >
+        <div class="flex items-start gap-3">
+          <div class="skeleton-shimmer w-10 h-10 rounded-lg flex-shrink-0"></div>
+          <div class="flex-1 space-y-2">
+            <div class="skeleton-shimmer h-4 w-3/4 rounded"></div>
+            <div class="skeleton-shimmer h-3 w-1/2 rounded"></div>
+          </div>
+        </div>
+        <div class="mt-3 space-y-2">
+          <div class="skeleton-shimmer h-3 w-full rounded"></div>
+          <div class="skeleton-shimmer h-3 w-5/6 rounded"></div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+{type === 'list' && (
+  <div class:list={["space-y-2", className]}>
+    {items.map((i) => (
+      <div
+        class="skeleton-list-item flex items-center gap-3 p-3 rounded-lg stagger-item"
+        style={`animation-delay: ${i * 50}ms`}
+      >
+        <div class="skeleton-shimmer w-8 h-8 rounded-lg flex-shrink-0"></div>
+        <div class="flex-1">
+          <div class="skeleton-shimmer h-4 w-2/3 rounded"></div>
+        </div>
+        <div class="skeleton-shimmer h-4 w-16 rounded"></div>
+      </div>
+    ))}
+  </div>
+)}
+
+{type === 'stat' && (
+  <div class:list={["grid gap-4", className]} style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
+    {items.map((i) => (
+      <div
+        class="skeleton-stat panel p-4 stagger-item"
+        style={`animation-delay: ${i * 75}ms`}
+      >
+        <div class="flex items-center gap-3 mb-3">
+          <div class="skeleton-shimmer w-10 h-10 rounded-lg"></div>
+          <div class="skeleton-shimmer h-8 w-16 rounded"></div>
+        </div>
+        <div class="skeleton-shimmer h-3 w-20 rounded"></div>
+      </div>
+    ))}
+  </div>
+)}
+
+{type === 'text' && (
+  <div class:list={["space-y-3", className]}>
+    {items.map((i) => (
+      <div class="space-y-2 stagger-item" style={`animation-delay: ${i * 50}ms`}>
+        <div class="skeleton-shimmer h-4 w-full rounded"></div>
+        <div class="skeleton-shimmer h-4 w-11/12 rounded"></div>
+        <div class="skeleton-shimmer h-4 w-4/5 rounded"></div>
+      </div>
+    ))}
+  </div>
+)}
+
+<style>
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-muted) 0%,
+      var(--color-surface-alt) 50%,
+      var(--color-surface-muted) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .skeleton-card,
+  .skeleton-list-item,
+  .skeleton-stat {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+
+  .skeleton-list-item {
+    background-color: var(--color-surface-muted);
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer {
+      animation: none;
+      background: var(--color-surface-muted);
+    }
+  }
+</style>

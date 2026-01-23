@@ -1,0 +1,380 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import EmptyState from '../components/EmptyState.astro';
+import SkeletonLoader from '../components/SkeletonLoader.astro';
+---
+
+<Layout title="Style Guide">
+  <main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto space-y-12">
+      <header class="page-header">
+        <h1 class="page-title">Style Guide</h1>
+        <nav class="page-nav">
+          <a href="/" class="nav-link">Capture</a>
+          <a href="/browse" class="nav-link">Browse</a>
+          <a href="/settings" class="nav-link">Settings</a>
+        </nav>
+      </header>
+
+      <p class="text-muted max-w-2xl">
+        Interactive documentation of Athena Scribe's design system. All components shown here
+        are live examples using the actual component code.
+      </p>
+
+      <!-- Colors -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Colors</h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="space-y-2">
+            <div class="h-16 rounded-lg bg-app border border-default"></div>
+            <p class="text-sm text-muted">bg-app</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-16 rounded-lg bg-surface border border-default"></div>
+            <p class="text-sm text-muted">bg-surface</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-16 rounded-lg bg-surface-alt border border-default"></div>
+            <p class="text-sm text-muted">bg-surface-alt</p>
+          </div>
+          <div class="space-y-2">
+            <div class="h-16 rounded-lg bg-surface-muted border border-default"></div>
+            <p class="text-sm text-muted">bg-surface-muted</p>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-medium text-primary mt-8">Category Colors</h3>
+        <div class="grid grid-cols-4 md:grid-cols-8 gap-3">
+          {[1,2,3,4,5,6,7,8].map(n => (
+            <div class="space-y-2">
+              <div class={`h-12 rounded-lg category-${n}`} style={`background-color: rgb(var(--category-${n}-rgb))`}></div>
+              <p class="text-xs text-subtle text-center">category-{n}</p>
+            </div>
+          ))}
+        </div>
+
+        <h3 class="text-lg font-medium text-primary mt-8">Semantic Colors</h3>
+        <div class="flex flex-wrap gap-4">
+          <span class="px-3 py-1 rounded-full text-sm" style="background: var(--accent); color: var(--accent-contrast)">accent</span>
+          <span class="px-3 py-1 rounded-full text-sm" style="background: var(--focus); color: #000">focus</span>
+          <span class="px-3 py-1 rounded-full text-sm text-success" style="background: rgb(var(--success-rgb) / 0.2)">success</span>
+          <span class="px-3 py-1 rounded-full text-sm text-warning" style="background: rgb(var(--warning-rgb) / 0.2)">warning</span>
+          <span class="px-3 py-1 rounded-full text-sm text-danger" style="background: rgb(var(--danger-rgb) / 0.2)">danger</span>
+        </div>
+      </section>
+
+      <!-- Typography -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Typography</h2>
+
+        <div class="space-y-4">
+          <div class="panel p-4">
+            <p class="text-3xl font-light text-primary mb-1">Page Title (3xl, light)</p>
+            <p class="text-xs text-subtle font-mono">font-size: 1.875rem / font-weight: 300</p>
+          </div>
+          <div class="panel p-4">
+            <p class="text-2xl text-primary mb-1">Heading 2 (2xl)</p>
+            <p class="text-xs text-subtle font-mono">font-size: 1.5rem / font-weight: 600</p>
+          </div>
+          <div class="panel p-4">
+            <p class="text-xl text-primary mb-1">Heading 3 (xl)</p>
+            <p class="text-xs text-subtle font-mono">font-size: 1.25rem / font-weight: 500</p>
+          </div>
+          <div class="panel p-4">
+            <p class="text-lg text-primary mb-1">Heading 4 (lg)</p>
+            <p class="text-xs text-subtle font-mono">font-size: 1.125rem / font-weight: 500</p>
+          </div>
+          <div class="panel p-4">
+            <p class="text-base text-primary mb-1">Body text (base)</p>
+            <p class="text-xs text-subtle font-mono">font-size: 1rem / line-height: 1.75</p>
+          </div>
+          <div class="panel p-4">
+            <p class="text-sm text-muted mb-1">Small text (sm, muted)</p>
+            <p class="text-xs text-subtle font-mono">font-size: 0.875rem</p>
+          </div>
+          <div class="panel p-4">
+            <p class="text-xs text-subtle mb-1">Caption (xs, subtle)</p>
+            <p class="text-xs text-subtle font-mono">font-size: 0.75rem</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Buttons -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Buttons</h2>
+
+        <div class="flex flex-wrap gap-4 items-center">
+          <button class="btn-primary btn-ripple focus-ring">
+            Primary Button
+          </button>
+          <button class="btn-secondary btn-ripple focus-ring">
+            Secondary Button
+          </button>
+          <button class="btn-primary btn-ripple focus-ring" disabled>
+            Disabled
+          </button>
+        </div>
+
+        <h3 class="text-lg font-medium text-primary mt-8">With Icons</h3>
+        <div class="flex flex-wrap gap-4 items-center">
+          <button class="btn-primary btn-ripple focus-ring flex items-center gap-2">
+            <Icon name="pen-new-square-linear" size={18} />
+            <span>Create Note</span>
+          </button>
+          <button class="btn-secondary btn-ripple focus-ring flex items-center gap-2">
+            <Icon name="folder-linear" size={18} />
+            <span>Browse</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Panels -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Panels</h2>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="panel p-6">
+            <h3 class="text-lg font-medium text-primary mb-2">Basic Panel</h3>
+            <p class="text-muted">Panels have a subtle gradient overlay and lift on hover. They're the primary container for content sections.</p>
+          </div>
+          <div class="panel p-6 card-interactive cursor-pointer">
+            <h3 class="text-lg font-medium text-primary mb-2">Interactive Card</h3>
+            <p class="text-muted">Add <code class="text-xs bg-surface-muted px-1 rounded">.card-interactive</code> for enhanced hover lift effect.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Form Elements -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Form Elements</h2>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm text-muted mb-2">Text Input</label>
+              <input type="text" class="w-full input-field focus-ring px-4 py-3 rounded-lg" placeholder="Enter text..." />
+            </div>
+            <div>
+              <label class="block text-sm text-muted mb-2">Textarea (auto-grow)</label>
+              <textarea class="w-full input-field textarea-autogrow focus-ring px-4 py-3 rounded-lg" placeholder="Type here and watch it grow..." rows="3"></textarea>
+            </div>
+          </div>
+          <div class="panel p-4">
+            <h4 class="text-sm font-medium text-primary mb-3">Focus States</h4>
+            <p class="text-sm text-muted">
+              Input fields have an enhanced focus state with a cyan glow, background color change,
+              and animated placeholder. Click/focus the inputs to see the effect.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Category Chips -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Category Chips</h2>
+
+        <div class="flex flex-wrap gap-3">
+          <span class="category-chip category-1 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <Icon name="case-linear" size={16} />
+            <span>projects</span>
+          </span>
+          <span class="category-chip category-2 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <Icon name="users-group-rounded-linear" size={16} />
+            <span>people</span>
+          </span>
+          <span class="category-chip category-3 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <Icon name="notebook-linear" size={16} />
+            <span>journal</span>
+          </span>
+          <span class="category-chip category-4 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <Icon name="settings-linear" size={16} />
+            <span>tech</span>
+          </span>
+          <span class="category-chip category-5 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <Icon name="book-2-linear" size={16} />
+            <span>reading</span>
+          </span>
+          <span class="category-chip category-6 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <Icon name="health-linear" size={16} />
+            <span>wellness</span>
+          </span>
+          <span class="category-chip category-7 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <Icon name="home-2-linear" size={16} />
+            <span>home</span>
+          </span>
+        </div>
+      </section>
+
+      <!-- Icons -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Icons</h2>
+
+        <p class="text-muted">Solar Icons - hover to see animation effect</p>
+
+        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4">
+          {[
+            'folder-linear', 'folder-open-linear', 'document-linear', 'document-add-linear', 'pen-new-square-linear',
+            'calendar-linear', 'calendar-minimalistic-linear', 'tag-linear', 'bolt-linear', 'rocket-linear',
+            'library-linear', 'archive-down-minimlistic-linear', 'shuffle-linear', 'settings-linear',
+            'magnifer-linear', 'case-linear', 'users-group-rounded-linear', 'notebook-linear', 'book-2-linear', 'health-linear',
+            'home-2-linear', 'alt-arrow-right-linear', 'alt-arrow-left-linear'
+          ].map(icon => (
+            <div class="flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-surface-muted transition-colors group">
+              <span class="icon-demo">
+                <Icon name={icon} size={28} class="text-primary" />
+              </span>
+              <span class="text-xs text-subtle text-center truncate w-full">{icon.replace('-linear', '')}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- Empty States -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Empty States</h2>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <div class="panel p-4">
+            <h3 class="text-sm font-medium text-muted mb-4 uppercase">Default Variant</h3>
+            <EmptyState
+              icon="folder-open-linear"
+              title="No items yet"
+              description="This is an example empty state with the default variant."
+              actionText="Take Action"
+              actionHref="#"
+              actionIcon="pen-new-square-linear"
+            />
+          </div>
+          <div class="panel p-4">
+            <h3 class="text-sm font-medium text-muted mb-4 uppercase">Compact Variant</h3>
+            <EmptyState
+              icon="calendar-linear"
+              title="Nothing here"
+              description="Compact variant uses smaller icon and tighter spacing."
+              variant="compact"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Skeleton Loaders -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Skeleton Loaders</h2>
+
+        <div class="grid md:grid-cols-2 gap-8">
+          <div>
+            <h3 class="text-sm font-medium text-muted mb-4 uppercase">Card Type</h3>
+            <SkeletonLoader type="card" count={2} />
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-muted mb-4 uppercase">List Type</h3>
+            <SkeletonLoader type="list" count={4} />
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-muted mb-4 uppercase">Stat Type</h3>
+            <SkeletonLoader type="stat" count={4} />
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-muted mb-4 uppercase">Text Type</h3>
+            <SkeletonLoader type="text" count={2} />
+          </div>
+        </div>
+      </section>
+
+      <!-- Animations -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Animations</h2>
+
+        <h3 class="text-lg font-medium text-primary">Stagger Animation</h3>
+        <p class="text-muted mb-4">Items animate in sequence with 50ms delays</p>
+
+        <div class="flex flex-wrap gap-3" id="stagger-demo">
+          {[1,2,3,4,5,6].map(n => (
+            <div class="stagger-item panel p-4 w-20 h-20 flex items-center justify-center text-2xl font-light text-primary">
+              {n}
+            </div>
+          ))}
+        </div>
+
+        <button class="btn-secondary mt-4" id="replay-stagger">Replay Animation</button>
+
+        <h3 class="text-lg font-medium text-primary mt-8">Link Animation</h3>
+        <p class="text-muted mb-4">
+          <a href="#" class="link link-animated">Hover over this animated link</a>
+          to see the underline slide in from left.
+        </p>
+      </section>
+
+      <!-- Spacing Reference -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-light text-primary border-b border-default pb-2">Spacing</h2>
+
+        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="panel p-4">
+            <div class="bg-accent-soft h-4 rounded mb-2" style="width: var(--spacing-page)"></div>
+            <p class="text-sm text-muted">--spacing-page</p>
+            <p class="text-xs text-subtle">16px / 24px</p>
+          </div>
+          <div class="panel p-4">
+            <div class="bg-accent-soft h-4 rounded mb-2" style="width: var(--spacing-section)"></div>
+            <p class="text-sm text-muted">--spacing-section</p>
+            <p class="text-xs text-subtle">24px / 32px</p>
+          </div>
+          <div class="panel p-4">
+            <div class="bg-accent-soft h-4 rounded mb-2" style="width: var(--spacing-card)"></div>
+            <p class="text-sm text-muted">--spacing-card</p>
+            <p class="text-xs text-subtle">16px / 24px</p>
+          </div>
+          <div class="panel p-4">
+            <div class="bg-accent-soft h-4 rounded mb-2" style="width: var(--spacing-element)"></div>
+            <p class="text-sm text-muted">--spacing-element</p>
+            <p class="text-xs text-subtle">12px</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <style>
+    .icon-demo {
+      transition: transform var(--transition-fast) var(--ease-out);
+    }
+
+    .group:hover .icon-demo {
+      transform: scale(1.2) rotate(-5deg);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .icon-demo {
+        transition: none;
+      }
+      .group:hover .icon-demo {
+        transform: none;
+      }
+    }
+  </style>
+
+  <script>
+    // Replay stagger animation
+    document.getElementById('replay-stagger')?.addEventListener('click', () => {
+      const items = document.querySelectorAll('#stagger-demo .stagger-item');
+      items.forEach(item => {
+        item.classList.remove('stagger-item');
+        void (item as HTMLElement).offsetWidth; // Trigger reflow
+        item.classList.add('stagger-item');
+      });
+    });
+
+    // Auto-grow textareas on this page
+    document.querySelectorAll('.textarea-autogrow').forEach(textarea => {
+      const el = textarea as HTMLTextAreaElement;
+      el.addEventListener('input', () => {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, window.innerHeight * 0.6) + 'px';
+      });
+    });
+  </script>
+</Layout>
