@@ -1,10 +1,11 @@
 ---
 # pkms-3qym
 title: Update documentation and screenshots after UI/UX epic
-status: in-progress
+status: completed
 type: task
+priority: normal
 created_at: 2026-01-23T03:02:14Z
-updated_at: 2026-01-23T03:02:14Z
+updated_at: 2026-01-23T03:29:25Z
 ---
 
 Update all documentation to reflect the completed UI/UX Enhancement epic changes and take new screenshots.
