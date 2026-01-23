@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 BRANDING_DIR: Final[Path] = config.STATE_DIR / "branding"
 SETTINGS_FILE: Final[Path] = BRANDING_DIR / "settings.json"
 ICON_SOURCE_FILE: Final[Path] = BRANDING_DIR / "icon-source.png"
+DEFAULT_ICON_FILE: Final[Path] = Path(__file__).parent / "assets" / "default-icon.png"
 
 DEFAULT_APP_NAME: Final[str] = "Athena Scribe"
 DEFAULT_THEME: Final[str] = "default"
@@ -178,6 +179,12 @@ def _generate_favicon_ico(base: Image.Image) -> None:
 
 
 def _generate_default_base() -> Image.Image:
+    # Use bundled default icon if available
+    if DEFAULT_ICON_FILE.exists():
+        with Image.open(DEFAULT_ICON_FILE) as source:
+            return source.convert("RGBA")
+
+    # Fallback: generate simple icon programmatically
     size = MIN_ICON_SIZE
     image = Image.new("RGBA", (size, size), DEFAULT_BG)
     draw = ImageDraw.Draw(image)
