@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Icon from '../../components/Icon.astro';
 import EmptyState from '../../components/EmptyState.astro';
+import ContactCard from '../../components/ContactCard.astro';
 import { marked } from 'marked';
 import DOMPurify from 'isomorphic-dompurify';
 
@@ -19,6 +20,9 @@ const authHeaders = AUTH_TOKEN
 
 const { path } = Astro.params;
 const currentPath = path || '';
+
+// Check if we're in the people category
+const isPeopleCategory = currentPath.startsWith('people');
 
 let data: any = null;
 let error: string | null = null;
@@ -48,6 +52,20 @@ if (!currentPath) {
     }
   } catch (e) {
     // Silently fail - recent activity is optional
+  }
+}
+
+// Fetch contacts when viewing the people directory
+let contacts: any[] = [];
+if (currentPath === 'people' && !data?.is_file) {
+  try {
+    const contactsResponse = await fetch(`${GARDENER_URL}/api/contacts`, { headers: authHeaders });
+    if (contactsResponse.ok) {
+      const contactsData = await contactsResponse.json();
+      contacts = contactsData.contacts || [];
+    }
+  } catch (e) {
+    // Fall back to regular directory listing
   }
 }
 
@@ -106,12 +124,23 @@ function formatRelativeTime(timestamp: number): string {
   return `${Math.floor(diff / 2592000)}mo ago`;
 }
 
+// Strip YAML frontmatter from content before rendering
+function stripFrontmatter(content: string): string {
+  const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n?/;
+  return content.replace(frontmatterRegex, '');
+}
+
 // Render markdown if it's a file, then sanitize to prevent XSS
 let renderedContent = '';
 if (data?.is_file && data?.content) {
-  const rawHtml = await marked(data.content);
+  // Strip frontmatter before rendering (metadata is already parsed by backend)
+  const contentWithoutFrontmatter = stripFrontmatter(data.content);
+  const rawHtml = await marked(contentWithoutFrontmatter);
   renderedContent = DOMPurify.sanitize(rawHtml);
 }
+
+// Check if this is a contact (has contact-specific metadata)
+const isContact = data?.metadata?.name || data?.metadata?.email || data?.metadata?.phone;
 ---
 
 <Layout title={`Browse - ${currentPath || 'Atlas'}`}>
@@ -214,9 +243,20 @@ if (data?.is_file && data?.content) {
         </div>
       ) : data?.is_file ? (
         <!-- File content (direct navigation) -->
-        <article class="prose prose-sm max-w-none prose-theme">
-          <div set:html={renderedContent} />
-        </article>
+        <div>
+          {/* Show contact card header for contacts in people category */}
+          {isPeopleCategory && isContact && (
+            <ContactCard
+              metadata={data.metadata}
+              filePath={currentPath}
+              variant="detail"
+            />
+          )}
+          {/* Show markdown content (notes section for contacts, or full content for other files) */}
+          <article class="prose prose-sm max-w-none prose-theme">
+            <div set:html={renderedContent} />
+          </article>
+        </div>
       ) : (
         <!-- Directory listing with preview -->
         <div class="browse-container">
@@ -260,7 +300,32 @@ if (data?.is_file && data?.content) {
                   </div>
                 )}
               </EmptyState>
+            ) : contacts.length > 0 ? (
+              /* Contact grid view for people directory */
+              <div>
+                {/* Add Contact button */}
+                <div class="flex justify-end mb-4">
+                  <button
+                    type="button"
+                    id="add-contact-btn"
+                    class="btn-primary flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+                  >
+                    <Icon name="user-plus-linear" size={18} />
+                    <span>Add Contact</span>
+                  </button>
+                </div>
+                <div class="contacts-grid">
+                  {contacts.map((contact: any) => (
+                    <ContactCard
+                      metadata={contact.metadata}
+                      filePath={contact.path}
+                      variant="card"
+                    />
+                  ))}
+                </div>
+              </div>
             ) : (
+              /* Regular directory listing */
               data?.items?.map((item: any, index: number) => {
                 const category = item.type === 'directory' ? getCategoryStyle(item.name) : null;
                 const isDirectory = item.type === 'directory';
@@ -398,7 +463,104 @@ if (data?.is_file && data?.content) {
     </div>
   </main>
 
+  <!-- Add Contact Modal -->
+  <div id="add-contact-modal" class="fixed inset-0 z-50 hidden">
+    <div id="add-contact-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+      <div class="panel w-full max-w-md p-6 relative animate-in fade-in slide-in-from-bottom-4 duration-200">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-primary">Add Contact</h2>
+          <button type="button" id="close-contact-modal" class="p-2 rounded-lg hover:bg-surface-muted transition-colors">
+            <Icon name="close-circle-linear" size={20} class="text-muted" />
+          </button>
+        </div>
+        <form id="add-contact-form" class="space-y-4">
+          <div>
+            <label for="contact-name" class="block text-sm font-medium text-muted mb-1">Name *</label>
+            <input type="text" id="contact-name" name="name" required
+              class="w-full px-3 py-2 rounded-lg bg-surface-muted border border-default text-primary placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent"
+              placeholder="John Doe">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="contact-email" class="block text-sm font-medium text-muted mb-1">Email</label>
+              <input type="email" id="contact-email" name="email"
+                class="w-full px-3 py-2 rounded-lg bg-surface-muted border border-default text-primary placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="john@example.com">
+            </div>
+            <div>
+              <label for="contact-phone" class="block text-sm font-medium text-muted mb-1">Phone</label>
+              <input type="tel" id="contact-phone" name="phone"
+                class="w-full px-3 py-2 rounded-lg bg-surface-muted border border-default text-primary placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="+1-555-0100">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="contact-company" class="block text-sm font-medium text-muted mb-1">Company</label>
+              <input type="text" id="contact-company" name="company"
+                class="w-full px-3 py-2 rounded-lg bg-surface-muted border border-default text-primary placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="Acme Corp">
+            </div>
+            <div>
+              <label for="contact-role" class="block text-sm font-medium text-muted mb-1">Role</label>
+              <input type="text" id="contact-role" name="role"
+                class="w-full px-3 py-2 rounded-lg bg-surface-muted border border-default text-primary placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent"
+                placeholder="Software Engineer">
+            </div>
+          </div>
+          <div>
+            <label for="contact-relationship" class="block text-sm font-medium text-muted mb-1">Relationship</label>
+            <select id="contact-relationship" name="relationship"
+              class="w-full px-3 py-2 rounded-lg bg-surface-muted border border-default text-primary focus:outline-none focus:ring-2 focus:ring-accent">
+              <option value="">Select...</option>
+              <option value="colleague">Colleague</option>
+              <option value="friend">Friend</option>
+              <option value="family">Family</option>
+              <option value="mentor">Mentor</option>
+              <option value="client">Client</option>
+            </select>
+          </div>
+          <div>
+            <label for="contact-notes" class="block text-sm font-medium text-muted mb-1">Initial Notes</label>
+            <textarea id="contact-notes" name="notes" rows="3"
+              class="w-full px-3 py-2 rounded-lg bg-surface-muted border border-default text-primary placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+              placeholder="How did you meet? Any initial notes..."></textarea>
+          </div>
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" id="cancel-contact" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+              <Icon name="check-linear" size={18} />
+              <span>Create Contact</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <style>
+    /* Contacts grid for people directory */
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    @media (min-width: 640px) {
+      .contacts-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .contacts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     /* Browse container - responsive layout */
     .browse-container {
       display: block;
@@ -1034,5 +1196,82 @@ if (data?.is_file && data?.content) {
 
     // Initialize
     initFilePreview();
+
+    // Add Contact Modal functionality
+    const addContactBtn = document.getElementById('add-contact-btn');
+    const addContactModal = document.getElementById('add-contact-modal');
+    const addContactBackdrop = document.getElementById('add-contact-backdrop');
+    const closeContactModal = document.getElementById('close-contact-modal');
+    const cancelContact = document.getElementById('cancel-contact');
+    const addContactForm = document.getElementById('add-contact-form') as HTMLFormElement;
+
+    function openContactModal() {
+      addContactModal?.classList.remove('hidden');
+      document.getElementById('contact-name')?.focus();
+    }
+
+    function closeContactModalFn() {
+      addContactModal?.classList.add('hidden');
+      addContactForm?.reset();
+    }
+
+    addContactBtn?.addEventListener('click', openContactModal);
+    closeContactModal?.addEventListener('click', closeContactModalFn);
+    cancelContact?.addEventListener('click', closeContactModalFn);
+    addContactBackdrop?.addEventListener('click', closeContactModalFn);
+
+    // Handle form submission
+    addContactForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(addContactForm);
+      const data = {
+        name: formData.get('name') as string,
+        email: formData.get('email') as string || undefined,
+        phone: formData.get('phone') as string || undefined,
+        company: formData.get('company') as string || undefined,
+        role: formData.get('role') as string || undefined,
+        relationship: formData.get('relationship') as string || undefined,
+        notes: formData.get('notes') as string || undefined,
+      };
+
+      // Remove empty values
+      Object.keys(data).forEach(key => {
+        if (!data[key as keyof typeof data]) {
+          delete data[key as keyof typeof data];
+        }
+      });
+
+      try {
+        const response = await fetch(`${GARDENER_URL}/api/contacts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          closeContactModalFn();
+          // Redirect to the new contact
+          window.location.href = `/browse/${result.path}`;
+        } else {
+          const error = await response.json();
+          alert(`Failed to create contact: ${error.detail || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error creating contact:', error);
+        alert('Could not connect to server. Please try again.');
+      }
+    });
+
+    // Close modal on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !addContactModal?.classList.contains('hidden')) {
+        closeContactModalFn();
+      }
+    });
   </script>
 </Layout>

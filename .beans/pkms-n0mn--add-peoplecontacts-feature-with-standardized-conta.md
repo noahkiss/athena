@@ -1,10 +1,11 @@
 ---
 # pkms-n0mn
 title: Add people/contacts feature with standardized contact cards
-status: draft
+status: in-progress
 type: feature
+priority: normal
 created_at: 2026-01-22T02:42:26Z
-updated_at: 2026-01-22T02:42:26Z
+updated_at: 2026-01-23T23:10:20Z
 ---
 
 Create structured contact card system for people in the /people atlas category.
@@ -53,16 +54,16 @@ birthday: 1985-06-20
 - Integration with capture: "@mention someone" auto-links to their contact
 
 ## Checklist
-- [ ] Design contact card template (YAML frontmatter structure)
-- [ ] Add contact card parser to gardener
-- [ ] Build contact card UI component in Scribe
-- [ ] Add grid view for /people category
-- [ ] Add "Add Contact" button with template
-- [ ] Implement contact card detail view
-- [ ] Add quick actions (email, call links)
+- [x] Design contact card template (YAML frontmatter structure)
+- [x] Add contact card parser to gardener
+- [x] Build contact card UI component in Scribe
+- [x] Add grid view for /people category
+- [x] Add "Add Contact" button with template
+- [x] Implement contact card detail view
+- [x] Add quick actions (email, call links)
 - [ ] Add filtering and sorting
 - [ ] Add last contact date tracking
-- [ ] Add relationship tags
+- [x] Add relationship tags
 - [ ] Add birthday reminders (optional)
 - [ ] Add contact frequency suggestions
 - [ ] Test @mention auto-linking

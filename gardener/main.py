@@ -9,6 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
+import frontmatter
+
 from fastapi import (
     BackgroundTasks,
     Depends,
@@ -389,6 +391,30 @@ class BrowseItem(BaseModel):
     path: str
 
 
+class NoteMetadata(BaseModel):
+    """Parsed YAML frontmatter metadata from a note."""
+
+    # Standard note fields
+    title: str | None = None
+    date: str | None = None
+    tags: list[str] = []
+    status: str | None = None  # seed, active, archive
+
+    # Contact card fields (for /people category)
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    company: str | None = None
+    role: str | None = None
+    relationship: str | None = None  # colleague, friend, family, etc.
+    last_contact: str | None = None
+    birthday: str | None = None
+    photo: str | None = None  # relative path to photo
+
+    # Raw frontmatter for any additional fields
+    raw: dict = {}
+
+
 class BrowseResponse(BaseModel):
     """Response model for browse endpoint."""
 
@@ -396,6 +422,7 @@ class BrowseResponse(BaseModel):
     items: list[BrowseItem]
     content: str | None = None
     is_file: bool = False
+    metadata: NoteMetadata | None = None  # Parsed frontmatter if file has it
 
 
 # --- Endpoints ---
@@ -1150,6 +1177,44 @@ async def ask_question(request: AskRequest):
 # --- Browse Endpoints ---
 
 
+def parse_note_metadata(content: str) -> NoteMetadata | None:
+    """Parse YAML frontmatter from markdown content and return NoteMetadata."""
+    try:
+        post = frontmatter.loads(content)
+        if not post.metadata:
+            return None
+
+        raw = dict(post.metadata)
+
+        # Extract known fields, handle type coercion
+        tags = raw.get("tags", [])
+        if isinstance(tags, str):
+            tags = [t.strip() for t in tags.split(",")]
+
+        return NoteMetadata(
+            # Standard fields
+            title=raw.get("title"),
+            date=str(raw.get("date")) if raw.get("date") else None,
+            tags=tags if isinstance(tags, list) else [],
+            status=raw.get("status"),
+            # Contact card fields
+            name=raw.get("name"),
+            email=raw.get("email"),
+            phone=raw.get("phone"),
+            company=raw.get("company"),
+            role=raw.get("role"),
+            relationship=raw.get("relationship"),
+            last_contact=str(raw.get("last_contact")) if raw.get("last_contact") else None,
+            birthday=str(raw.get("birthday")) if raw.get("birthday") else None,
+            photo=raw.get("photo"),
+            # Keep raw for any extra fields
+            raw=raw,
+        )
+    except Exception:
+        # If frontmatter parsing fails, return None
+        return None
+
+
 def browse_directory(root: Path, path: str) -> BrowseResponse:
     """Browse a directory tree rooted at the provided path."""
     target = root / path if path else root
@@ -1165,11 +1230,13 @@ def browse_directory(root: Path, path: str) -> BrowseResponse:
 
     if target.is_file():
         content = target.read_text()
+        metadata = parse_note_metadata(content) if target.suffix == ".md" else None
         return BrowseResponse(
             path=path,
             items=[],
             content=content,
             is_file=True,
+            metadata=metadata,
         )
 
     # List directory contents
@@ -1221,6 +1288,135 @@ async def browse_archive(path: str = "") -> BrowseResponse:
     """Browse archived inbox notes."""
     ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
     return browse_directory(ARCHIVE_DIR, path)
+
+
+class ContactItem(BaseModel):
+    """A contact with parsed metadata."""
+
+    path: str
+    name: str
+    metadata: NoteMetadata
+
+
+class ContactsResponse(BaseModel):
+    """Response for contacts endpoint."""
+
+    contacts: list[ContactItem]
+
+
+@app.get(
+    "/api/contacts",
+    response_model=ContactsResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def list_contacts() -> ContactsResponse:
+    """List all contacts in the people category with their metadata."""
+    people_dir = ATLAS_DIR / "people"
+    contacts = []
+
+    if people_dir.exists() and people_dir.is_dir():
+        for file_path in sorted(people_dir.glob("*.md")):
+            try:
+                content = file_path.read_text()
+                metadata = parse_note_metadata(content)
+                if metadata:
+                    # Use name from metadata or filename
+                    display_name = metadata.name or file_path.stem.replace("-", " ").title()
+                    contacts.append(
+                        ContactItem(
+                            path=str(file_path.relative_to(ATLAS_DIR)),
+                            name=display_name,
+                            metadata=metadata,
+                        )
+                    )
+            except Exception:
+                continue
+
+    return ContactsResponse(contacts=contacts)
+
+
+class CreateContactRequest(BaseModel):
+    """Request model for creating a contact."""
+
+    name: str
+    email: str | None = None
+    phone: str | None = None
+    company: str | None = None
+    role: str | None = None
+    relationship: str | None = None
+    notes: str | None = None
+
+
+class CreateContactResponse(BaseModel):
+    """Response model for creating a contact."""
+
+    path: str
+    message: str
+
+
+@app.post(
+    "/api/contacts",
+    response_model=CreateContactResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def create_contact(request: CreateContactRequest) -> CreateContactResponse:
+    """Create a new contact in the people category."""
+    import re
+    from datetime import date
+
+    people_dir = ATLAS_DIR / "people"
+    people_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate filename from name
+    slug = re.sub(r"[^a-z0-9]+", "-", request.name.lower()).strip("-")
+    filename = f"{slug}.md"
+    filepath = people_dir / filename
+
+    # Handle duplicate names
+    counter = 1
+    while filepath.exists():
+        filename = f"{slug}-{counter}.md"
+        filepath = people_dir / filename
+        counter += 1
+
+    # Build frontmatter
+    frontmatter_parts = [f"name: {request.name}"]
+    if request.email:
+        frontmatter_parts.append(f"email: {request.email}")
+    if request.phone:
+        frontmatter_parts.append(f"phone: {request.phone}")
+    if request.company:
+        frontmatter_parts.append(f"company: {request.company}")
+    if request.role:
+        frontmatter_parts.append(f"role: {request.role}")
+    if request.relationship:
+        frontmatter_parts.append(f"relationship: {request.relationship}")
+    frontmatter_parts.append(f"last_contact: {date.today().isoformat()}")
+
+    frontmatter = "\n".join(frontmatter_parts)
+
+    # Build content
+    notes_section = request.notes or "Add notes about this contact here..."
+    content = f"""---
+{frontmatter}
+---
+
+# Notes
+
+{notes_section}
+"""
+
+    try:
+        filepath.write_text(content)
+        logger.info(f"Created contact: {filename}")
+    except OSError as e:
+        logger.error(f"Failed to create contact {filename}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create contact: {e}")
+
+    return CreateContactResponse(
+        path=f"people/{filename}",
+        message=f"Created contact: {request.name}",
+    )
 
 
 @app.get(

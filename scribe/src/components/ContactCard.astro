@@ -1,0 +1,244 @@
+---
+import Icon from './Icon.astro';
+
+interface ContactMetadata {
+  name?: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  role?: string;
+  relationship?: string;
+  last_contact?: string;
+  birthday?: string;
+  photo?: string;
+  tags?: string[];
+}
+
+interface Props {
+  metadata: ContactMetadata;
+  filePath: string;
+  variant?: 'card' | 'detail';
+}
+
+const { metadata, filePath, variant = 'card' } = Astro.props;
+
+// Display name: prefer name field, fall back to filename
+const displayName = metadata.name || filePath.split('/').pop()?.replace('.md', '') || 'Unknown';
+
+// Format last contact as relative time
+function formatLastContact(dateStr: string | undefined): string | null {
+  if (!dateStr) return null;
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    return `${Math.floor(diffDays / 365)} years ago`;
+  } catch {
+    return dateStr;
+  }
+}
+
+// Relationship type to color/style mapping
+const relationshipStyles: Record<string, { color: string; icon: string }> = {
+  colleague: { color: 'category-1', icon: 'buildings-linear' },
+  friend: { color: 'category-3', icon: 'heart-linear' },
+  family: { color: 'category-5', icon: 'home-2-linear' },
+  mentor: { color: 'category-4', icon: 'graduation-cap-linear' },
+  client: { color: 'category-6', icon: 'case-linear' },
+  default: { color: 'category-2', icon: 'user-linear' },
+};
+
+const relationshipStyle = relationshipStyles[metadata.relationship || ''] || relationshipStyles.default;
+const lastContactText = formatLastContact(metadata.last_contact);
+const isDetail = variant === 'detail';
+---
+
+{isDetail ? (
+  <!-- Detail view: full contact card with all info -->
+  <div class="contact-card-detail panel p-6 mb-6">
+    <!-- Header with avatar and basic info -->
+    <div class="flex items-start gap-4 mb-6">
+      <!-- Avatar placeholder -->
+      <div class={`contact-avatar w-16 h-16 rounded-full flex items-center justify-center text-2xl font-semibold ${relationshipStyle.color} category-chip`}>
+        {displayName.charAt(0).toUpperCase()}
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <h1 class="text-xl font-semibold text-primary mb-1">{displayName}</h1>
+        {(metadata.role || metadata.company) && (
+          <p class="text-muted">
+            {metadata.role}{metadata.role && metadata.company && ' at '}{metadata.company}
+          </p>
+        )}
+        {metadata.relationship && (
+          <span class={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mt-2 ${relationshipStyle.color} category-chip`}>
+            <Icon name={relationshipStyle.icon} size={12} />
+            {metadata.relationship}
+          </span>
+        )}
+      </div>
+    </div>
+
+    <!-- Contact actions -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      {metadata.email && (
+        <a href={`mailto:${metadata.email}`} class="contact-action btn-secondary flex items-center gap-2 px-3 py-2 rounded-lg text-sm">
+          <Icon name="letter-linear" size={18} />
+          <span>Email</span>
+        </a>
+      )}
+      {metadata.phone && (
+        <a href={`tel:${metadata.phone}`} class="contact-action btn-secondary flex items-center gap-2 px-3 py-2 rounded-lg text-sm">
+          <Icon name="phone-linear" size={18} />
+          <span>Call</span>
+        </a>
+      )}
+    </div>
+
+    <!-- Contact details grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      {metadata.email && (
+        <div class="flex items-center gap-3">
+          <Icon name="letter-linear" size={18} class="text-muted flex-shrink-0" />
+          <div class="min-w-0">
+            <div class="text-subtle text-xs">Email</div>
+            <div class="text-primary truncate">{metadata.email}</div>
+          </div>
+        </div>
+      )}
+      {metadata.phone && (
+        <div class="flex items-center gap-3">
+          <Icon name="phone-linear" size={18} class="text-muted flex-shrink-0" />
+          <div class="min-w-0">
+            <div class="text-subtle text-xs">Phone</div>
+            <div class="text-primary">{metadata.phone}</div>
+          </div>
+        </div>
+      )}
+      {metadata.company && (
+        <div class="flex items-center gap-3">
+          <Icon name="buildings-linear" size={18} class="text-muted flex-shrink-0" />
+          <div class="min-w-0">
+            <div class="text-subtle text-xs">Company</div>
+            <div class="text-primary">{metadata.company}</div>
+          </div>
+        </div>
+      )}
+      {metadata.birthday && (
+        <div class="flex items-center gap-3">
+          <Icon name="cake-linear" size={18} class="text-muted flex-shrink-0" />
+          <div class="min-w-0">
+            <div class="text-subtle text-xs">Birthday</div>
+            <div class="text-primary">{metadata.birthday}</div>
+          </div>
+        </div>
+      )}
+      {lastContactText && (
+        <div class="flex items-center gap-3">
+          <Icon name="calendar-linear" size={18} class="text-muted flex-shrink-0" />
+          <div class="min-w-0">
+            <div class="text-subtle text-xs">Last Contact</div>
+            <div class="text-primary">{lastContactText}</div>
+          </div>
+        </div>
+      )}
+    </div>
+
+    <!-- Tags -->
+    {metadata.tags && metadata.tags.length > 0 && (
+      <div class="flex flex-wrap gap-1.5 mt-4 pt-4 border-t border-default">
+        {metadata.tags.map((tag: string) => (
+          <span class="text-xs px-2 py-0.5 rounded-full bg-surface-muted text-muted">
+            #{tag}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+) : (
+  <!-- Card view: compact card for grid -->
+  <a
+    href={`/browse/${filePath}`}
+    class="contact-card panel p-4 flex items-center gap-3 hover:bg-surface-muted transition-all group"
+  >
+    <!-- Avatar -->
+    <div class={`contact-avatar w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold flex-shrink-0 ${relationshipStyle.color} category-chip`}>
+      {displayName.charAt(0).toUpperCase()}
+    </div>
+
+    <!-- Info -->
+    <div class="flex-1 min-w-0">
+      <div class="font-medium text-primary truncate">{displayName}</div>
+      {(metadata.role || metadata.company) && (
+        <div class="text-sm text-muted truncate">
+          {metadata.role}{metadata.role && metadata.company && ' · '}{metadata.company}
+        </div>
+      )}
+      {lastContactText && (
+        <div class="text-xs text-subtle mt-1 flex items-center gap-1">
+          <Icon name="calendar-linear" size={12} />
+          {lastContactText}
+        </div>
+      )}
+    </div>
+
+    <!-- Relationship badge -->
+    {metadata.relationship && (
+      <span class={`hidden sm:flex items-center gap-1 text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${relationshipStyle.color} category-chip`}>
+        <Icon name={relationshipStyle.icon} size={12} />
+        <span class="hidden md:inline">{metadata.relationship}</span>
+      </span>
+    )}
+
+    <!-- Arrow -->
+    <Icon name="alt-arrow-right-linear" size={18} class="text-muted opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+  </a>
+)}
+
+<style>
+  .contact-card {
+    transition: transform var(--transition-fast) var(--ease-out),
+                box-shadow var(--transition-fast) var(--ease-out);
+  }
+
+  .contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.1);
+  }
+
+  .contact-avatar {
+    transition: transform var(--transition-fast) var(--ease-out);
+  }
+
+  .contact-card:hover .contact-avatar {
+    transform: scale(1.05);
+  }
+
+  .contact-action {
+    transition: all var(--transition-fast) var(--ease-out);
+  }
+
+  .contact-action:hover {
+    transform: translateY(-1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact-card,
+    .contact-avatar,
+    .contact-action {
+      transition: none;
+    }
+
+    .contact-card:hover,
+    .contact-card:hover .contact-avatar,
+    .contact-action:hover {
+      transform: none;
+    }
+  }
+</style>
