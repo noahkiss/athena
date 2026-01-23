@@ -7,6 +7,11 @@ on:
         description: 'Reason for screenshot update'
         required: false
         default: 'Design changes'
+  push:
+    branches: [main]
+    paths:
+      - 'scribe/**'
+      - '.github/screenshots/**'
 
 permissions:
   contents: write
@@ -66,9 +71,10 @@ jobs:
           if git diff --staged --quiet; then
             echo "No screenshot changes to commit"
           else
+            REASON="${{ github.event.inputs.reason || 'UI changes' }}"
             git commit -m "docs: update screenshots
 
-          Reason: ${{ github.event.inputs.reason }}
+          Reason: ${REASON}
           Triggered by: @${{ github.actor }}"
             git push
           fi

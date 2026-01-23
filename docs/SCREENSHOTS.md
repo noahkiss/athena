@@ -64,12 +64,11 @@ Optimized for touch with iOS-style bottom navigation.
 
 Screenshots are updated automatically via GitHub Actions:
 
-1. Go to **Actions** → **Update Screenshots**
-2. Click **Run workflow**
-3. Optionally enter a reason for the update
-4. Screenshots are committed directly to `main`
+**Automatic:** Runs on every push to `main` that changes `scribe/**` or `.github/screenshots/**`
 
-The workflow uses sample data from `.screenshot-data/athena/` to ensure consistent, realistic screenshots.
+**Manual:** Go to **Actions** → **Update Screenshots** → **Run workflow**
+
+Screenshots are committed directly to `main`. The workflow uses sample data from `.screenshot-data/athena/` to ensure consistent, realistic screenshots.
 
 ### Manual Update
 
