@@ -1,11 +1,11 @@
 ---
 # pkms-upxj
 title: Improve UI/UX with native iOS/macOS design language
-status: in-progress
+status: completed
 type: feature
 priority: high
 created_at: 2026-01-22T17:34:18Z
-updated_at: 2026-01-22T17:34:18Z
+updated_at: 2026-01-23T02:36:02Z
 ---
 
 Improve the overall UI/UX to have a premium, native iOS/macOS feel with proper design language.
@@ -44,7 +44,7 @@ Improve the overall UI/UX to have a premium, native iOS/macOS feel with proper d
 - [x] Add proper padding inside cards/panels (increased padding on buttons and theme options)
 
 ### 4. Visual Polish
-- [ ] Improve color palette with better contrast
+- [x] Improve color palette with better contrast
 - [x] Add subtle shadows to create depth (panels, buttons, theme options, bottom nav)
 - [x] Better typography hierarchy (sizes, weights)
 - [x] System font stack (San Francisco, Segoe UI, Roboto)
@@ -52,10 +52,10 @@ Improve the overall UI/UX to have a premium, native iOS/macOS feel with proper d
 - [x] iOS-style mobile bottom nav (backdrop blur + shadow)
 
 ### 5. Theme Improvements
-- [ ] Review current themes for native feel
-- [ ] Ensure themes work in both light and dark mode
-- [ ] Better accent colors that feel more premium
-- [ ] Proper surface elevation colors
+- [x] Review current themes for native feel
+- [x] Ensure themes work in both light and dark mode
+- [x] Better accent colors that feel more premium
+- [x] Proper surface elevation colors
 
 ## References:
 - Ionic Framework: http://ionicframework.com/docs
