@@ -67,7 +67,7 @@ Screenshots are updated automatically via GitHub Actions:
 1. Go to **Actions** → **Update Screenshots**
 2. Click **Run workflow**
 3. Optionally enter a reason for the update
-4. Review and merge the generated PR
+4. Screenshots are committed directly to `main`
 
 The workflow uses sample data from `.screenshot-data/athena/` to ensure consistent, realistic screenshots.
 
@@ -77,7 +77,7 @@ To capture screenshots locally:
 
 ```bash
 # Start services with sample data
-docker compose -f docker compose.screenshots.yml up -d --build
+docker compose -f docker-compose.screenshots.yml up -d --build
 
 # Wait for services
 sleep 30
@@ -89,7 +89,7 @@ npx playwright install chromium
 npx playwright test
 
 # Stop services
-docker compose -f docker compose.screenshots.yml down
+docker compose -f docker-compose.screenshots.yml down
 ```
 
 ### Screenshot Specifications

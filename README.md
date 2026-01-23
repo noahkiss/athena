@@ -34,20 +34,9 @@ Athena follows a simple philosophy: **capture fast, organize later**. Drop raw n
 
 ## Screenshots
 
-<table>
-  <tr>
-    <th>Light Mode (Rosé Pine Dawn)</th>
-    <th>Dark Mode (Catppuccin Mocha)</th>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshot-light.png" width="500"></td>
-    <td><img src="docs/screenshot-dark.png" width="500"></td>
-  </tr>
-</table>
+**[View screenshots →](docs/SCREENSHOTS.md)** — capture page (light/dark), dashboard, browse, timeline, settings, and mobile views.
 
 **Design:** iOS-inspired with squircle corners, micro-interactions, icon animations, and refined typography. 13 themes and 18 fonts (6 header, 6 body, 6 mono) available. See `/styleguide` for interactive component documentation.
-
-**[View all screenshots →](docs/SCREENSHOTS.md)** (dashboard, browse, timeline, settings, mobile views)
 
 ## Quick Start (All-in-one)
 
