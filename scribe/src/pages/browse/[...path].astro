@@ -213,96 +213,292 @@ if (data?.is_file && data?.content) {
           <p class="text-danger">{error}</p>
         </div>
       ) : data?.is_file ? (
-        <!-- File content -->
+        <!-- File content (direct navigation) -->
         <article class="prose prose-sm max-w-none prose-theme">
           <div set:html={renderedContent} />
         </article>
       ) : (
-        <!-- Directory listing -->
-        <div class="space-y-1">
-          {data?.items?.length === 0 ? (
-            <EmptyState
-              icon="folder-open-linear"
-              title="This folder is waiting for its first note"
-              description="The Gardener will automatically file notes here based on their content. Just capture your thoughts and let the AI organize them for you."
-              actionText="Capture a note →"
-              actionHref="/"
-            >
-              {currentPath.includes('projects') && (
-                <div class="mb-6 p-4 panel text-left max-w-md">
-                  <h3 class="text-sm font-semibold text-muted mb-2">What goes in Projects?</h3>
-                  <ul class="text-sm text-subtle space-y-1">
-                    <li>• Work projects and deliverables</li>
-                    <li>• Side projects and ideas</li>
-                    <li>• Project plans and progress notes</li>
-                  </ul>
-                </div>
-              )}
-              {currentPath.includes('people') && (
-                <div class="mb-6 p-4 panel text-left max-w-md">
-                  <h3 class="text-sm font-semibold text-muted mb-2">What goes in People?</h3>
-                  <ul class="text-sm text-subtle space-y-1">
-                    <li>• Contact notes and details</li>
-                    <li>• Meeting summaries</li>
-                    <li>• Relationship reminders</li>
-                  </ul>
-                </div>
-              )}
-              {currentPath.includes('journal') && (
-                <div class="mb-6 p-4 panel text-left max-w-md">
-                  <h3 class="text-sm font-semibold text-muted mb-2">What goes in Journal?</h3>
-                  <ul class="text-sm text-subtle space-y-1">
-                    <li>• Daily reflections and thoughts</li>
-                    <li>• Mood logs and gratitude</li>
-                    <li>• Personal observations</li>
-                  </ul>
-                </div>
-              )}
-            </EmptyState>
-          ) : (
-            data?.items?.map((item: any, index: number) => {
-              const category = item.type === 'directory' ? getCategoryStyle(item.name) : null;
-              const isDirectory = item.type === 'directory';
-              return (
-                <a
-                  href={`/browse/${item.path}`}
-                  class={`browse-item flex items-center gap-3 p-3 rounded-lg transition-all group stagger-item ${
-                    category
-                      ? `category-chip ${category.className}`
-                      : 'hover:bg-surface-muted'
-                  }`}
-                >
-                  <span class={`browse-item-icon flex-shrink-0 ${isDirectory ? 'folder-icon' : 'file-icon'}`}>
-                    <Icon
-                      name={isDirectory ? (category?.icon || 'folder-linear') : 'document-linear'}
-                      size={24}
-                      class={isDirectory && category ? `category-text ${category.className}` : 'text-primary'}
-                    />
-                  </span>
-                  <span class={`flex-1 truncate ${category ? `category-text ${category.className}` : 'text-primary'}`}>
-                    {item.name.replace('.md', '')}
-                  </span>
-                  {isDirectory ? (
+        <!-- Directory listing with preview -->
+        <div class="browse-container">
+          <div id="file-list" class="file-list space-y-1">
+            {data?.items?.length === 0 ? (
+              <EmptyState
+                icon="folder-open-linear"
+                title="This folder is waiting for its first note"
+                description="The Gardener will automatically file notes here based on their content. Just capture your thoughts and let the AI organize them for you."
+                actionText="Capture a note →"
+                actionHref="/"
+              >
+                {currentPath.includes('projects') && (
+                  <div class="mb-6 p-4 panel text-left max-w-md">
+                    <h3 class="text-sm font-semibold text-muted mb-2">What goes in Projects?</h3>
+                    <ul class="text-sm text-subtle space-y-1">
+                      <li>• Work projects and deliverables</li>
+                      <li>• Side projects and ideas</li>
+                      <li>• Project plans and progress notes</li>
+                    </ul>
+                  </div>
+                )}
+                {currentPath.includes('people') && (
+                  <div class="mb-6 p-4 panel text-left max-w-md">
+                    <h3 class="text-sm font-semibold text-muted mb-2">What goes in People?</h3>
+                    <ul class="text-sm text-subtle space-y-1">
+                      <li>• Contact notes and details</li>
+                      <li>• Meeting summaries</li>
+                      <li>• Relationship reminders</li>
+                    </ul>
+                  </div>
+                )}
+                {currentPath.includes('journal') && (
+                  <div class="mb-6 p-4 panel text-left max-w-md">
+                    <h3 class="text-sm font-semibold text-muted mb-2">What goes in Journal?</h3>
+                    <ul class="text-sm text-subtle space-y-1">
+                      <li>• Daily reflections and thoughts</li>
+                      <li>• Mood logs and gratitude</li>
+                      <li>• Personal observations</li>
+                    </ul>
+                  </div>
+                )}
+              </EmptyState>
+            ) : (
+              data?.items?.map((item: any, index: number) => {
+                const category = item.type === 'directory' ? getCategoryStyle(item.name) : null;
+                const isDirectory = item.type === 'directory';
+                const fileIndex = data?.items?.filter((i: any) => i.type === 'file').findIndex((f: any) => f.path === item.path);
+                return isDirectory ? (
+                  <a
+                    href={`/browse/${item.path}`}
+                    class={`browse-item flex items-center gap-3 p-3 rounded-lg transition-all group stagger-item category-chip ${category?.className}`}
+                  >
+                    <span class="browse-item-icon flex-shrink-0 folder-icon">
+                      <Icon
+                        name={category?.icon || 'folder-linear'}
+                        size={24}
+                        class={`category-text ${category?.className}`}
+                      />
+                    </span>
+                    <span class={`flex-1 truncate category-text ${category?.className}`}>
+                      {item.name}
+                    </span>
                     <Icon
                       name="alt-arrow-right-linear"
                       size={18}
-                      class={`browse-item-arrow opacity-40 group-hover:opacity-100 transition-all ${category ? `category-text ${category.className}` : 'text-subtle'}`}
+                      class={`browse-item-arrow opacity-40 group-hover:opacity-100 transition-all category-text ${category?.className}`}
                     />
-                  ) : (
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    data-file-path={item.path}
+                    data-file-index={fileIndex}
+                    class="browse-item file-preview-trigger w-full text-left flex items-center gap-3 p-3 rounded-lg transition-all group stagger-item hover:bg-surface-muted"
+                  >
+                    <span class="browse-item-icon flex-shrink-0 file-icon">
+                      <Icon name="document-linear" size={24} class="text-primary" />
+                    </span>
+                    <span class="flex-1 truncate text-primary">
+                      {item.name.replace('.md', '')}
+                    </span>
                     <span class="text-xs text-subtle opacity-0 group-hover:opacity-60 transition-opacity">
                       .md
                     </span>
-                  )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          <!-- File Preview Panel (Desktop: side panel, Mobile: modal) -->
+          <div id="preview-panel" class="preview-panel hidden">
+            <div class="preview-panel-inner panel">
+              <!-- Header -->
+              <div class="preview-header sticky top-0 bg-surface border-b border-default p-4 flex items-center justify-between gap-3 z-10">
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <Icon name="document-linear" size={20} class="text-primary flex-shrink-0" />
+                  <span id="preview-filename" class="font-medium text-primary truncate">Loading...</span>
+                </div>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    id="preview-prev"
+                    type="button"
+                    class="p-2 rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Previous file (←)"
+                    disabled
+                  >
+                    <Icon name="alt-arrow-left-linear" size={18} class="text-muted" />
+                  </button>
+                  <button
+                    id="preview-next"
+                    type="button"
+                    class="p-2 rounded-lg hover:bg-surface-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Next file (→)"
+                    disabled
+                  >
+                    <Icon name="alt-arrow-right-linear" size={18} class="text-muted" />
+                  </button>
+                  <button
+                    id="preview-close"
+                    type="button"
+                    class="p-2 rounded-lg hover:bg-surface-muted transition-colors ml-1"
+                    title="Close (Esc)"
+                  >
+                    <Icon name="close-circle-linear" size={18} class="text-muted" />
+                  </button>
+                </div>
+              </div>
+
+              <!-- Breadcrumb -->
+              <div id="preview-breadcrumb" class="px-4 py-2 text-xs text-subtle border-b border-default bg-surface-muted">
+                <span class="opacity-60">atlas</span>
+              </div>
+
+              <!-- Content -->
+              <div id="preview-content" class="preview-content p-4 md:p-6 overflow-auto">
+                <div class="preview-loading flex items-center justify-center py-12">
+                  <Icon name="spinner" size={24} class="text-muted animate-spin" />
+                </div>
+              </div>
+
+              <!-- Footer with actions -->
+              <div class="preview-footer sticky bottom-0 bg-surface border-t border-default p-3 flex items-center justify-between gap-2">
+                <a
+                  id="preview-open-link"
+                  href="#"
+                  class="btn-secondary text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5"
+                >
+                  <Icon name="arrow-right-up-linear" size={16} />
+                  <span>Open</span>
                 </a>
-              );
-            })
-          )}
+                <div class="flex items-center gap-1">
+                  <button
+                    id="preview-copy-link"
+                    type="button"
+                    class="p-2 rounded-lg hover:bg-surface-muted transition-colors"
+                    title="Copy link"
+                  >
+                    <Icon name="link-linear" size={18} class="text-muted" />
+                  </button>
+                  <button
+                    id="preview-download"
+                    type="button"
+                    class="p-2 rounded-lg hover:bg-surface-muted transition-colors"
+                    title="Download"
+                  >
+                    <Icon name="download-linear" size={18} class="text-muted" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile overlay backdrop -->
+          <div id="preview-backdrop" class="preview-backdrop hidden"></div>
         </div>
       )}
     </div>
   </main>
 
   <style>
+    /* Browse container - responsive layout */
+    .browse-container {
+      display: block;
+    }
+
+    /* Desktop: side-by-side layout when preview is open */
+    @media (min-width: 1024px) {
+      .browse-container {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .browse-container .file-list {
+        flex: 1;
+        min-width: 0;
+        max-width: 400px;
+      }
+
+      .browse-container.preview-open .file-list {
+        max-width: 320px;
+      }
+
+      .preview-panel {
+        position: sticky;
+        top: 2rem;
+        flex: 1;
+        min-width: 0;
+        max-height: calc(100vh - 4rem);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .preview-panel-inner {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        max-height: calc(100vh - 4rem);
+        overflow: hidden;
+      }
+
+      .preview-content {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .preview-backdrop {
+        display: none !important;
+      }
+    }
+
+    /* Mobile/Tablet: modal overlay */
+    @media (max-width: 1023px) {
+      .preview-panel {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 1rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+      }
+
+      .preview-panel-inner {
+        width: 100%;
+        max-width: 100%;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        animation: slideUp var(--transition-base) var(--ease-out);
+      }
+
+      .preview-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .preview-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 49;
+        animation: fadeIn var(--transition-fast) var(--ease-out);
+      }
+    }
+
+    /* Preview panel states */
+    .preview-panel.hidden,
+    .preview-backdrop.hidden {
+      display: none;
+    }
+
+    /* File item selected state */
+    .file-preview-trigger.selected {
+      background-color: var(--color-surface-muted);
+      border-color: var(--color-border);
+    }
+
     /* Browse item hover effects */
     .browse-item {
       border: 1px solid transparent;
@@ -351,14 +547,104 @@ if (data?.is_file && data?.content) {
       transition: transform var(--transition-fast) var(--ease-out);
     }
 
+    /* Keyboard hint in preview */
+    .preview-kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.5rem;
+      padding: 0.125rem 0.375rem;
+      font-size: 0.6875rem;
+      font-family: var(--font-mono);
+      background: var(--color-surface-alt);
+      border: 1px solid var(--color-border);
+      border-radius: 0.25rem;
+      color: var(--color-text-subtle);
+    }
+
+    /* Syntax highlighting using theme colors */
+    .hljs {
+      color: var(--color-text);
+      background: transparent;
+    }
+
+    .hljs-comment,
+    .hljs-quote {
+      color: var(--color-text-subtle);
+      font-style: italic;
+    }
+
+    .hljs-keyword,
+    .hljs-selector-tag,
+    .hljs-addition {
+      color: var(--accent);
+    }
+
+    .hljs-number,
+    .hljs-string,
+    .hljs-meta .hljs-meta-string,
+    .hljs-literal,
+    .hljs-doctag,
+    .hljs-regexp {
+      color: rgb(var(--category-3-rgb));
+    }
+
+    .hljs-title,
+    .hljs-section,
+    .hljs-name,
+    .hljs-selector-id,
+    .hljs-selector-class {
+      color: rgb(var(--category-1-rgb));
+    }
+
+    .hljs-attribute,
+    .hljs-attr,
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-class .hljs-title,
+    .hljs-type {
+      color: rgb(var(--category-4-rgb));
+    }
+
+    .hljs-symbol,
+    .hljs-bullet,
+    .hljs-subst,
+    .hljs-meta,
+    .hljs-meta .hljs-keyword,
+    .hljs-selector-attr,
+    .hljs-selector-pseudo,
+    .hljs-link {
+      color: rgb(var(--category-5-rgb));
+    }
+
+    .hljs-built_in,
+    .hljs-deletion {
+      color: rgb(var(--category-2-rgb));
+    }
+
+    .hljs-formula {
+      background: var(--color-surface-muted);
+    }
+
+    .hljs-emphasis {
+      font-style: italic;
+    }
+
+    .hljs-strong {
+      font-weight: bold;
+    }
+
     /* Respect reduced motion */
     @media (prefers-reduced-motion: reduce) {
       .browse-item,
       .browse-item-icon,
       .browse-item-arrow,
       .breadcrumb-item,
-      .breadcrumb-icon {
+      .breadcrumb-icon,
+      .preview-panel-inner,
+      .preview-backdrop {
         transition: none;
+        animation: none;
       }
 
       .browse-item:hover,
@@ -372,16 +658,353 @@ if (data?.is_file && data?.content) {
   </style>
 
   <script>
+    import { marked } from 'marked';
+    import DOMPurify from 'isomorphic-dompurify';
+    import hljs from 'highlight.js/lib/core';
+    // Import common languages
+    import javascript from 'highlight.js/lib/languages/javascript';
+    import typescript from 'highlight.js/lib/languages/typescript';
+    import python from 'highlight.js/lib/languages/python';
+    import bash from 'highlight.js/lib/languages/bash';
+    import json from 'highlight.js/lib/languages/json';
+    import yaml from 'highlight.js/lib/languages/yaml';
+    import markdown from 'highlight.js/lib/languages/markdown';
+    import css from 'highlight.js/lib/languages/css';
+    import xml from 'highlight.js/lib/languages/xml';
+    import sql from 'highlight.js/lib/languages/sql';
+
+    // Register languages
+    hljs.registerLanguage('javascript', javascript);
+    hljs.registerLanguage('js', javascript);
+    hljs.registerLanguage('typescript', typescript);
+    hljs.registerLanguage('ts', typescript);
+    hljs.registerLanguage('python', python);
+    hljs.registerLanguage('py', python);
+    hljs.registerLanguage('bash', bash);
+    hljs.registerLanguage('sh', bash);
+    hljs.registerLanguage('shell', bash);
+    hljs.registerLanguage('json', json);
+    hljs.registerLanguage('yaml', yaml);
+    hljs.registerLanguage('yml', yaml);
+    hljs.registerLanguage('markdown', markdown);
+    hljs.registerLanguage('md', markdown);
+    hljs.registerLanguage('css', css);
+    hljs.registerLanguage('html', xml);
+    hljs.registerLanguage('xml', xml);
+    hljs.registerLanguage('sql', sql);
+
+    // Configure marked with syntax highlighting
+    marked.setOptions({
+      highlight: function(code: string, lang: string) {
+        if (lang && hljs.getLanguage(lang)) {
+          try {
+            return hljs.highlight(code, { language: lang }).value;
+          } catch (e) {
+            // Fall through to auto-detection
+          }
+        }
+        // Auto-detect language
+        try {
+          return hljs.highlightAuto(code).value;
+        } catch (e) {
+          return code;
+        }
+      },
+    });
+
     const GARDENER_URL = import.meta.env.PUBLIC_GARDENER_URL || 'http://localhost:8000';
 
-    async function goToRandomNote() {
+    // Auth helper
+    function getAuthHeaders(): HeadersInit {
       const token = localStorage.getItem('authToken') || '';
-      const headers: HeadersInit = token
+      return token
         ? { 'Authorization': `Bearer ${token}`, 'X-Auth-Token': token }
         : {};
+    }
 
+    // File preview state
+    interface PreviewState {
+      isOpen: boolean;
+      currentPath: string | null;
+      currentIndex: number;
+      files: Array<{ path: string; name: string }>;
+      rawContent: string;
+      cache: Map<string, { content: string; rendered: string }>;
+    }
+
+    const previewState: PreviewState = {
+      isOpen: false,
+      currentPath: null,
+      currentIndex: -1,
+      files: [],
+      rawContent: '',
+      cache: new Map(),
+    };
+
+    // DOM elements
+    const previewPanel = document.getElementById('preview-panel');
+    const previewBackdrop = document.getElementById('preview-backdrop');
+    const previewContent = document.getElementById('preview-content');
+    const previewFilename = document.getElementById('preview-filename');
+    const previewBreadcrumb = document.getElementById('preview-breadcrumb');
+    const previewOpenLink = document.getElementById('preview-open-link') as HTMLAnchorElement;
+    const previewPrev = document.getElementById('preview-prev') as HTMLButtonElement;
+    const previewNext = document.getElementById('preview-next') as HTMLButtonElement;
+    const previewClose = document.getElementById('preview-close');
+    const previewCopyLink = document.getElementById('preview-copy-link');
+    const previewDownload = document.getElementById('preview-download');
+    const browseContainer = document.querySelector('.browse-container');
+
+    // Collect all files from the list
+    function collectFiles() {
+      const triggers = document.querySelectorAll('.file-preview-trigger');
+      previewState.files = Array.from(triggers).map((el) => ({
+        path: el.getAttribute('data-file-path') || '',
+        name: el.querySelector('.truncate')?.textContent || '',
+      }));
+    }
+
+    // Open preview for a file
+    async function openPreview(filePath: string) {
+      if (!previewPanel || !previewContent) return;
+
+      previewState.isOpen = true;
+      previewState.currentPath = filePath;
+      previewState.currentIndex = previewState.files.findIndex(f => f.path === filePath);
+
+      // Show panel and backdrop
+      previewPanel.classList.remove('hidden');
+      previewBackdrop?.classList.remove('hidden');
+      browseContainer?.classList.add('preview-open');
+
+      // Update selected state
+      document.querySelectorAll('.file-preview-trigger').forEach(el => {
+        el.classList.toggle('selected', el.getAttribute('data-file-path') === filePath);
+      });
+
+      // Update navigation buttons
+      updateNavigationButtons();
+
+      // Update filename and breadcrumb
+      const fileName = filePath.split('/').pop()?.replace('.md', '') || filePath;
+      if (previewFilename) previewFilename.textContent = fileName;
+
+      const pathParts = filePath.split('/');
+      pathParts.pop(); // Remove filename
+      const breadcrumbHtml = ['atlas', ...pathParts].map((part, i) =>
+        `<span class="${i === 0 ? 'opacity-60' : ''}">${part}</span>`
+      ).join(' <span class="mx-1 opacity-40">/</span> ');
+      if (previewBreadcrumb) previewBreadcrumb.innerHTML = breadcrumbHtml;
+
+      // Update open link
+      if (previewOpenLink) previewOpenLink.href = `/browse/${filePath}`;
+
+      // Show loading state
+      previewContent.innerHTML = `
+        <div class="flex items-center justify-center py-12">
+          <div class="animate-spin w-6 h-6 border-2 border-muted border-t-accent rounded-full"></div>
+        </div>
+      `;
+
+      // Check cache first
+      if (previewState.cache.has(filePath)) {
+        const cached = previewState.cache.get(filePath)!;
+        previewState.rawContent = cached.content;
+        previewContent.innerHTML = `<article class="prose prose-sm max-w-none prose-theme">${cached.rendered}</article>`;
+        return;
+      }
+
+      // Fetch file content
+      const MAX_PREVIEW_SIZE = 100000; // ~100KB limit for preview
       try {
-        const response = await fetch(`${GARDENER_URL}/api/random`, { headers });
+        const response = await fetch(`${GARDENER_URL}/api/browse/${filePath}`, {
+          headers: getAuthHeaders(),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.content) {
+            previewState.rawContent = data.content;
+
+            // Handle large files
+            let contentToRender = data.content;
+            let isTruncated = false;
+            if (data.content.length > MAX_PREVIEW_SIZE) {
+              // Find a good break point (end of paragraph or line)
+              let breakPoint = MAX_PREVIEW_SIZE;
+              const newlinePos = data.content.lastIndexOf('\n\n', MAX_PREVIEW_SIZE);
+              if (newlinePos > MAX_PREVIEW_SIZE * 0.7) {
+                breakPoint = newlinePos;
+              }
+              contentToRender = data.content.slice(0, breakPoint);
+              isTruncated = true;
+            }
+
+            const rawHtml = await marked(contentToRender);
+            let rendered = DOMPurify.sanitize(rawHtml);
+
+            // Add truncation notice if needed
+            if (isTruncated) {
+              rendered += `
+                <div class="mt-6 p-4 rounded-lg bg-surface-muted border border-default text-center">
+                  <p class="text-sm text-muted mb-2">File is large (${Math.round(data.content.length / 1024)}KB) — showing first ${Math.round(contentToRender.length / 1024)}KB</p>
+                  <a href="/browse/${filePath}" class="text-sm link">Open full file →</a>
+                </div>
+              `;
+            }
+
+            // Cache the result
+            previewState.cache.set(filePath, { content: data.content, rendered });
+
+            // Only update if still viewing this file
+            if (previewState.currentPath === filePath) {
+              previewContent.innerHTML = `<article class="prose prose-sm max-w-none prose-theme">${rendered}</article>`;
+            }
+          }
+        } else {
+          previewContent.innerHTML = `
+            <div class="text-center py-12 text-muted">
+              <p>Failed to load file</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        previewContent.innerHTML = `
+          <div class="text-center py-12 text-muted">
+            <p>Could not connect to server</p>
+          </div>
+        `;
+      }
+    }
+
+    // Close preview
+    function closePreview() {
+      if (!previewPanel) return;
+
+      previewState.isOpen = false;
+      previewState.currentPath = null;
+      previewState.currentIndex = -1;
+
+      previewPanel.classList.add('hidden');
+      previewBackdrop?.classList.add('hidden');
+      browseContainer?.classList.remove('preview-open');
+
+      // Clear selected state
+      document.querySelectorAll('.file-preview-trigger').forEach(el => {
+        el.classList.remove('selected');
+      });
+    }
+
+    // Navigate to previous/next file
+    function navigatePreview(direction: 'prev' | 'next') {
+      if (!previewState.isOpen || previewState.files.length === 0) return;
+
+      const newIndex = direction === 'prev'
+        ? previewState.currentIndex - 1
+        : previewState.currentIndex + 1;
+
+      if (newIndex >= 0 && newIndex < previewState.files.length) {
+        openPreview(previewState.files[newIndex].path);
+      }
+    }
+
+    // Update navigation button states
+    function updateNavigationButtons() {
+      if (previewPrev) {
+        previewPrev.disabled = previewState.currentIndex <= 0;
+      }
+      if (previewNext) {
+        previewNext.disabled = previewState.currentIndex >= previewState.files.length - 1;
+      }
+    }
+
+    // Copy link to clipboard
+    async function copyLink() {
+      if (!previewState.currentPath) return;
+
+      const url = `${window.location.origin}/browse/${previewState.currentPath}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        // Brief visual feedback
+        if (previewCopyLink) {
+          previewCopyLink.classList.add('text-success');
+          setTimeout(() => previewCopyLink.classList.remove('text-success'), 1000);
+        }
+      } catch (error) {
+        console.error('Failed to copy link:', error);
+      }
+    }
+
+    // Download file
+    function downloadFile() {
+      if (!previewState.currentPath || !previewState.rawContent) return;
+
+      const fileName = previewState.currentPath.split('/').pop() || 'note.md';
+      const blob = new Blob([previewState.rawContent], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Initialize file preview
+    function initFilePreview() {
+      collectFiles();
+
+      // File click handlers
+      document.querySelectorAll('.file-preview-trigger').forEach(el => {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          const path = el.getAttribute('data-file-path');
+          if (path) openPreview(path);
+        });
+      });
+
+      // Navigation buttons
+      previewPrev?.addEventListener('click', () => navigatePreview('prev'));
+      previewNext?.addEventListener('click', () => navigatePreview('next'));
+
+      // Close buttons
+      previewClose?.addEventListener('click', closePreview);
+      previewBackdrop?.addEventListener('click', closePreview);
+
+      // Quick actions
+      previewCopyLink?.addEventListener('click', copyLink);
+      previewDownload?.addEventListener('click', downloadFile);
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (!previewState.isOpen) return;
+
+        switch (e.key) {
+          case 'Escape':
+            closePreview();
+            break;
+          case 'ArrowLeft':
+            if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+              e.preventDefault();
+              navigatePreview('prev');
+            }
+            break;
+          case 'ArrowRight':
+            if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+              e.preventDefault();
+              navigatePreview('next');
+            }
+            break;
+        }
+      });
+    }
+
+    // Random note functionality
+    async function goToRandomNote() {
+      try {
+        const response = await fetch(`${GARDENER_URL}/api/random`, { headers: getAuthHeaders() });
         if (response.ok) {
           const data = await response.json();
           if (data.path) {
@@ -400,12 +1023,16 @@ if (data?.is_file && data?.content) {
     // Handle button click
     document.getElementById('random-note-btn')?.addEventListener('click', goToRandomNote);
 
-    // Handle keyboard shortcut (Ctrl+Shift+R or Cmd+Shift+R)
+    // Handle keyboard shortcuts
     document.addEventListener('keydown', (e) => {
+      // Random note: Ctrl+Shift+R or Cmd+Shift+R
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
         e.preventDefault();
         goToRandomNote();
       }
     });
+
+    // Initialize
+    initFilePreview();
   </script>
 </Layout>

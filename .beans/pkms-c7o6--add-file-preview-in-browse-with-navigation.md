@@ -1,11 +1,11 @@
 ---
 # pkms-c7o6
 title: Add file preview in Browse with navigation
-status: todo
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-22T02:45:15Z
-updated_at: 2026-01-22T16:34:48Z
+updated_at: 2026-01-23T22:02:03Z
 ---
 
 Show rendered markdown preview when clicking files in Browse instead of raw markdown.
@@ -45,15 +45,15 @@ Show rendered markdown preview when clicking files in Browse instead of raw mark
 - Cache rendered content
 
 ## Checklist
-- [ ] Choose preview layout (modal vs side panel)
-- [ ] Implement file preview modal component
-- [ ] Add markdown rendering
-- [ ] Add syntax highlighting for code blocks
-- [ ] Add prev/next navigation
-- [ ] Add breadcrumb navigation
-- [ ] Add keyboard shortcuts (←/→, Esc)
-- [ ] Add quick actions (copy link, download)
-- [ ] Make responsive (modal on mobile, side panel on desktop)
-- [ ] Handle large files gracefully
-- [ ] Test with various markdown features
-- [ ] Add loading state while fetching
+- [x] Choose preview layout (modal vs side panel) - Responsive: modal on mobile, side panel on desktop
+- [x] Implement file preview modal component
+- [x] Add markdown rendering
+- [x] Add syntax highlighting for code blocks (highlight.js with theme-aware colors)
+- [x] Add prev/next navigation
+- [x] Add breadcrumb navigation
+- [x] Add keyboard shortcuts (←/→, Esc)
+- [x] Add quick actions (copy link, download)
+- [x] Make responsive (modal on mobile, side panel on desktop)
+- [x] Handle large files gracefully (truncate at ~100KB with notice)
+- [x] Test with various markdown features
+- [x] Add loading state while fetching
