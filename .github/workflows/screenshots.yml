@@ -28,6 +28,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Initialize sample data git repo
+        run: .screenshot-data/init-git.sh
+
       - name: Start services with sample data
         run: |
           docker compose -f docker-compose.screenshots.yml up -d --build
