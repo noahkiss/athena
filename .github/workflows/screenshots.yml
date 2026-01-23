@@ -8,6 +8,9 @@ on:
         required: false
         default: 'Design changes'
 
+permissions:
+  contents: write
+
 jobs:
   capture:
     runs-on: ubuntu-latest
