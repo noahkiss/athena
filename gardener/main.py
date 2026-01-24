@@ -1204,7 +1204,9 @@ def parse_note_metadata(content: str) -> NoteMetadata | None:
             company=raw.get("company"),
             role=raw.get("role"),
             relationship=raw.get("relationship"),
-            last_contact=str(raw.get("last_contact")) if raw.get("last_contact") else None,
+            last_contact=str(raw.get("last_contact"))
+            if raw.get("last_contact")
+            else None,
             birthday=str(raw.get("birthday")) if raw.get("birthday") else None,
             photo=raw.get("photo"),
             # Keep raw for any extra fields
@@ -1411,7 +1413,9 @@ async def list_contacts() -> ContactsResponse:
                 metadata = parse_note_metadata(content)
                 if metadata:
                     # Use name from metadata or filename
-                    display_name = metadata.name or file_path.stem.replace("-", " ").title()
+                    display_name = (
+                        metadata.name or file_path.stem.replace("-", " ").title()
+                    )
                     contacts.append(
                         ContactItem(
                             path=str(file_path.relative_to(ATLAS_DIR)),
@@ -1614,7 +1618,9 @@ async def get_upcoming_birthdays(days: int = 30):
                     birth_date = datetime.strptime(birthday_str, "%Y-%m-%d").date()
                     birth_year = birth_date.year
                 elif len(birthday_str) == 5:  # MM-DD
-                    birth_date = datetime.strptime(f"2000-{birthday_str}", "%Y-%m-%d").date()
+                    birth_date = datetime.strptime(
+                        f"2000-{birthday_str}", "%Y-%m-%d"
+                    ).date()
                     birth_year = None
                 else:
                     continue
@@ -1701,7 +1707,9 @@ async def get_stale_contacts(days: int = 90, limit: int = 10):
 
             if last_contact_str:
                 try:
-                    last_contact_date = datetime.strptime(last_contact_str, "%Y-%m-%d").date()
+                    last_contact_date = datetime.strptime(
+                        last_contact_str, "%Y-%m-%d"
+                    ).date()
                     days_since = (today - last_contact_date).days
                     # Only include if stale (beyond threshold)
                     if days_since < days:
