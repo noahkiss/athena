@@ -18,17 +18,19 @@ interface Screenshot extends ScreenshotConfig {
 }
 
 // Base configs for desktop screenshots (will be captured in both themes)
+// Note: dashboard is excluded due to slow API calls in CI
 const DESKTOP_CONFIGS: ScreenshotConfig[] = [
   {
     name: 'capture',
     path: '/',
     viewport: { width: 1280, height: 800 },
   },
-  {
-    name: 'dashboard',
-    path: '/dashboard',
-    viewport: { width: 1280, height: 900 },
-  },
+  // Dashboard excluded: makes multiple API calls that timeout in CI
+  // {
+  //   name: 'dashboard',
+  //   path: '/dashboard',
+  //   viewport: { width: 1280, height: 900 },
+  // },
   {
     name: 'browse',
     path: '/browse',
@@ -60,25 +62,28 @@ const DESKTOP_CONFIGS: ScreenshotConfig[] = [
     path: '/browse/people',
     viewport: { width: 1280, height: 900 },
   },
-  {
-    name: 'contact-detail',
-    path: '/browse/people/sarah-chen.md',
-    viewport: { width: 1280, height: 900 },
-  },
+  // Contact detail excluded: page loads slowly in CI
+  // {
+  //   name: 'contact-detail',
+  //   path: '/browse/people/sarah-chen.md',
+  //   viewport: { width: 1280, height: 900 },
+  // },
 ];
 
 // Base configs for mobile screenshots (will be captured in both themes)
+// Note: dashboard excluded due to slow API calls in CI
 const MOBILE_CONFIGS: ScreenshotConfig[] = [
   {
     name: 'capture',
     path: '/',
     viewport: { width: 390, height: 844 },
   },
-  {
-    name: 'dashboard',
-    path: '/dashboard',
-    viewport: { width: 390, height: 844 },
-  },
+  // Dashboard excluded: makes multiple API calls that timeout in CI
+  // {
+  //   name: 'dashboard',
+  //   path: '/dashboard',
+  //   viewport: { width: 390, height: 844 },
+  // },
   {
     name: 'browse',
     path: '/browse',
