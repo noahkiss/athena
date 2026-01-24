@@ -52,11 +52,31 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '.github/screenshots/package-lock.json'
 
-      - name: Install Playwright
+      - name: Install dependencies
         working-directory: .github/screenshots
-        run: |
-          npm ci || npm install
-          npx playwright install chromium
+        run: npm ci || npm install
+
+      - name: Get Playwright version
+        id: playwright-version
+        working-directory: .github/screenshots
+        run: echo "version=$(npx playwright --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        working-directory: .github/screenshots
+        run: npx playwright install chromium --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+
+      - name: Install Playwright deps (cached)
+        working-directory: .github/screenshots
+        run: npx playwright install-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
 
       - name: Capture screenshots
         working-directory: .github/screenshots
