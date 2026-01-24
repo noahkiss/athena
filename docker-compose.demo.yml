@@ -1,0 +1,26 @@
+# Docker Compose for running Athena demo with sample data
+# Usage: docker compose -f docker-compose.demo.yml up --build
+#
+# Access from:
+#   - This machine: http://localhost:3000
+#   - Other machines on network: http://<this-machine-ip>:3000
+
+services:
+  athena:
+    build: .
+    ports:
+      - "0.0.0.0:3000:3000"  # Frontend - accessible from network
+      - "0.0.0.0:8000:8000"  # API - accessible from network
+    volumes:
+      - ./.screenshot-data/athena:/data  # Sample data
+    environment:
+      - GARDENER_AUTO=false
+      - LOG_LEVEL=INFO
+      - GARDENER_URL=http://127.0.0.1:8000
+      - GARDENER_BACKEND=openai
+      - AI_API_KEY=${AI_API_KEY:-demo-mode}  # Optional: set for AI features
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

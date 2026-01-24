@@ -29,7 +29,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 cd /app/gardener
-uv run uvicorn main:app --host "${GARDENER_HOST}" --port "${GARDENER_PORT}" &
+uv run --no-dev uvicorn main:app --host "${GARDENER_HOST}" --port "${GARDENER_PORT}" &
 
 gardener_pid=$!
 
