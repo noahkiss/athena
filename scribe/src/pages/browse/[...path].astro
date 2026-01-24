@@ -630,17 +630,14 @@ const isContact = data?.metadata?.name || data?.metadata?.email || data?.metadat
       display: grid;
       grid-template-columns: 1fr;
       gap: 0.75rem;
+      max-width: 100%;
     }
 
-    @media (min-width: 640px) {
+    /* Tablet portrait and up: 2 columns */
+    @media (min-width: 768px) {
       .contacts-grid {
         grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .contacts-grid {
-        grid-template-columns: 1fr;
+        gap: 1rem;
       }
     }
 
