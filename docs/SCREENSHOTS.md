@@ -1,187 +1,76 @@
 # Screenshots
 
-Visual overview of Athena's interface. These screenshots are automatically generated using the [screenshot workflow](../.github/workflows/screenshots.yml).
+Visual overview of Athena's interface. All screenshots use the dark theme (Catppuccin Mocha) and are automatically generated via [GitHub Actions](../.github/workflows/screenshots.yml).
 
-All screenshots are captured in both dark mode (Catppuccin Mocha) and light mode (Rosé Pine Dawn). Dark mode is shown by default.
+## Table of Contents
 
-## Capture Page
+- [Capture](#capture) - Quick thought capture
+- [Browse](#browse) - Navigate your atlas
+- [Timeline](#timeline) - Chronological view
+- [Contacts](#contacts) - People management
+- [Settings](#settings) - Theme and font customization
+- [Archive](#archive) - Archived notes (mobile)
+- [Style Guide](#style-guide) - Component documentation
 
-The main interface for quickly capturing thoughts.
+---
 
-![Capture](screenshot-capture.png)
+## Capture
 
-<details>
-<summary>View in light mode</summary>
+The main interface for quickly capturing thoughts with AI-powered refinement and exploration.
 
-![Capture (Light)](screenshot-capture-light.png)
+| Desktop | Mobile |
+|---------|--------|
+| ![Capture](screenshot-capture.png) | ![Capture Mobile](mobile-capture.png) |
 
-</details>
+## Browse
 
-## Desktop Views
+Navigate your atlas with category-aware styling, breadcrumb navigation, and recent activity.
 
-### Dashboard
-Clean stats overview with category breakdown and recent activity.
+| Desktop | Mobile |
+|---------|--------|
+| ![Browse](screenshot-browse.png) | ![Browse Mobile](mobile-browse.png) |
 
-![Dashboard](screenshot-dashboard.png)
+## Timeline
 
-<details>
-<summary>View in light mode</summary>
-
-![Dashboard (Light)](screenshot-dashboard-light.png)
-
-</details>
-
-### Browse
-Navigate your atlas with category-aware styling and breadcrumb navigation.
-
-![Browse](screenshot-browse.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Browse (Light)](screenshot-browse-light.png)
-
-</details>
-
-### Timeline
 Chronological view of all your notes, grouped by date.
 
-![Timeline](screenshot-timeline.png)
+| Desktop | Mobile |
+|---------|--------|
+| ![Timeline](screenshot-timeline.png) | ![Timeline Mobile](mobile-timeline.png) |
 
-<details>
-<summary>View in light mode</summary>
+## Contacts
 
-![Timeline (Light)](screenshot-timeline-light.png)
+Structured contact cards with filtering by relationship type.
 
-</details>
+| Desktop | Mobile |
+|---------|--------|
+| ![Contacts](screenshot-contacts.png) | ![Contacts Mobile](mobile-contacts.png) |
 
-### Contacts
-Structured contact cards with grid view, filtering, and detail pages.
+## Settings
 
-![Contacts](screenshot-contacts.png)
+Theme selection and font customization options.
 
-<details>
-<summary>View in light mode</summary>
+| Desktop | Mobile |
+|---------|--------|
+| ![Settings](screenshot-settings-fonts.png) | ![Settings Mobile](mobile-settings.png) |
 
-![Contacts (Light)](screenshot-contacts-light.png)
+Font customization (scrolled view):
 
-</details>
+![Settings - Font Options](screenshot-settings-fonts-scrolled.png)
 
-![Contact Detail](screenshot-contact-detail.png)
+## Archive
 
-<details>
-<summary>View in light mode</summary>
+View and restore archived notes.
 
-![Contact Detail (Light)](screenshot-contact-detail-light.png)
+| Mobile |
+|--------|
+| ![Archive Mobile](mobile-archive.png) |
 
-</details>
+## Style Guide
 
-### Settings
-Theme selection and font customization.
-
-![Settings](screenshot-settings-fonts.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Settings (Light)](screenshot-settings-fonts-light.png)
-
-</details>
-
-![Settings (Scrolled)](screenshot-settings-fonts-scrolled.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Settings Scrolled (Light)](screenshot-settings-fonts-scrolled-light.png)
-
-</details>
-
-### Style Guide
-Interactive component documentation at `/styleguide`.
+Interactive component documentation for developers at `/styleguide`.
 
 ![Style Guide](screenshot-styleguide.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Style Guide (Light)](screenshot-styleguide-light.png)
-
-</details>
-
-## Mobile Views (390×844)
-
-Optimized for touch with iOS-style bottom navigation.
-
-### Capture
-![Mobile Capture](mobile-capture.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Mobile Capture (Light)](mobile-capture-light.png)
-
-</details>
-
-### Dashboard
-![Mobile Dashboard](mobile-dashboard.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Mobile Dashboard (Light)](mobile-dashboard-light.png)
-
-</details>
-
-### Browse
-![Mobile Browse](mobile-browse.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Mobile Browse (Light)](mobile-browse-light.png)
-
-</details>
-
-### Timeline
-![Mobile Timeline](mobile-timeline.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Mobile Timeline (Light)](mobile-timeline-light.png)
-
-</details>
-
-### Settings
-![Mobile Settings](mobile-settings.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Mobile Settings (Light)](mobile-settings-light.png)
-
-</details>
-
-### Archive
-![Mobile Archive](mobile-archive.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Mobile Archive (Light)](mobile-archive-light.png)
-
-</details>
-
-### Contacts
-![Mobile Contacts](mobile-contacts.png)
-
-<details>
-<summary>View in light mode</summary>
-
-![Mobile Contacts (Light)](mobile-contacts-light.png)
-
-</details>
 
 ---
 
@@ -189,21 +78,16 @@ Optimized for touch with iOS-style bottom navigation.
 
 Screenshots are updated automatically via GitHub Actions:
 
-**Automatic:** Runs on every push to `main` that changes `scribe/**` or `.github/screenshots/**`
+- **Automatic:** Runs on every push to `main` that changes `scribe/**` or `.github/screenshots/**`
+- **Manual:** Go to **Actions** → **Update Screenshots** → **Run workflow**
 
-**Manual:** Go to **Actions** → **Update Screenshots** → **Run workflow**
-
-Screenshots are committed directly to `main`. The workflow uses sample data from `.screenshot-data/athena/` to ensure consistent, realistic screenshots.
-
-### Manual Update
-
-To capture screenshots locally:
+### Local Capture
 
 ```bash
 # Start services with sample data
 docker compose -f docker-compose.screenshots.yml up -d --build
 
-# Wait for services
+# Wait for services to be ready
 sleep 30
 
 # Run Playwright tests
@@ -216,9 +100,9 @@ npx playwright test
 docker compose -f docker-compose.screenshots.yml down
 ```
 
-### Screenshot Specifications
+### Specifications
 
-| Category | Viewport | Themes |
-|----------|----------|--------|
-| Desktop | 1280×800-1200 | Catppuccin Mocha (default), Rosé Pine Dawn |
-| Mobile | 390×844 | Catppuccin Mocha (default), Rosé Pine Dawn |
+| Platform | Viewport | Theme |
+|----------|----------|-------|
+| Desktop | 1280×800-1200 | Catppuccin Mocha |
+| Mobile | 390×844 | Catppuccin Mocha |
