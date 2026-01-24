@@ -303,8 +303,44 @@ const isContact = data?.metadata?.name || data?.metadata?.email || data?.metadat
             ) : contacts.length > 0 ? (
               /* Contact grid view for people directory */
               <div>
-                {/* Add Contact button */}
-                <div class="flex justify-end mb-4">
+                {/* Toolbar: filters, sort, and add button */}
+                <div class="flex flex-wrap items-center gap-3 mb-4">
+                  {/* Relationship filter */}
+                  <div class="flex items-center gap-2">
+                    <label for="filter-relationship" class="text-sm text-muted">Filter:</label>
+                    <select
+                      id="filter-relationship"
+                      class="text-sm px-2 py-1.5 rounded-lg bg-surface-muted border border-default text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="">All relationships</option>
+                      <option value="colleague">Colleague</option>
+                      <option value="friend">Friend</option>
+                      <option value="family">Family</option>
+                      <option value="mentor">Mentor</option>
+                      <option value="client">Client</option>
+                    </select>
+                  </div>
+
+                  {/* Sort dropdown */}
+                  <div class="flex items-center gap-2">
+                    <label for="sort-contacts" class="text-sm text-muted">Sort:</label>
+                    <select
+                      id="sort-contacts"
+                      class="text-sm px-2 py-1.5 rounded-lg bg-surface-muted border border-default text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+                    >
+                      <option value="name">Name</option>
+                      <option value="last_contact">Last Contact</option>
+                      <option value="company">Company</option>
+                      <option value="relationship">Relationship</option>
+                    </select>
+                  </div>
+
+                  {/* Results count */}
+                  <span id="contacts-count" class="text-sm text-subtle ml-auto">
+                    {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
+                  </span>
+
+                  {/* Add Contact button */}
                   <button
                     type="button"
                     id="add-contact-btn"
@@ -314,7 +350,9 @@ const isContact = data?.metadata?.name || data?.metadata?.email || data?.metadat
                     <span>Add Contact</span>
                   </button>
                 </div>
-                <div class="contacts-grid">
+
+                {/* Contacts grid - will be managed by JS for filtering/sorting */}
+                <div id="contacts-grid" class="contacts-grid" data-contacts={JSON.stringify(contacts)}>
                   {contacts.map((contact: any) => (
                     <ContactCard
                       metadata={contact.metadata}
@@ -1273,5 +1311,69 @@ const isContact = data?.metadata?.name || data?.metadata?.email || data?.metadat
         closeContactModalFn();
       }
     });
+
+    // Contact filtering and sorting
+    const filterRelationship = document.getElementById('filter-relationship') as HTMLSelectElement;
+    const sortContacts = document.getElementById('sort-contacts') as HTMLSelectElement;
+    const contactsGrid = document.getElementById('contacts-grid');
+    const contactsCount = document.getElementById('contacts-count');
+
+    function applyFiltersAndSort() {
+      if (!contactsGrid) return;
+
+      const cards = Array.from(contactsGrid.querySelectorAll('.contact-card')) as HTMLElement[];
+      const relationshipFilter = filterRelationship?.value || '';
+      const sortBy = sortContacts?.value || 'name';
+
+      // Filter
+      let visibleCards = cards.filter(card => {
+        if (relationshipFilter && card.dataset.relationship !== relationshipFilter) {
+          return false;
+        }
+        return true;
+      });
+
+      // Show/hide based on filter
+      cards.forEach(card => {
+        const shouldShow = visibleCards.includes(card);
+        card.style.display = shouldShow ? '' : 'none';
+      });
+
+      // Sort visible cards
+      visibleCards.sort((a, b) => {
+        switch (sortBy) {
+          case 'name':
+            return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+          case 'last_contact':
+            // Sort by date descending (most recent first)
+            const dateA = a.dataset.lastContact || '';
+            const dateB = b.dataset.lastContact || '';
+            if (!dateA && !dateB) return 0;
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            return dateB.localeCompare(dateA);
+          case 'company':
+            return (a.dataset.company || '').localeCompare(b.dataset.company || '');
+          case 'relationship':
+            return (a.dataset.relationship || '').localeCompare(b.dataset.relationship || '');
+          default:
+            return 0;
+        }
+      });
+
+      // Reorder DOM elements
+      visibleCards.forEach(card => {
+        contactsGrid.appendChild(card);
+      });
+
+      // Update count
+      if (contactsCount) {
+        const count = visibleCards.length;
+        contactsCount.textContent = `${count} contact${count !== 1 ? 's' : ''}`;
+      }
+    }
+
+    filterRelationship?.addEventListener('change', applyFiltersAndSort);
+    sortContacts?.addEventListener('change', applyFiltersAndSort);
   </script>
 </Layout>

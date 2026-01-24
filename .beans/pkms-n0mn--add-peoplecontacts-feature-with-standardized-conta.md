@@ -61,7 +61,7 @@ birthday: 1985-06-20
 - [x] Add "Add Contact" button with template
 - [x] Implement contact card detail view
 - [x] Add quick actions (email, call links)
-- [ ] Add filtering and sorting
+- [x] Add filtering and sorting
 - [ ] Add last contact date tracking
 - [x] Add relationship tags
 - [ ] Add birthday reminders (optional)

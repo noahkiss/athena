@@ -166,6 +166,10 @@ const isDetail = variant === 'detail';
   <a
     href={`/browse/${filePath}`}
     class="contact-card panel p-4 flex items-center gap-3 hover:bg-surface-muted transition-all group"
+    data-name={displayName.toLowerCase()}
+    data-relationship={metadata.relationship || ''}
+    data-company={(metadata.company || '').toLowerCase()}
+    data-last-contact={metadata.last_contact || ''}
   >
     <!-- Avatar -->
     <div class={`contact-avatar w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold flex-shrink-0 ${relationshipStyle.color} category-chip`}>
