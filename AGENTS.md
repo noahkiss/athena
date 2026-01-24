@@ -17,7 +17,7 @@ Always prefix Python commands with `uv run` (e.g., `uv run pytest`, `uv run uvic
 ## Project Structure
 
 ```
-pkms/
+athena/
 ├── athena/          # The Data Skeleton (source of truth, git-versioned)
 ├── gardener/        # Python/FastAPI backend + AI worker
 ├── scribe/          # Astro/HTMX frontend

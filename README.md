@@ -253,14 +253,14 @@ Expose your knowledge base to external AI tools via Model Context Protocol. The 
 
 **Configure Claude Code:**
 ```bash
-claude mcp add --transport http athena-pkms http://localhost:8000/mcp
+claude mcp add --transport http athena http://localhost:8000/mcp
 ```
 
 **Or add to `.mcp.json`:**
 ```json
 {
   "mcpServers": {
-    "athena-pkms": {
+    "athena": {
       "type": "http",
       "url": "http://localhost:8000/mcp"
     }

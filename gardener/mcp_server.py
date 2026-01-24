@@ -1,4 +1,4 @@
-"""MCP Server for Athena PKMS - External AI access to notes."""
+"""MCP Server for Athena - External AI access to notes."""
 
 import os
 from datetime import datetime
@@ -13,7 +13,7 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
 INBOX_DIR = DATA_DIR / "inbox"
 ATLAS_DIR = DATA_DIR / "atlas"
 
-server = Server("athena-pkms")
+server = Server("athena")
 
 
 @server.list_tools()

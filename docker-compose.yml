@@ -21,6 +21,6 @@ services:
 #   "athena": {
 #     "command": "uv",
 #     "args": ["run", "python", "mcp_server.py"],
-#     "cwd": "/path/to/pkms/gardener",
-#     "env": { "DATA_DIR": "/path/to/pkms/athena" }
+#     "cwd": "/path/to/athena/gardener",
+#     "env": { "DATA_DIR": "/path/to/athena/athena" }
 #   }

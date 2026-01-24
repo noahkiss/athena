@@ -101,7 +101,7 @@ The MCP server is integrated into the FastAPI app using FastMCP with streamable-
 
 **Configure Claude Code to use it:**
 ```bash
-claude mcp add --transport http athena-pkms http://localhost:8000/mcp
+claude mcp add --transport http athena http://localhost:8000/mcp
 ```
 
 ## Worker Logic

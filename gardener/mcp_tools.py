@@ -1,4 +1,4 @@
-"""MCP Tools for Athena PKMS - FastMCP integration."""
+"""MCP Tools for Athena - FastMCP integration."""
 
 import logging
 from datetime import datetime
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Create MCP server with stateless HTTP mode.
 # Set streamable_http_path="/" so mounting at /mcp exposes /mcp (no double /mcp/mcp).
 mcp = FastMCP(
-    "athena-pkms",
+    "athena",
     stateless_http=True,
     json_response=True,
     streamable_http_path="/",
