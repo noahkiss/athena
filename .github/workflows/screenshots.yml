@@ -19,7 +19,7 @@ permissions:
 jobs:
   capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -80,7 +80,7 @@ jobs:
 
       - name: Capture screenshots
         working-directory: .github/screenshots
-        run: npx playwright test
+        run: npx playwright test --workers=2
 
       - name: Stop services
         if: always()
