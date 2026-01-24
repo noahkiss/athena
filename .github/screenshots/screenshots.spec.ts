@@ -3,132 +3,142 @@ import * as path from 'path';
 
 const DOCS_DIR = path.join(__dirname, '../../docs');
 
-interface Screenshot {
+type Theme = 'catppuccin-mocha' | 'rose-pine-dawn';
+
+interface ScreenshotConfig {
   name: string;
   path: string;
-  theme: 'catppuccin-mocha' | 'rose-pine-dawn';
   viewport: { width: number; height: number };
-  waitFor?: string; // Optional selector to wait for
-  scrollTo?: string; // Optional selector to scroll to
+  scrollTo?: string;
 }
 
-const DESKTOP_SCREENSHOTS: Screenshot[] = [
-  // Primary hero screenshots
+interface Screenshot extends ScreenshotConfig {
+  theme: Theme;
+  outputName: string;
+}
+
+// Base configs for desktop screenshots (will be captured in both themes)
+const DESKTOP_CONFIGS: ScreenshotConfig[] = [
   {
-    name: 'screenshot-light',
+    name: 'capture',
     path: '/',
-    theme: 'rose-pine-dawn',
     viewport: { width: 1280, height: 800 },
   },
   {
-    name: 'screenshot-dark',
-    path: '/',
-    theme: 'catppuccin-mocha',
-    viewport: { width: 1280, height: 800 },
-  },
-  // Desktop page screenshots
-  {
-    name: 'screenshot-dashboard',
+    name: 'dashboard',
     path: '/dashboard',
-    theme: 'catppuccin-mocha',
     viewport: { width: 1280, height: 900 },
   },
   {
-    name: 'screenshot-browse',
+    name: 'browse',
     path: '/browse',
-    theme: 'catppuccin-mocha',
     viewport: { width: 1280, height: 800 },
   },
   {
-    name: 'screenshot-settings-fonts',
+    name: 'settings-fonts',
     path: '/settings',
-    theme: 'catppuccin-mocha',
     viewport: { width: 1280, height: 900 },
   },
   {
-    name: 'screenshot-settings-fonts-scrolled',
+    name: 'settings-fonts-scrolled',
     path: '/settings',
-    theme: 'catppuccin-mocha',
     viewport: { width: 1280, height: 900 },
     scrollTo: 'text=Header Font',
   },
   {
-    name: 'screenshot-styleguide',
+    name: 'styleguide',
     path: '/styleguide',
-    theme: 'catppuccin-mocha',
     viewport: { width: 1280, height: 1200 },
   },
   {
-    name: 'screenshot-timeline',
+    name: 'timeline',
     path: '/timeline',
-    theme: 'catppuccin-mocha',
     viewport: { width: 1280, height: 800 },
   },
-  // Contacts feature screenshots
   {
-    name: 'screenshot-contacts',
+    name: 'contacts',
     path: '/browse/people',
-    theme: 'catppuccin-mocha',
     viewport: { width: 1280, height: 900 },
   },
   {
-    name: 'screenshot-contact-detail',
+    name: 'contact-detail',
     path: '/browse/people/sarah-chen.md',
-    theme: 'catppuccin-mocha',
     viewport: { width: 1280, height: 900 },
   },
 ];
 
-const MOBILE_SCREENSHOTS: Screenshot[] = [
+// Base configs for mobile screenshots (will be captured in both themes)
+const MOBILE_CONFIGS: ScreenshotConfig[] = [
   {
-    name: 'mobile-capture',
+    name: 'capture',
     path: '/',
-    theme: 'catppuccin-mocha',
     viewport: { width: 390, height: 844 },
   },
   {
-    name: 'mobile-dashboard',
+    name: 'dashboard',
     path: '/dashboard',
-    theme: 'catppuccin-mocha',
     viewport: { width: 390, height: 844 },
   },
   {
-    name: 'mobile-browse',
+    name: 'browse',
     path: '/browse',
-    theme: 'catppuccin-mocha',
     viewport: { width: 390, height: 844 },
   },
   {
-    name: 'mobile-timeline',
+    name: 'timeline',
     path: '/timeline',
-    theme: 'catppuccin-mocha',
     viewport: { width: 390, height: 844 },
   },
   {
-    name: 'mobile-settings',
+    name: 'settings',
     path: '/settings',
-    theme: 'catppuccin-mocha',
     viewport: { width: 390, height: 844 },
   },
   {
-    name: 'mobile-archive',
+    name: 'archive',
     path: '/archive',
-    theme: 'catppuccin-mocha',
     viewport: { width: 390, height: 844 },
   },
   {
-    name: 'mobile-contacts',
+    name: 'contacts',
     path: '/browse/people',
-    theme: 'catppuccin-mocha',
     viewport: { width: 390, height: 844 },
   },
 ];
 
+// Generate both theme variants for each config
+function generateScreenshots(
+  configs: ScreenshotConfig[],
+  prefix: string
+): Screenshot[] {
+  const screenshots: Screenshot[] = [];
+
+  for (const config of configs) {
+    // Dark theme (default) - no suffix
+    screenshots.push({
+      ...config,
+      theme: 'catppuccin-mocha',
+      outputName: `${prefix}${config.name}`,
+    });
+
+    // Light theme - with -light suffix
+    screenshots.push({
+      ...config,
+      theme: 'rose-pine-dawn',
+      outputName: `${prefix}${config.name}-light`,
+    });
+  }
+
+  return screenshots;
+}
+
+const DESKTOP_SCREENSHOTS = generateScreenshots(DESKTOP_CONFIGS, 'screenshot-');
+const MOBILE_SCREENSHOTS = generateScreenshots(MOBILE_CONFIGS, 'mobile-');
 const ALL_SCREENSHOTS = [...DESKTOP_SCREENSHOTS, ...MOBILE_SCREENSHOTS];
 
 test.describe('Screenshot Capture', () => {
   for (const shot of ALL_SCREENSHOTS) {
-    test(`capture ${shot.name}`, async ({ page }) => {
+    test(`capture ${shot.outputName}`, async ({ page }) => {
       // Set viewport
       await page.setViewportSize(shot.viewport);
 
@@ -155,7 +165,7 @@ test.describe('Screenshot Capture', () => {
 
       // Take screenshot
       await page.screenshot({
-        path: path.join(DOCS_DIR, `${shot.name}.png`),
+        path: path.join(DOCS_DIR, `${shot.outputName}.png`),
         type: 'png',
       });
     });

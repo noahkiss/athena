@@ -2,20 +2,20 @@
 
 Visual overview of Athena's interface. These screenshots are automatically generated using the [screenshot workflow](../.github/workflows/screenshots.yml).
 
+All screenshots are captured in both dark mode (Catppuccin Mocha) and light mode (Rosé Pine Dawn). Dark mode is shown by default.
+
 ## Capture Page
 
 The main interface for quickly capturing thoughts.
 
-<table>
-  <tr>
-    <th>Light Mode (Rosé Pine Dawn)</th>
-    <th>Dark Mode (Catppuccin Mocha)</th>
-  </tr>
-  <tr>
-    <td><img src="screenshot-light.png" width="500" alt="Capture page in light mode"></td>
-    <td><img src="screenshot-dark.png" width="500" alt="Capture page in dark mode"></td>
-  </tr>
-</table>
+![Capture](screenshot-capture.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Capture (Light)](screenshot-capture-light.png)
+
+</details>
 
 ## Desktop Views
 
@@ -24,46 +24,164 @@ Clean stats overview with category breakdown and recent activity.
 
 ![Dashboard](screenshot-dashboard.png)
 
+<details>
+<summary>View in light mode</summary>
+
+![Dashboard (Light)](screenshot-dashboard-light.png)
+
+</details>
+
 ### Browse
 Navigate your atlas with category-aware styling and breadcrumb navigation.
 
 ![Browse](screenshot-browse.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Browse (Light)](screenshot-browse-light.png)
+
+</details>
 
 ### Timeline
 Chronological view of all your notes, grouped by date.
 
 ![Timeline](screenshot-timeline.png)
 
+<details>
+<summary>View in light mode</summary>
+
+![Timeline (Light)](screenshot-timeline-light.png)
+
+</details>
+
 ### Contacts
 Structured contact cards with grid view, filtering, and detail pages.
 
 ![Contacts](screenshot-contacts.png)
 
+<details>
+<summary>View in light mode</summary>
+
+![Contacts (Light)](screenshot-contacts-light.png)
+
+</details>
+
 ![Contact Detail](screenshot-contact-detail.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Contact Detail (Light)](screenshot-contact-detail-light.png)
+
+</details>
 
 ### Settings
 Theme selection and font customization.
 
-| Settings Overview | Font Selection |
-|-------------------|----------------|
-| ![Settings](screenshot-settings-fonts.png) | ![Fonts](screenshot-settings-fonts-scrolled.png) |
+![Settings](screenshot-settings-fonts.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Settings (Light)](screenshot-settings-fonts-light.png)
+
+</details>
+
+![Settings (Scrolled)](screenshot-settings-fonts-scrolled.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Settings Scrolled (Light)](screenshot-settings-fonts-scrolled-light.png)
+
+</details>
 
 ### Style Guide
 Interactive component documentation at `/styleguide`.
 
 ![Style Guide](screenshot-styleguide.png)
 
+<details>
+<summary>View in light mode</summary>
+
+![Style Guide (Light)](screenshot-styleguide-light.png)
+
+</details>
+
 ## Mobile Views (390×844)
 
 Optimized for touch with iOS-style bottom navigation.
 
-| Capture | Dashboard | Browse |
-|---------|-----------|--------|
-| <img src="mobile-capture.png" width="200" alt="Mobile capture"> | <img src="mobile-dashboard.png" width="200" alt="Mobile dashboard"> | <img src="mobile-browse.png" width="200" alt="Mobile browse"> |
+### Capture
+![Mobile Capture](mobile-capture.png)
 
-| Timeline | Settings | Archive | Contacts |
-|----------|----------|---------|----------|
-| <img src="mobile-timeline.png" width="200" alt="Mobile timeline"> | <img src="mobile-settings.png" width="200" alt="Mobile settings"> | <img src="mobile-archive.png" width="200" alt="Mobile archive"> | <img src="mobile-contacts.png" width="200" alt="Mobile contacts"> |
+<details>
+<summary>View in light mode</summary>
+
+![Mobile Capture (Light)](mobile-capture-light.png)
+
+</details>
+
+### Dashboard
+![Mobile Dashboard](mobile-dashboard.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Mobile Dashboard (Light)](mobile-dashboard-light.png)
+
+</details>
+
+### Browse
+![Mobile Browse](mobile-browse.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Mobile Browse (Light)](mobile-browse-light.png)
+
+</details>
+
+### Timeline
+![Mobile Timeline](mobile-timeline.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Mobile Timeline (Light)](mobile-timeline-light.png)
+
+</details>
+
+### Settings
+![Mobile Settings](mobile-settings.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Mobile Settings (Light)](mobile-settings-light.png)
+
+</details>
+
+### Archive
+![Mobile Archive](mobile-archive.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Mobile Archive (Light)](mobile-archive-light.png)
+
+</details>
+
+### Contacts
+![Mobile Contacts](mobile-contacts.png)
+
+<details>
+<summary>View in light mode</summary>
+
+![Mobile Contacts (Light)](mobile-contacts-light.png)
+
+</details>
 
 ---
 
@@ -100,9 +218,7 @@ docker compose -f docker-compose.screenshots.yml down
 
 ### Screenshot Specifications
 
-| Category | Viewport | Theme |
-|----------|----------|-------|
-| Desktop hero (light) | 1280×800 | Rose Pine Dawn |
-| Desktop hero (dark) | 1280×800 | Catppuccin Mocha |
-| Desktop pages | 1280×800-1200 | Catppuccin Mocha |
-| Mobile | 390×844 | Catppuccin Mocha |
+| Category | Viewport | Themes |
+|----------|----------|--------|
+| Desktop | 1280×800-1200 | Catppuccin Mocha (default), Rosé Pine Dawn |
+| Mobile | 390×844 | Catppuccin Mocha (default), Rosé Pine Dawn |
