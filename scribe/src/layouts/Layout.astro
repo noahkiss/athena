@@ -175,6 +175,7 @@ const darkThemeVars = themeToCssVars(darkTheme);
     <meta name="mobile-web-app-capable" content="yes" />
     <title>{title}</title>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
     <style is:global>
       :root {
         /* Color variables */
@@ -846,6 +847,10 @@ const darkThemeVars = themeToCssVars(darkTheme);
             <h3 class="text-sm font-semibold text-muted uppercase mb-3">Global</h3>
             <div class="space-y-2">
               <div class="flex items-center justify-between">
+                <span class="text-primary">Search notes</span>
+                <kbd class="px-2 py-1 rounded text-sm">/</kbd>
+              </div>
+              <div class="flex items-center justify-between">
                 <span class="text-primary">Show this help</span>
                 <kbd class="px-2 py-1 rounded text-sm">?</kbd>
               </div>
@@ -917,9 +922,52 @@ const darkThemeVars = themeToCssVars(darkTheme);
       </div>
     </div>
 
+    <!-- Global Search Modal -->
+    <div id="search-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-start justify-center pt-[15vh] p-4 animate-fadeIn">
+      <div class="panel max-w-xl w-full animate-slideUp">
+        <div class="p-4 border-b border-default">
+          <div class="relative">
+            <input
+              type="text"
+              id="search-input"
+              class="input-field w-full pl-10 pr-4 py-3 text-lg"
+              placeholder="Search notes..."
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+        </div>
+
+        <div id="search-results" class="max-h-[50vh] overflow-auto">
+          <div id="search-empty" class="p-8 text-center text-muted">
+            <p>Type to search across all notes</p>
+            <p class="text-sm text-subtle mt-2">Searches titles, content, and tags</p>
+          </div>
+          <div id="search-loading" class="hidden p-8 text-center text-muted">
+            <p>Loading search index...</p>
+          </div>
+          <div id="search-no-results" class="hidden p-8 text-center text-muted">
+            <p>No results found</p>
+          </div>
+          <div id="search-results-list" class="hidden divide-y divide-default"></div>
+        </div>
+
+        <div class="p-3 border-t border-default flex items-center justify-between text-xs text-muted">
+          <div class="flex items-center gap-4">
+            <span><kbd class="px-1.5 py-0.5 rounded">↑</kbd><kbd class="px-1.5 py-0.5 rounded ml-1">↓</kbd> Navigate</span>
+            <span><kbd class="px-1.5 py-0.5 rounded">Enter</kbd> Open</span>
+          </div>
+          <span><kbd class="px-1.5 py-0.5 rounded">Esc</kbd> Close</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Footer hint -->
-    <div class="fixed bottom-4 right-4 text-xs text-subtle">
-      Press <kbd class="px-1.5 py-0.5 rounded">?</kbd> for shortcuts
+    <div class="fixed bottom-4 right-4 text-xs text-subtle hidden md:block">
+      Press <kbd class="px-1.5 py-0.5 rounded">/</kbd> to search · <kbd class="px-1.5 py-0.5 rounded">?</kbd> for shortcuts
     </div>
 
     <script is:inline define:vars={{ lightThemeVars, darkThemeVars }}>
@@ -986,7 +1034,14 @@ const darkThemeVars = themeToCssVars(darkTheme);
       document.addEventListener('keydown', (e) => {
         // Handle Escape key
         if (e.key === 'Escape') {
-          // Close modal if open
+          // Close search modal if open
+          const searchModalEl = document.getElementById('search-modal');
+          if (searchModalEl && !searchModalEl.classList.contains('hidden')) {
+            hideSearchModal();
+            return;
+          }
+
+          // Close shortcuts modal if open
           const modal = document.getElementById('shortcuts-modal');
           if (modal && !modal.classList.contains('hidden')) {
             hideShortcutsModal();
@@ -999,6 +1054,13 @@ const darkThemeVars = themeToCssVars(darkTheme);
             textarea.value = '';
             e.preventDefault();
           }
+          return;
+        }
+
+        // Open search on "/" (when not typing)
+        if (e.key === '/' && !isTyping()) {
+          showSearchModal();
+          e.preventDefault();
           return;
         }
 
@@ -1085,6 +1147,206 @@ const darkThemeVars = themeToCssVars(darkTheme);
       document.getElementById('shortcuts-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) {
           hideShortcutsModal();
+        }
+      });
+
+      // ============ GLOBAL SEARCH ============
+      let searchIndex = null;
+      let fuse = null;
+      let selectedIndex = -1;
+      let searchResults = [];
+
+      const searchModal = document.getElementById('search-modal');
+      const searchInput = document.getElementById('search-input');
+      const searchEmpty = document.getElementById('search-empty');
+      const searchLoading = document.getElementById('search-loading');
+      const searchNoResults = document.getElementById('search-no-results');
+      const searchResultsList = document.getElementById('search-results-list');
+
+      // Category styling (matching browse page)
+      const categoryStyles = {
+        projects: { className: 'category-1', icon: '📁' },
+        people: { className: 'category-2', icon: '👤' },
+        journal: { className: 'category-3', icon: '📔' },
+        tech: { className: 'category-4', icon: '⚙️' },
+        reading: { className: 'category-5', icon: '📚' },
+        wellness: { className: 'category-6', icon: '🏃' },
+        home: { className: 'category-7', icon: '🏠' },
+        archive: { className: 'category-8', icon: '📦' },
+      };
+
+      function getCategoryStyle(category) {
+        return categoryStyles[category.toLowerCase()] || { className: 'category-1', icon: '📄' };
+      }
+
+      async function loadSearchIndex() {
+        if (searchIndex) return; // Already loaded
+
+        searchLoading?.classList.remove('hidden');
+        searchEmpty?.classList.add('hidden');
+
+        try {
+          const response = await fetch('/api/search/index');
+          if (response.ok) {
+            const data = await response.json();
+            searchIndex = data.notes;
+
+            // Initialize Fuse.js with search options
+            fuse = new Fuse(searchIndex, {
+              keys: [
+                { name: 'title', weight: 0.4 },
+                { name: 'preview', weight: 0.3 },
+                { name: 'tags', weight: 0.2 },
+                { name: 'category', weight: 0.1 },
+              ],
+              threshold: 0.4, // Fuzzy matching threshold
+              includeMatches: true,
+              minMatchCharLength: 2,
+            });
+          }
+        } catch (e) {
+          console.error('Failed to load search index:', e);
+        } finally {
+          searchLoading?.classList.add('hidden');
+          searchEmpty?.classList.remove('hidden');
+        }
+      }
+
+      function showSearchModal() {
+        searchModal?.classList.remove('hidden');
+        searchInput?.focus();
+        loadSearchIndex();
+      }
+
+      function hideSearchModal() {
+        searchModal?.classList.add('hidden');
+        if (searchInput) searchInput.value = '';
+        selectedIndex = -1;
+        searchResults = [];
+        renderSearchResults([]);
+      }
+
+      function renderSearchResults(results) {
+        searchResults = results;
+        selectedIndex = results.length > 0 ? 0 : -1;
+
+        if (!searchResultsList) return;
+
+        if (results.length === 0) {
+          searchResultsList.classList.add('hidden');
+          if (searchInput?.value.trim()) {
+            searchNoResults?.classList.remove('hidden');
+            searchEmpty?.classList.add('hidden');
+          } else {
+            searchNoResults?.classList.add('hidden');
+            searchEmpty?.classList.remove('hidden');
+          }
+          return;
+        }
+
+        searchNoResults?.classList.add('hidden');
+        searchEmpty?.classList.add('hidden');
+        searchResultsList.classList.remove('hidden');
+
+        searchResultsList.innerHTML = results.slice(0, 10).map((result, idx) => {
+          const item = result.item;
+          const style = getCategoryStyle(item.source === 'archive' ? 'archive' : item.category);
+          const isSelected = idx === selectedIndex;
+          const basePath = item.source === 'archive' ? '/archive' : '/browse';
+
+          return `
+            <a href="${basePath}/${item.path}"
+               class="search-result block p-3 hover:bg-surface-muted transition-colors ${isSelected ? 'bg-surface-muted' : ''}"
+               data-index="${idx}">
+              <div class="flex items-start gap-3">
+                <span class="text-lg flex-shrink-0">${style.icon}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-primary truncate">${escapeHtml(item.title)}</div>
+                  <div class="text-sm text-muted truncate">${escapeHtml(item.preview)}</div>
+                  <div class="flex items-center gap-2 mt-1 text-xs">
+                    <span class="${style.className} category-chip px-1.5 py-0.5 rounded">${item.category}</span>
+                    ${item.tags.slice(0, 3).map(tag => `<span class="text-subtle">#${tag}</span>`).join('')}
+                    ${item.source === 'archive' ? '<span class="text-subtle italic">archived</span>' : ''}
+                  </div>
+                </div>
+              </div>
+            </a>
+          `;
+        }).join('');
+
+        updateSelectedResult();
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function updateSelectedResult() {
+        const results = searchResultsList?.querySelectorAll('.search-result');
+        results?.forEach((el, idx) => {
+          if (idx === selectedIndex) {
+            el.classList.add('bg-surface-muted');
+            el.scrollIntoView({ block: 'nearest' });
+          } else {
+            el.classList.remove('bg-surface-muted');
+          }
+        });
+      }
+
+      function navigateResults(direction) {
+        if (searchResults.length === 0) return;
+
+        if (direction === 'up') {
+          selectedIndex = selectedIndex <= 0 ? searchResults.length - 1 : selectedIndex - 1;
+        } else {
+          selectedIndex = selectedIndex >= searchResults.length - 1 ? 0 : selectedIndex + 1;
+        }
+        updateSelectedResult();
+      }
+
+      function selectResult() {
+        if (selectedIndex >= 0 && selectedIndex < searchResults.length) {
+          const result = searchResults[selectedIndex].item;
+          const basePath = result.source === 'archive' ? '/archive' : '/browse';
+          window.location.href = `${basePath}/${result.path}`;
+        }
+      }
+
+      // Search input handler with debounce
+      let searchTimeout;
+      searchInput?.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          const query = e.target.value.trim();
+          if (!query || !fuse) {
+            renderSearchResults([]);
+            return;
+          }
+          const results = fuse.search(query);
+          renderSearchResults(results);
+        }, 150);
+      });
+
+      // Keyboard navigation in search
+      searchInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          navigateResults('down');
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          navigateResults('up');
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          selectResult();
+        }
+      });
+
+      // Close search modal on outside click
+      searchModal?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          hideSearchModal();
         }
       });
 

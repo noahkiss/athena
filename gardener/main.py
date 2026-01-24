@@ -1290,6 +1290,96 @@ async def browse_archive(path: str = "") -> BrowseResponse:
     return browse_directory(ARCHIVE_DIR, path)
 
 
+class SearchIndexItem(BaseModel):
+    """A note entry for the search index."""
+
+    path: str
+    title: str
+    category: str
+    preview: str  # First ~200 chars of content
+    tags: list[str] = []
+    source: str  # "atlas" or "archive"
+
+
+class SearchIndexResponse(BaseModel):
+    """Response containing all notes for client-side search."""
+
+    notes: list[SearchIndexItem]
+    total: int
+
+
+@app.get(
+    "/api/search/index",
+    response_model=SearchIndexResponse,
+    dependencies=[Depends(verify_auth_token)],
+)
+async def get_search_index() -> SearchIndexResponse:
+    """Get all notes for client-side fuzzy search indexing."""
+    notes = []
+
+    def extract_preview(content: str, max_len: int = 200) -> str:
+        """Extract a preview from markdown content, stripping frontmatter."""
+        # Strip YAML frontmatter
+        frontmatter_pattern = r"^---\s*\n[\s\S]*?\n---\s*\n?"
+        import re
+
+        content = re.sub(frontmatter_pattern, "", content)
+        # Strip markdown headers and formatting
+        content = re.sub(r"^#+\s*", "", content, flags=re.MULTILINE)
+        content = re.sub(r"\*\*|__|\*|_|`", "", content)
+        # Collapse whitespace
+        content = " ".join(content.split())
+        return content[:max_len].strip()
+
+    def process_directory(base_dir: Path, source: str):
+        """Process all markdown files in a directory."""
+        if not base_dir.exists():
+            return
+
+        for md_file in base_dir.rglob("*.md"):
+            try:
+                content = md_file.read_text()
+                metadata = parse_note_metadata(content)
+
+                # Get relative path from base
+                rel_path = str(md_file.relative_to(base_dir))
+
+                # Determine category (top-level directory)
+                parts = rel_path.split("/")
+                category = parts[0] if len(parts) > 1 else "root"
+
+                # Get title from metadata or filename
+                if metadata and metadata.title:
+                    title = metadata.title
+                elif metadata and metadata.name:  # Contact name
+                    title = metadata.name
+                else:
+                    title = md_file.stem.replace("-", " ").title()
+
+                # Get tags
+                tags = metadata.tags if metadata and metadata.tags else []
+
+                notes.append(
+                    SearchIndexItem(
+                        path=rel_path,
+                        title=title,
+                        category=category,
+                        preview=extract_preview(content),
+                        tags=tags,
+                        source=source,
+                    )
+                )
+            except Exception as e:
+                logger.warning(f"Error indexing {md_file}: {e}")
+                continue
+
+    # Process atlas and archive
+    process_directory(ATLAS_DIR, "atlas")
+    process_directory(ARCHIVE_DIR, "archive")
+
+    return SearchIndexResponse(notes=notes, total=len(notes))
+
+
 class ContactItem(BaseModel):
     """A contact with parsed metadata."""
 

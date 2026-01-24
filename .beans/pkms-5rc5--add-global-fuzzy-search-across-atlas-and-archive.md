@@ -1,10 +1,11 @@
 ---
 # pkms-5rc5
 title: Add global fuzzy search across atlas and archive
-status: draft
+status: in-progress
 type: feature
+priority: normal
 created_at: 2026-01-22T02:42:03Z
-updated_at: 2026-01-22T02:42:03Z
+updated_at: 2026-01-24T05:52:34Z
 ---
 
 Implement fast, fuzzy search across all notes with keyboard shortcut and instant results.
@@ -41,14 +42,14 @@ Implement fast, fuzzy search across all notes with keyboard shortcut and instant
 **Recommendation**: Start with Fuse.js client-side for MVP, migrate to FTS5 if needed.
 
 ## Checklist
-- [ ] Choose search implementation (Fuse.js recommended)
-- [ ] Add search index building (client or server)
-- [ ] Design search UI (modal overlay or header bar)
-- [ ] Implement search input with debouncing
-- [ ] Add keyboard shortcut (/ or Ctrl+K)
-- [ ] Build search results list with highlights
-- [ ] Add keyboard navigation (up/down/enter)
-- [ ] Link results to Browse or inline preview
+- [x] Choose search implementation (Fuse.js recommended)
+- [x] Add search index building (client or server)
+- [x] Design search UI (modal overlay or header bar)
+- [x] Implement search input with debouncing
+- [x] Add keyboard shortcut (/ or Ctrl+K)
+- [x] Build search results list with highlights
+- [x] Add keyboard navigation (up/down/enter)
+- [x] Link results to Browse or inline preview
 - [ ] Add search scope filters (atlas, archive, all)
 - [ ] Test fuzzy matching quality
 - [ ] Test with large note counts
