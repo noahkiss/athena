@@ -37,9 +37,9 @@ Chronological view of all your notes, grouped by date.
 ### Contacts
 Structured contact cards with grid view, filtering, and detail pages.
 
-| Contacts Grid | Contact Detail |
-|---------------|----------------|
-| ![Contacts Grid](screenshot-contacts-grid.png) | ![Contact Detail](screenshot-contact-detail.png) |
+![Contacts](screenshot-contacts.png)
+
+![Contact Detail](screenshot-contact-detail.png)
 
 ### Settings
 Theme selection and font customization.
@@ -104,5 +104,5 @@ docker compose -f docker-compose.screenshots.yml down
 |----------|----------|-------|
 | Desktop hero (light) | 1280×800 | Rose Pine Dawn |
 | Desktop hero (dark) | 1280×800 | Catppuccin Mocha |
-| Desktop pages | 1280×800-1200 | Rose Pine Dawn |
+| Desktop pages | 1280×800-1200 | Catppuccin Mocha |
 | Mobile | 390×844 | Catppuccin Mocha |
