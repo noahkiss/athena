@@ -78,9 +78,20 @@ jobs:
         run: npx playwright install-deps chromium
         if: steps.playwright-cache.outputs.cache-hit == 'true'
 
+      - name: Warmup app
+        run: |
+          echo "Warming up the app..."
+          curl -sf http://localhost:3000/ > /dev/null || true
+          curl -sf http://localhost:3000/dashboard > /dev/null || true
+          curl -sf http://localhost:3000/browse > /dev/null || true
+          sleep 5
+
       - name: Capture screenshots
         working-directory: .github/screenshots
-        run: npx playwright test --workers=2
+        run: npx playwright test
+        env:
+          # Set to 'both' to generate light+dark theme screenshots (doubles test count)
+          SCREENSHOT_THEMES: dark-only
 
       - name: Stop services
         if: always()

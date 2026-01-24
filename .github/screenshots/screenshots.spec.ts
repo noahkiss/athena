@@ -106,12 +106,14 @@ const MOBILE_CONFIGS: ScreenshotConfig[] = [
   },
 ];
 
-// Generate both theme variants for each config
+// Generate theme variants for each config
+// Set SCREENSHOT_THEMES=both to generate both light and dark
 function generateScreenshots(
   configs: ScreenshotConfig[],
   prefix: string
 ): Screenshot[] {
   const screenshots: Screenshot[] = [];
+  const includeBothThemes = process.env.SCREENSHOT_THEMES === 'both';
 
   for (const config of configs) {
     // Dark theme (default) - no suffix
@@ -121,12 +123,14 @@ function generateScreenshots(
       outputName: `${prefix}${config.name}`,
     });
 
-    // Light theme - with -light suffix
-    screenshots.push({
-      ...config,
-      theme: 'rose-pine-dawn',
-      outputName: `${prefix}${config.name}-light`,
-    });
+    // Light theme - with -light suffix (only if enabled)
+    if (includeBothThemes) {
+      screenshots.push({
+        ...config,
+        theme: 'rose-pine-dawn',
+        outputName: `${prefix}${config.name}-light`,
+      });
+    }
   }
 
   return screenshots;
