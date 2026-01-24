@@ -458,7 +458,7 @@ const isContact = data?.metadata?.name || data?.metadata?.email || data?.metadat
               <!-- Content -->
               <div id="preview-content" class="preview-content p-4 md:p-6 overflow-auto">
                 <div class="preview-loading flex items-center justify-center py-12">
-                  <Icon name="spinner" size={24} class="text-muted animate-spin" />
+                  <div class="w-6 h-6 border-2 border-muted border-t-accent rounded-full animate-spin"></div>
                 </div>
               </div>
 
@@ -570,7 +570,7 @@ const isContact = data?.metadata?.name || data?.metadata?.email || data?.metadat
               Cancel
             </button>
             <button type="submit" class="btn-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-              <Icon name="check-linear" size={18} />
+              <Icon name="check-circle-linear" size={18} />
               <span>Create Contact</span>
             </button>
           </div>
