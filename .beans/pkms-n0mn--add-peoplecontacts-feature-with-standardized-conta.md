@@ -1,11 +1,11 @@
 ---
 # pkms-n0mn
 title: Add people/contacts feature with standardized contact cards
-status: in-progress
+status: completed
 type: feature
 priority: normal
 created_at: 2026-01-22T02:42:26Z
-updated_at: 2026-01-23T23:10:20Z
+updated_at: 2026-01-24T05:05:55Z
 ---
 
 Create structured contact card system for people in the /people atlas category.
@@ -62,9 +62,9 @@ birthday: 1985-06-20
 - [x] Implement contact card detail view
 - [x] Add quick actions (email, call links)
 - [x] Add filtering and sorting
-- [ ] Add last contact date tracking
+- [x] Add last contact date tracking
 - [x] Add relationship tags
-- [ ] Add birthday reminders (optional)
-- [ ] Add contact frequency suggestions
-- [ ] Test @mention auto-linking
-- [ ] Document contact template in README
+- [x] Add birthday reminders (optional)
+- [x] Add contact frequency suggestions
+- [x] Test @mention auto-linking
+- [x] Document contact template in README

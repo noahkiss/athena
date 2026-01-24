@@ -99,6 +99,15 @@ const isDetail = variant === 'detail';
           <span>Call</span>
         </a>
       )}
+      <button
+        type="button"
+        class="contact-action mark-contacted-btn btn-secondary flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+        data-contact-path={filePath.replace(/^people\//, '')}
+        title="Mark as contacted today"
+      >
+        <Icon name="check-circle-linear" size={18} />
+        <span>Mark Contacted</span>
+      </button>
     </div>
 
     <!-- Contact details grid -->

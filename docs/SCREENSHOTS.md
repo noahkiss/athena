@@ -34,6 +34,13 @@ Chronological view of all your notes, grouped by date.
 
 ![Timeline](screenshot-timeline.png)
 
+### Contacts
+Structured contact cards with grid view, filtering, and detail pages.
+
+| Contacts Grid | Contact Detail |
+|---------------|----------------|
+| ![Contacts Grid](screenshot-contacts-grid.png) | ![Contact Detail](screenshot-contact-detail.png) |
+
 ### Settings
 Theme selection and font customization.
 
@@ -54,9 +61,9 @@ Optimized for touch with iOS-style bottom navigation.
 |---------|-----------|--------|
 | <img src="mobile-capture.png" width="200" alt="Mobile capture"> | <img src="mobile-dashboard.png" width="200" alt="Mobile dashboard"> | <img src="mobile-browse.png" width="200" alt="Mobile browse"> |
 
-| Timeline | Settings | Archive |
-|----------|----------|---------|
-| <img src="mobile-timeline.png" width="200" alt="Mobile timeline"> | <img src="mobile-settings.png" width="200" alt="Mobile settings"> | <img src="mobile-archive.png" width="200" alt="Mobile archive"> |
+| Timeline | Settings | Archive | Contacts |
+|----------|----------|---------|----------|
+| <img src="mobile-timeline.png" width="200" alt="Mobile timeline"> | <img src="mobile-settings.png" width="200" alt="Mobile settings"> | <img src="mobile-archive.png" width="200" alt="Mobile archive"> | <img src="mobile-contacts.png" width="200" alt="Mobile contacts"> |
 
 ---
 

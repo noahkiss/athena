@@ -24,12 +24,15 @@ let stats: any = {
   categories: {},
 };
 let recentActivity: any[] = [];
+let upcomingBirthdays: any[] = [];
+let staleContacts: any[] = [];
 let error: string | null = null;
 
 try {
-  const [statsResponse, recentResponse] = await Promise.all([
+  const [statsResponse, recentResponse, birthdaysResponse] = await Promise.all([
     fetch(`${GARDENER_URL}/api/stats`, { headers: authHeaders }),
     fetch(`${GARDENER_URL}/api/recent?limit=5`, { headers: authHeaders }),
+    fetch(`${GARDENER_URL}/api/contacts/birthdays?days=30`, { headers: authHeaders }),
   ]);
 
   if (statsResponse.ok) {
@@ -40,8 +43,39 @@ try {
     const recentData = await recentResponse.json();
     recentActivity = recentData.recent || [];
   }
+
+  if (birthdaysResponse.ok) {
+    const birthdaysData = await birthdaysResponse.json();
+    upcomingBirthdays = birthdaysData.birthdays || [];
+  }
+
+  // Fetch stale contacts separately (non-blocking)
+  try {
+    const staleResponse = await fetch(`${GARDENER_URL}/api/contacts/stale?days=90&limit=5`, { headers: authHeaders });
+    if (staleResponse.ok) {
+      const staleData = await staleResponse.json();
+      staleContacts = staleData.contacts || [];
+    }
+  } catch {}
 } catch (e) {
   error = 'Could not connect to Gardener. Is it running?';
+}
+
+function formatBirthdayCountdown(daysUntil: number): string {
+  if (daysUntil === 0) return 'Today!';
+  if (daysUntil === 1) return 'Tomorrow';
+  if (daysUntil <= 7) return `In ${daysUntil} days`;
+  if (daysUntil <= 14) return `In ${Math.ceil(daysUntil / 7)} week${daysUntil > 7 ? 's' : ''}`;
+  return `In ${Math.ceil(daysUntil / 7)} weeks`;
+}
+
+function formatLastContactAgo(daysSince: number | null): string {
+  if (daysSince === null) return 'Never contacted';
+  if (daysSince < 30) return `${daysSince} days ago`;
+  if (daysSince < 60) return '1 month ago';
+  if (daysSince < 365) return `${Math.floor(daysSince / 30)} months ago`;
+  if (daysSince < 730) return '1 year ago';
+  return `${Math.floor(daysSince / 365)} years ago`;
 }
 
 const categoryStyles: Record<string, { className: string; icon: string }> = {
@@ -242,6 +276,86 @@ const sortedCategories = Object.entries(stats.categories || {})
               </div>
             </div>
           </div>
+
+          <!-- Upcoming Birthdays -->
+          {upcomingBirthdays.length > 0 && (
+            <div class="panel p-6">
+              <h2 class="text-lg font-medium text-primary mb-4 flex items-center gap-2">
+                <Icon name="cake-linear" size={24} class="text-primary" />
+                <span>Upcoming Birthdays</span>
+                <span class="text-xs text-muted font-normal ml-auto">Next 30 days</span>
+              </h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {upcomingBirthdays.slice(0, 6).map((bday: any) => (
+                  <a
+                    href={`/browse/${bday.path}`}
+                    class:list={[
+                      'flex items-center gap-3 p-3 rounded-lg transition-colors',
+                      bday.days_until === 0 ? 'bg-warning-soft border border-warning' : 'hover:bg-surface-muted'
+                    ]}
+                  >
+                    <div class:list={[
+                      'w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold',
+                      bday.days_until === 0 ? 'bg-warning text-warning-contrast' : bday.days_until <= 7 ? 'category-3 category-chip' : 'bg-surface-muted text-muted'
+                    ]}>
+                      {bday.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="font-medium text-primary truncate">{bday.name}</div>
+                      <div class:list={['text-xs', bday.days_until === 0 ? 'text-warning font-medium' : 'text-muted']}>
+                        {formatBirthdayCountdown(bday.days_until)}
+                        {bday.age && <span class="text-subtle"> · Turning {bday.age}</span>}
+                      </div>
+                    </div>
+                    {bday.days_until === 0 && <Icon name="confetti-linear" size={20} class="text-warning flex-shrink-0" />}
+                  </a>
+                ))}
+              </div>
+              {upcomingBirthdays.length > 6 && (
+                <div class="mt-3 pt-3 border-t border-default text-sm">
+                  <a href="/browse/people" class="link">
+                    View all contacts →
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          <!-- Reconnect Suggestions (Stale Contacts) -->
+          {staleContacts.length > 0 && (
+            <div class="panel p-6">
+              <h2 class="text-lg font-medium text-primary mb-4 flex items-center gap-2">
+                <Icon name="users-group-rounded-linear" size={24} class="text-primary" />
+                <span>Reconnect</span>
+                <span class="text-xs text-muted font-normal ml-auto">Not contacted in 90+ days</span>
+              </h2>
+              <div class="space-y-2">
+                {staleContacts.map((contact: any) => (
+                  <a
+                    href={`/browse/${contact.path}`}
+                    class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-muted transition-colors"
+                  >
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-surface-muted text-muted">
+                      {contact.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="font-medium text-primary truncate">{contact.name}</div>
+                      <div class="text-xs text-subtle">
+                        {formatLastContactAgo(contact.days_since)}
+                        {contact.relationship && <span> · {contact.relationship}</span>}
+                      </div>
+                    </div>
+                    <Icon name="arrow-right-linear" size={16} class="text-muted flex-shrink-0" />
+                  </a>
+                ))}
+              </div>
+              <div class="mt-3 pt-3 border-t border-default text-sm">
+                <a href="/browse/people" class="link">
+                  View all contacts →
+                </a>
+              </div>
+            </div>
+          )}
 
           <!-- Quick Actions -->
           <div class="panel p-6">

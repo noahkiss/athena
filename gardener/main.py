@@ -1419,6 +1419,226 @@ async def create_contact(request: CreateContactRequest) -> CreateContactResponse
     )
 
 
+class UpdateLastContactRequest(BaseModel):
+    """Request model for updating a contact's last_contact date."""
+
+    path: str  # Relative path within people directory (e.g., "john-doe.md")
+
+
+class UpdateLastContactResponse(BaseModel):
+    """Response model for updating last_contact."""
+
+    path: str
+    last_contact: str
+    message: str
+
+
+@app.patch(
+    "/api/contacts/last-contact",
+    dependencies=[Depends(verify_auth_token)],
+    response_model=UpdateLastContactResponse,
+)
+async def update_last_contact(request: UpdateLastContactRequest):
+    """Update a contact's last_contact date to today."""
+    # Resolve the file path
+    people_dir = ATLAS_DIR / "people"
+    filepath = people_dir / request.path
+
+    # Security: ensure path is within people directory
+    try:
+        filepath = filepath.resolve()
+        if not str(filepath).startswith(str(people_dir.resolve())):
+            raise HTTPException(status_code=400, detail="Invalid path")
+    except (OSError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Contact not found")
+
+    try:
+        content = filepath.read_text()
+        post = frontmatter.loads(content)
+
+        # Update last_contact to today
+        today = date.today().isoformat()
+        post.metadata["last_contact"] = today
+
+        # Write back
+        filepath.write_text(frontmatter.dumps(post))
+
+        logger.info(f"Updated last_contact for {request.path} to {today}")
+
+        return UpdateLastContactResponse(
+            path=request.path,
+            last_contact=today,
+            message=f"Updated last contact to {today}",
+        )
+    except Exception as e:
+        logger.error(f"Failed to update last_contact for {request.path}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update contact: {e}")
+
+
+class BirthdayItem(BaseModel):
+    """A contact with an upcoming birthday."""
+
+    path: str
+    name: str
+    birthday: str  # MM-DD format
+    days_until: int
+    age: int | None = None  # Age they'll turn, if year known
+
+
+class UpcomingBirthdaysResponse(BaseModel):
+    """Response model for upcoming birthdays."""
+
+    birthdays: list[BirthdayItem]
+
+
+@app.get(
+    "/api/contacts/birthdays",
+    dependencies=[Depends(verify_auth_token)],
+    response_model=UpcomingBirthdaysResponse,
+)
+async def get_upcoming_birthdays(days: int = 30):
+    """Get contacts with birthdays in the next N days."""
+    from datetime import datetime
+
+    people_dir = ATLAS_DIR / "people"
+    if not people_dir.exists():
+        return UpcomingBirthdaysResponse(birthdays=[])
+
+    today = date.today()
+    upcoming = []
+
+    for md_file in people_dir.glob("*.md"):
+        try:
+            content = md_file.read_text()
+            metadata = parse_note_metadata(content)
+            if not metadata or not metadata.birthday:
+                continue
+
+            # Parse birthday - could be YYYY-MM-DD or MM-DD
+            birthday_str = metadata.birthday
+            try:
+                if len(birthday_str) == 10:  # YYYY-MM-DD
+                    birth_date = datetime.strptime(birthday_str, "%Y-%m-%d").date()
+                    birth_year = birth_date.year
+                elif len(birthday_str) == 5:  # MM-DD
+                    birth_date = datetime.strptime(f"2000-{birthday_str}", "%Y-%m-%d").date()
+                    birth_year = None
+                else:
+                    continue
+            except ValueError:
+                continue
+
+            # Calculate this year's birthday
+            this_year_bday = date(today.year, birth_date.month, birth_date.day)
+
+            # If birthday already passed this year, check next year
+            if this_year_bday < today:
+                this_year_bday = date(today.year + 1, birth_date.month, birth_date.day)
+
+            days_until = (this_year_bday - today).days
+
+            if days_until <= days:
+                # Calculate age they'll turn
+                age = None
+                if birth_year:
+                    age = this_year_bday.year - birth_year
+
+                name = metadata.name or md_file.stem.replace("-", " ").title()
+                upcoming.append(
+                    BirthdayItem(
+                        path=f"people/{md_file.name}",
+                        name=name,
+                        birthday=f"{birth_date.month:02d}-{birth_date.day:02d}",
+                        days_until=days_until,
+                        age=age,
+                    )
+                )
+        except Exception as e:
+            logger.warning(f"Error parsing birthday for {md_file}: {e}")
+            continue
+
+    # Sort by days until birthday
+    upcoming.sort(key=lambda x: x.days_until)
+
+    return UpcomingBirthdaysResponse(birthdays=upcoming)
+
+
+class StaleContactItem(BaseModel):
+    """A contact that hasn't been contacted recently."""
+
+    path: str
+    name: str
+    relationship: str | None = None
+    last_contact: str | None = None  # YYYY-MM-DD or None if never
+    days_since: int | None = None  # None if never contacted
+
+
+class StaleContactsResponse(BaseModel):
+    """Response model for stale contacts."""
+
+    contacts: list[StaleContactItem]
+
+
+@app.get(
+    "/api/contacts/stale",
+    dependencies=[Depends(verify_auth_token)],
+    response_model=StaleContactsResponse,
+)
+async def get_stale_contacts(days: int = 90, limit: int = 10):
+    """Get contacts that haven't been contacted in the last N days."""
+    from datetime import datetime
+
+    people_dir = ATLAS_DIR / "people"
+    if not people_dir.exists():
+        return StaleContactsResponse(contacts=[])
+
+    today = date.today()
+    stale = []
+
+    for md_file in people_dir.glob("*.md"):
+        try:
+            content = md_file.read_text()
+            metadata = parse_note_metadata(content)
+            if not metadata:
+                continue
+
+            name = metadata.name or md_file.stem.replace("-", " ").title()
+            last_contact_str = metadata.last_contact
+            days_since = None
+
+            if last_contact_str:
+                try:
+                    last_contact_date = datetime.strptime(last_contact_str, "%Y-%m-%d").date()
+                    days_since = (today - last_contact_date).days
+                    # Only include if stale (beyond threshold)
+                    if days_since < days:
+                        continue
+                except ValueError:
+                    # Invalid date format, treat as never contacted
+                    pass
+
+            stale.append(
+                StaleContactItem(
+                    path=f"people/{md_file.name}",
+                    name=name,
+                    relationship=metadata.relationship,
+                    last_contact=last_contact_str,
+                    days_since=days_since,
+                )
+            )
+        except Exception as e:
+            logger.warning(f"Error checking stale contact {md_file}: {e}")
+            continue
+
+    # Sort: never contacted first, then by days_since descending (most stale first)
+    stale.sort(key=lambda x: (x.days_since is not None, -(x.days_since or 0)))
+
+    return StaleContactsResponse(contacts=stale[:limit])
+
+
 @app.get(
     "/api/random",
     dependencies=[Depends(verify_auth_token)],

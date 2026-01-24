@@ -6,6 +6,7 @@ company: TechCorp
 role: Engineering Manager
 relationship: mentor
 last_contact: 2026-01-15
+birthday: 1985-02-18
 tags: [career, leadership, tech]
 ---
 

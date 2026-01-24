@@ -55,9 +55,9 @@ if (!currentPath) {
   }
 }
 
-// Fetch contacts when viewing the people directory
+// Fetch contacts when viewing the people directory OR when viewing a file (for @mention linking)
 let contacts: any[] = [];
-if (currentPath === 'people' && !data?.is_file) {
+if (currentPath === 'people' || data?.is_file) {
   try {
     const contactsResponse = await fetch(`${GARDENER_URL}/api/contacts`, { headers: authHeaders });
     if (contactsResponse.ok) {
@@ -67,6 +67,49 @@ if (currentPath === 'people' && !data?.is_file) {
   } catch (e) {
     // Fall back to regular directory listing
   }
+}
+
+// Build a map of contact names to their paths for @mention linking
+const contactNameMap = new Map<string, string>();
+contacts.forEach((contact: any) => {
+  if (contact.name) {
+    // Store lowercase name for case-insensitive matching
+    contactNameMap.set(contact.name.toLowerCase(), contact.path);
+    // Also store first name only for partial matches
+    const firstName = contact.name.split(' ')[0];
+    if (firstName && !contactNameMap.has(firstName.toLowerCase())) {
+      contactNameMap.set(firstName.toLowerCase(), contact.path);
+    }
+  }
+});
+
+// Transform @mentions to links in markdown content
+function processMentions(content: string): string {
+  // Match @Name or @FirstName LastName (with optional quotes for multi-word)
+  // Patterns: @John, @"John Doe", @John-Doe
+  return content.replace(
+    /@(?:"([^"]+)"|(\w+(?:[-\s]\w+)?))/g,
+    (match, quotedName, simpleName) => {
+      const name = quotedName || simpleName;
+      const lowerName = name.toLowerCase().replace(/[-\s]+/g, ' ').trim();
+
+      // Try exact match first
+      const exactPath = contactNameMap.get(lowerName);
+      if (exactPath) {
+        return `[@${name}](/browse/${exactPath})`;
+      }
+
+      // Try matching just the first word
+      const firstName = lowerName.split(' ')[0];
+      const firstNamePath = contactNameMap.get(firstName);
+      if (firstNamePath) {
+        return `[@${name}](/browse/${firstNamePath})`;
+      }
+
+      // No match found, return original
+      return match;
+    }
+  );
 }
 
 // Build breadcrumb parts
@@ -134,7 +177,9 @@ function stripFrontmatter(content: string): string {
 let renderedContent = '';
 if (data?.is_file && data?.content) {
   // Strip frontmatter before rendering (metadata is already parsed by backend)
-  const contentWithoutFrontmatter = stripFrontmatter(data.content);
+  let contentWithoutFrontmatter = stripFrontmatter(data.content);
+  // Process @mentions to convert them to links before markdown rendering
+  contentWithoutFrontmatter = processMentions(contentWithoutFrontmatter);
   const rawHtml = await marked(contentWithoutFrontmatter);
   renderedContent = DOMPurify.sanitize(rawHtml);
 }
@@ -1310,6 +1355,52 @@ const isContact = data?.metadata?.name || data?.metadata?.email || data?.metadat
       if (e.key === 'Escape' && !addContactModal?.classList.contains('hidden')) {
         closeContactModalFn();
       }
+    });
+
+    // Mark as Contacted button handler
+    document.querySelectorAll('.mark-contacted-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const button = e.currentTarget as HTMLButtonElement;
+        const contactPath = button.dataset.contactPath;
+        if (!contactPath) return;
+
+        // Disable button and show loading state
+        button.disabled = true;
+        const originalText = button.querySelector('span')?.textContent;
+        const spanEl = button.querySelector('span');
+        if (spanEl) spanEl.textContent = 'Updating...';
+
+        try {
+          const response = await fetch(`${GARDENER_URL}/api/contacts/last-contact`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeaders(),
+            },
+            body: JSON.stringify({ path: contactPath }),
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            // Update the display
+            if (spanEl) spanEl.textContent = 'Updated!';
+            // Refresh the page to show updated last_contact
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
+          } else {
+            const error = await response.json();
+            alert(`Failed to update: ${error.detail || 'Unknown error'}`);
+            if (spanEl) spanEl.textContent = originalText || 'Mark Contacted';
+            button.disabled = false;
+          }
+        } catch (error) {
+          console.error('Error updating last contact:', error);
+          alert('Could not connect to server. Please try again.');
+          if (spanEl) spanEl.textContent = originalText || 'Mark Contacted';
+          button.disabled = false;
+        }
+      });
     });
 
     // Contact filtering and sorting

@@ -5,7 +5,7 @@ company: Design Studio
 role: Senior UX Designer
 relationship: colleague
 last_contact: 2026-01-18
-birthday: 1992-03-12
+birthday: 02-05
 tags: [design, ux, async]
 ---
 

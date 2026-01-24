@@ -4,7 +4,7 @@ email: maya.p@gmail.com
 phone: +1-555-0198
 relationship: friend
 last_contact: 2026-01-10
-birthday: 1990-08-22
+birthday: 1990-02-12
 tags: [hiking, photography, travel]
 ---
 

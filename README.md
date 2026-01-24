@@ -187,6 +187,50 @@ athena/
 
 The atlas structure evolves as the Gardener encounters new content types.
 
+## Contact Cards
+
+The `/people` category supports structured contact cards with special UI treatment. Create contacts with YAML frontmatter:
+
+```markdown
+---
+name: John Doe
+email: john@example.com
+phone: +1-555-0100
+company: Acme Corp
+role: Engineering Manager
+relationship: colleague
+last_contact: 2026-01-15
+birthday: 1985-06-20
+tags: [mentor, tech]
+---
+
+# Notes
+
+- Met at conference 2024
+- Working on Project X
+```
+
+**Fields:**
+| Field | Description |
+|-------|-------------|
+| `name` | Display name (required for contact UI) |
+| `email` | Email address (enables quick Email action) |
+| `phone` | Phone number (enables quick Call action) |
+| `company` | Company/organization |
+| `role` | Job title/role |
+| `relationship` | Type: `colleague`, `friend`, `family`, `mentor`, `client` |
+| `last_contact` | Date of last contact (YYYY-MM-DD) |
+| `birthday` | Birthday (YYYY-MM-DD or MM-DD) |
+| `tags` | Custom tags for filtering |
+
+**Features:**
+- **Grid view** with avatar initials and relationship badges
+- **Filtering** by relationship type
+- **Sorting** by name, last contact, company, or relationship
+- **Quick actions**: Email, Call, Mark as Contacted
+- **Dashboard widgets**: Upcoming birthdays (30 days), Reconnect suggestions (90+ days stale)
+- **@mentions**: Reference contacts in notes with `@John` or `@"John Doe"` - auto-links when viewing
+
 ## API
 
 | Method | Endpoint | Description |

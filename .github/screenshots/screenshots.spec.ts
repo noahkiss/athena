@@ -64,6 +64,19 @@ const DESKTOP_SCREENSHOTS: Screenshot[] = [
     theme: 'rose-pine-dawn',
     viewport: { width: 1280, height: 800 },
   },
+  // Contacts feature screenshots
+  {
+    name: 'screenshot-contacts-grid',
+    path: '/browse/people',
+    theme: 'rose-pine-dawn',
+    viewport: { width: 1280, height: 900 },
+  },
+  {
+    name: 'screenshot-contact-detail',
+    path: '/browse/people/sarah-chen.md',
+    theme: 'rose-pine-dawn',
+    viewport: { width: 1280, height: 900 },
+  },
 ];
 
 const MOBILE_SCREENSHOTS: Screenshot[] = [
@@ -100,6 +113,12 @@ const MOBILE_SCREENSHOTS: Screenshot[] = [
   {
     name: 'mobile-archive',
     path: '/archive',
+    theme: 'catppuccin-mocha',
+    viewport: { width: 390, height: 844 },
+  },
+  {
+    name: 'mobile-contacts',
+    path: '/browse/people',
     theme: 'catppuccin-mocha',
     viewport: { width: 390, height: 844 },
   },

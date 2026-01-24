@@ -4,7 +4,7 @@ email: alex.r@startup.io
 company: Startup.io
 role: Junior Developer
 relationship: colleague
-last_contact: 2026-01-20
+last_contact: 2025-09-15
 tags: [team, react, mentee]
 ---
 
